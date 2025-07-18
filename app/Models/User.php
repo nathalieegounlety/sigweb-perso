@@ -46,7 +46,7 @@ class User extends Authenticatable
         ];
     }
 
-    
+
     // JWT
     public function getJWTIdentifier() {
         return $this->getKey();
@@ -58,6 +58,6 @@ class User extends Authenticatable
 
     // Relations
     public function roles() {
-        return $this->belongsToMany(Role::class);
+        return $this->belongsToMany(Roles::class);
     }
 }
