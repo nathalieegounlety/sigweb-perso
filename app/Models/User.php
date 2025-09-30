@@ -21,7 +21,52 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'code_user',
+        'username',
+        'actif',
+        'login_count',
+        'first_login',
+        'last_login'
     ];
+
+
+    // récupérer la liste des rôles d'un utilisateurs 
+    public function roles()
+    {
+       return $this->belongsToMany(Roles::class, 'roles_users' );
+    }
+
+    // assigner un ou plusieurs rôle à un utilisateur 
+    public function assignRoles(array $roleIds)
+    {
+        $this->roles()->sync($roleIds);
+        return $this->roles;
+    }
+
+    // vérifier si le rôle à une permission spécifique
+    public function hasPermission(string $permission): bool
+    {
+        // parcourir les rôles de l'utilisateurs et vérifier si au moin un rôle à la permission requise
+        foreach ($this->roles as $role) {
+            # code...
+            $checkPermission = $role->permissions->pluck("libelle")->contains($permission);
+            if ($checkPermission) {
+                # code...
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // retourne la liste des rôles (utile à la connexion)
+    public function getRolesList()
+    {
+        return $this->roles()->get(['id','libelle']);
+    }
+    
+    
+    
 
     /**
      * The attributes that should be hidden for serialization.
@@ -55,9 +100,5 @@ class User extends Authenticatable
     public function getJWTCustomClaims() {
         return [];
     }
-
-    // Relations
-    public function roles() {
-        return $this->belongsToMany(Roles::class);
-    }
+ 
 }

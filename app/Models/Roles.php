@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Roles extends Model
 {
-    use HasFactory;
+            use HasFactory;
+
             protected $table = 'roles';
             protected $primaryKey = 'id';
             public $incrementing = true;
@@ -42,12 +44,18 @@ class Roles extends Model
 
             public function permissions()
             {
-                return $this->belongsToMany(Permissions::class)
+                return $this->belongsToMany(Permissions::class,'permissions_roles');
             }
 
+            // récupérer les utilisateurs ayant le rôle courant
             public function users()
             {
-                return $this->belongsToMany(User::class)
+                return $this->belongsToMany(User::class,'roles_users');
+            } 
+
+            // vérifier si un rôle à une permission
+            public function checkPermissionInRole(string $permissionId): bool {
+                return $this->permissions->pluck("libelle")->contains($permissionId);
             }
 
 }

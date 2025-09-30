@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Permissions extends Model
 {
@@ -41,8 +42,9 @@ class Permissions extends Model
             return $this->belongsTo(User::class,'updated_by');
         }
 
+        // récupérer les rôles associés à une permission
         public function roles()
         {
-            return $this->belongsToMany(Roles::class)
+            return $this->belongsToMany(Roles::class,'permissions_roles');
         }
 }
