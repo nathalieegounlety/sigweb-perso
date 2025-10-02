@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHandler;
 use App\Services\Contracts\AuthServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -19,18 +20,19 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'=>'required|string|max:255',
+            'nom_prenoms'=>'required|string|max:255',
+            'username'=>'required|string|max:255',
             'email'=>'required|string|email|unique:users',
             'password'=>'required|string|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors'=>$validator->errors()],422);
+            return ResponseHandler::error("Echec de validation des données", 422,$validator->errors());
         }
 
         $user = $this->authService->register($request->only('name','email','password'));
 
-        return response()->json(['message'=>'User created','user'=>$user],201);
+        return ResponseHandler::success("Enregistrement effectué avec succès.", $user);
     }
 
     public function login(Request $request)
