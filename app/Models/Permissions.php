@@ -45,6 +45,6 @@ class Permissions extends Model
         // récupérer les rôles associés à une permission
         public function roles()
         {
-            return $this->belongsToMany(Roles::class,'permissions_roles');
+            return $this->belongsToMany(Roles::class,'permissions_roles','permission_id','role_id');
         }
 }

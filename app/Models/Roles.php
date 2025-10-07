@@ -39,19 +39,19 @@ class Roles extends Model
 
             public function getUserUpdated()
             {
-                return $this->belongsTo(User::class,'updated_by');
+                return $this->belongsTo(User::class,'updated_by','id');
             }
 
             public function permissions()
             {
-                return $this->belongsToMany(Permissions::class,'permissions_roles');
+                return $this->belongsToMany(Permissions::class,'permissions_roles','role_id','permission_id');
             }
 
             // récupérer les utilisateurs ayant le rôle courant
             public function users()
             {
-                return $this->belongsToMany(User::class,'roles_users');
-            } 
+                return $this->belongsToMany(User::class,'roles_users','role_id','user_id');
+            }
 
             // vérifier si un rôle à une permission
             public function checkPermissionInRole(string $permissionId): bool {

@@ -6,8 +6,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -30,13 +31,13 @@ class User extends Authenticatable
     ];
 
 
-    // récupérer la liste des rôles d'un utilisateurs 
+    // récupérer la liste des rôles d'un utilisateurs
     public function roles()
     {
-       return $this->belongsToMany(Roles::class, 'roles_users' );
+       return $this->belongsToMany(Roles::class, 'roles_users' ,'user_id','role_id');
     }
 
-    // assigner un ou plusieurs rôle à un utilisateur 
+    // assigner un ou plusieurs rôle à un utilisateur
     public function assignRoles(array $roleIds)
     {
         $this->roles()->sync($roleIds);
@@ -64,9 +65,9 @@ class User extends Authenticatable
     {
         return $this->roles()->get(['id','libelle']);
     }
-    
-    
-    
+
+
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -100,5 +101,5 @@ class User extends Authenticatable
     public function getJWTCustomClaims() {
         return [];
     }
- 
+
 }

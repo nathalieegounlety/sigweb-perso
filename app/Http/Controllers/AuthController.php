@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    
+
     private AuthServiceInterface $authService;
 
     public function __construct(AuthServiceInterface $authService)
@@ -30,13 +30,13 @@ class AuthController extends Controller
             return ResponseHandler::error("Echec de validation des données", 422,$validator->errors());
         }
 
-        $user = $this->authService->register($request->only('name','email','password'));
+        $user = $this->authService->register($request);
 
         return ResponseHandler::success("Enregistrement effectué avec succès.", $user);
     }
 
     public function login(Request $request)
-    { 
+    {
 
         $data = $this->authService->login($request->only('email','password'));
 
@@ -63,7 +63,7 @@ class AuthController extends Controller
         return response()->json([
             'access_token'=>$this->authService->refresh(),
             'token_type'=>'bearer',
-            'expires_in'=> config('jwt.ttl')*60,
+            'expires_in'=> (int) config('jwt.ttl') * 60,
         ]);
     }
 }

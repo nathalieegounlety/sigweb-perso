@@ -1,5 +1,5 @@
 <?php
-
+namespace App\Services\util;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -12,14 +12,14 @@ class GenarateurCodeService {
 
         return DB::transaction(function () use ($prefixe, $annee_actuelle){
              // récupère le dernier codeUser de l'année en cours
-            $lastUser = User::where('codeUser', 'like', $prefixe.'%'.$annee_actuelle)
+            $lastUser = User::where('code_user', 'like', $prefixe.'%'.$annee_actuelle)
                 ->orderByDesc('id')
                 ->lockForUpdate() // permet de bloquer la lecture de la table courante avant la fin du traitement
                 ->first();
 
             // calcule le prochain compteur
             if ($lastUser) {
-                $lastCode = $lastUser->codeUser; // ex: SW0000124yy
+                $lastCode = $lastUser->code_user; // ex: SW0000124yy
                 $counter = (int) substr($lastCode, 2, 7); // extrait les 7 chiffres
                 $counter++;
             } else {
@@ -27,7 +27,7 @@ class GenarateurCodeService {
             }
 
             // génère le codeUser
-            $codeUser = 'SW' . str_pad($counter, 7, '0', STR_PAD_LEFT) . $year;
+            $codeUser = 'SW' . str_pad($counter, 7, '0', STR_PAD_LEFT) . $annee_actuelle;
 
             return $codeUser;
         });

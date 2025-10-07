@@ -9,8 +9,26 @@ Route::prefix('v1')->group(function () {
 });
 
 
-Route::middleware('auth:api')->group(function(){
+Route::middleware('auth:api')->prefix('v1')->group(function(){
     Route::get('me',[AuthController::class,'me']);
     Route::post('logout',[AuthController::class,'logout']);
     Route::post('refresh',[AuthController::class,'refresh']);
+    // Gestion des roles
+    Route::post('roles/store',[\App\Http\Controllers\RolesController::class,'store']);
+});
+
+// gestion des rôles
+Route::prefix('v1/roles')->group(function(){
+    Route::post('store',[\App\Http\Controllers\RolesController::class,'store']);
+    Route::get('/',[\App\Http\Controllers\RolesController::class,'index']);
+    Route::post('update',[\App\Http\Controllers\RolesController::class,'update']);
+    Route::post('remove',[\App\Http\Controllers\RolesController::class,'remove']);
+});
+
+// gestion des permissions
+Route::prefix('v1/permissions')->group(function(){
+    Route::post('store',[\App\Http\Controllers\PermissionsController::class,'store']);
+    Route::get('/',[\App\Http\Controllers\PermissionsController::class,'index']);
+    Route::post('update',[\App\Http\Controllers\PermissionsController::class,'update']);
+    Route::post('remove',[\App\Http\Controllers\PermissionsController::class,'remove']);
 });
