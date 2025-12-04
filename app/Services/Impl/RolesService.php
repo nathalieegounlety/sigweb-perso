@@ -64,15 +64,16 @@ class RolesService implements RolesServiceInterface
     public function getRole(int $id): Roles
     {
         // TODO: Implement getRole() method.
-        return $this->rolesRepository->findById($id);
+        return $queryRoles = Roles::select('id', 'libelle', 'updated_at')->withOnly('permissions:libelle as libelle_permission')->findOrFail($id);
     }
 
 
     public function getRoles(int $perPage = 50): LengthAwarePaginator
     {
         // TODO: Implement getRoles() method.
-        $queryRoles = Roles::select('id', 'libelle', 'updated_at')->paginate($perPage);
-
+        $queryRoles = Roles::select('id', 'libelle', 'updated_at')
+        ->withOnly('permissions:libelle as libelle_permission')->paginate($perPage);
+        $queryRoles?->permissions->makeHidden(['pivot']);
         return $queryRoles;
     }
 

@@ -41,6 +41,24 @@ class PermissionsController extends Controller
         }
     }
 
+    public function getPermission(Request $request){
+        try {
+
+                    // validation des données du formulaire
+                    $validated = $request->validate([
+                        'idPermission' => 'required|integer',
+                    ]);
+
+                    // procéder à l'enregistrement
+                    return $permission = $this->permissionService->getPermission($request->idPermission);
+
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+                } catch (\Exception $e) {
+                    return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+                }
+    }
+
     public function store(Request $request)
     {
 

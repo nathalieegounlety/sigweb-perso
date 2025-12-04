@@ -21,6 +21,7 @@ Route::middleware('auth:api')->prefix('v1')->group(function(){
 Route::prefix('v1/roles')->group(function(){
     Route::post('store',[\App\Http\Controllers\RolesController::class,'store']);
     Route::get('/',[\App\Http\Controllers\RolesController::class,'index']);
+    Route::post('unique',[\App\Http\Controllers\RolesController::class,'getRole']);
     Route::post('update',[\App\Http\Controllers\RolesController::class,'update']);
     Route::post('remove',[\App\Http\Controllers\RolesController::class,'remove']);
 });
@@ -29,6 +30,7 @@ Route::prefix('v1/roles')->group(function(){
 Route::prefix('v1/permissions')->group(function(){
     Route::post('store',[\App\Http\Controllers\PermissionsController::class,'store']);
     Route::get('/',[\App\Http\Controllers\PermissionsController::class,'index']);
+    Route::post('unique',[\App\Http\Controllers\PermissionsController::class,'getRole']);
     Route::post('update',[\App\Http\Controllers\PermissionsController::class,'update']);
     Route::post('remove',[\App\Http\Controllers\PermissionsController::class,'remove']);
 });

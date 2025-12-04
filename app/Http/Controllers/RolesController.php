@@ -16,8 +16,9 @@ class RolesController extends Controller
         // $this->middleware('auth:api', ['except' => ['store','index','update','remove']]);
 
         $this->rolesService = $rolesService;
-
+        //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);
         $this->middleware('role:ADMINISTRATEUR')->only(['index']);
+        $this->middleware('permission:CREATE')->only(['index']);
 
     }
 
@@ -44,6 +45,24 @@ class RolesController extends Controller
         }catch (\Exception $e){
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
+    }
+
+    public function getRole(Request $request){
+        try {
+
+                    // validation des données du formulaire
+                    $validated = $request->validate([
+                        'idRole' => 'required|integer',
+                    ]);
+
+                    // procéder à l'enregistrement
+                    return $role = $this->rolesService->getRole($request->idRole);
+
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+                } catch (\Exception $e) {
+                    return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+                }
     }
 
     public function store(Request $request)
