@@ -12,7 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('typeformations', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement();
+            $table->string('libelle',100);
+            $table->string('description')->nullable();
+            $table->boolean('enable')->default(true);
+            $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->foreign('created_by')->references('id')->on('users')->onDelete(('cascade'));
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete(('cascade'));
             $table->timestamps();
         });
     }

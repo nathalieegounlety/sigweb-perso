@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHandler;
+use App\Services\contracts\ModepaiementsInterface;
 use Illuminate\Http\Request;
 
 class ModepaiementsController extends Controller
@@ -32,6 +34,7 @@ private ModepaiementsInterface $modepaiementInterface;
                 'per_page'       => $data->perPage(),
                 'total'          => $data->total(),
             ];
+
             return ResponseHandler::success('ok',$response);
 
         }catch (\Exception $e){
@@ -69,7 +72,7 @@ private ModepaiementsInterface $modepaiementInterface;
             ]);
 
             // procéder à l'enregistrement
-            return $processSave = $this->permissionService->savePermission($request);
+            return $processSave = $this->modepaiementInterface->saveModepaiement($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
@@ -88,7 +91,7 @@ private ModepaiementsInterface $modepaiementInterface;
                 'id' => 'required|integer'
             ]);
 
-            return $response = $this->permissionService->update($request);
+            return $response = $this->modepaiementInterface->update($request);
 
             // call update service
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -105,7 +108,7 @@ private ModepaiementsInterface $modepaiementInterface;
                 'id' => 'required|integer'
             ]);
 
-           return $response = $this->permissionService->remove($request->id);
+           return  $this->permissionService->remove($request->id);
 
             // call update service
         } catch (\Illuminate\Validation\ValidationException $e) {

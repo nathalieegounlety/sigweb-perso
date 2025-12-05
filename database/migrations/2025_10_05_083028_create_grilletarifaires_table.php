@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id()->autoIncrement();
             $table->string('libelle');
             $table->string('type_tarif',100);
-            $table->integer('montant');
-            $table->string('statut',100)->default("ACTIF");
+            $table->integer('montant')->default(0);
+            $table->boolean('is_enable')->default(true);
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->foreign('created_by')->references('id')->on('users')->onDelete(('cascade'));

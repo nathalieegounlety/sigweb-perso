@@ -12,7 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('formationsformateurs', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement();
+            $table->unsignedBigInteger('formation_id');
+            $table->unsignedBigInteger('formateur_id');
+            $table->string('role',100)->nullable();
+            $table->unsignedBigInteger('roleformateur_id')->nullable();
+            $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->foreign('formation_id')->references('id')->on('formations')->onDelete(('cascade'));
+            $table->foreign('formateur_id')->references('id')->on('formateurs')->onDelete(('cascade'));
+            $table->foreign('roleformateur_id')->references('id')->on('roleformateurs')->onDelete(('cascade'));
+            $table->foreign('created_by')->references('id')->on('users')->onDelete(('cascade'));
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete(('cascade'));
             $table->timestamps();
         });
     }

@@ -12,7 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('dureeformations', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement();
+            $table->string('id_webinaire',100);
+            $table->string('code_formation',100);
+            $table->integer('duree')->default(0);
+            $table->integer('duree_enregistrement')->default(0);
+            $table->foreign('code_formation')->references('code_formation')->on('formations');
             $table->timestamps();
         });
     }

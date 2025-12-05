@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id()->autoIncrement();
             $table->string('libelle',100);
             $table->string('description')->nullable();
-            $table->string('statut',20)->default('ACTIF');
+            $table->boolean('is_enable')->default(true);
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->foreign('created_by')->references('id')->on('users')->onDelete(('cascade'));

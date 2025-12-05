@@ -12,7 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tarificationsformations', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement();
+            $table->string('code_formation',100);
+            $table->unsignedBigInteger('id_grilletarifaire');
+            $table->boolean('enable')->default(true);
+            $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->foreign('code_formation')->references('code_formation')->on('formations')->onDelete(('cascade'));
+            $table->foreign('created_by')->references('id')->on('users')->onDelete(('cascade'));
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete(('cascade'));
             $table->timestamps();
         });
     }
