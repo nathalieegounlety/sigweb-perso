@@ -12,7 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inscriptions_dscs', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement();
+            $table->unsignedBigInteger('inscrits_id');
+            $table->string('code_inscription',100);
+            $table->unsignedBigInteger('traiter_par');
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->foreign('inscrits_id')->references('id')->on('inscrits')->onDelete(('cascade'));
+            $table->foreign('traiter_par')->references('id')->on('users')->onDelete(('cascade'));
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete(('cascade'));
             $table->timestamps();
         });
     }

@@ -39,7 +39,7 @@ class Permissions extends Model
 
         public function getUserUpdated()
         {
-            return $this->belongsTo(User::class,'updated_by');
+            return $this->belongsTo(User::class,'updated_by','id');
         }
 
         // récupérer les rôles associés à une permission

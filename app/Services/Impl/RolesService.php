@@ -68,13 +68,65 @@ class RolesService implements RolesServiceInterface
     }
 
 
-    public function getRoles(int $perPage = 50): LengthAwarePaginator
+    public function getRoles(Request $request): LengthAwarePaginator
     {
         // TODO: Implement getRoles() method.
-        $queryRoles = Roles::select('id', 'libelle', 'updated_at')
-        ->withOnly('permissions:libelle as libelle_permission')->paginate($perPage);
-        $queryRoles?->permissions->makeHidden(['pivot']);
-        return $queryRoles;
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        // Filtres spécifiques
+        $filterLibelle = $request->input('filter_libelle');
+        $filterIsEnable = $request->input('filter_is_enable');
+        $filterUpdatedAt = $request->input('filter_updated_at');
+        $filterAuthor = $request->input('filter_author');
+
+        $query = Roles::select('roles.id', 'roles.libelle', 'roles.updated_at', 'roles.is_enable', 'roles.updated_by')
+            ->with([
+                'getUserUpdated:id,name,email,code_user',
+                'permissions:id,libelle'
+            ]);
+
+        // On fait la jointure dès qu'on a besoin de users.name (recherche globale OU filtre auteur OU tri par auteur)
+        $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';
+
+        if ($needsUserJoin) {
+            $query->leftJoin('users', 'roles.updated_by', '=', 'users.id');
+        }
+
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('roles.libelle', 'like', "%{$search}%")
+                    ->orWhere('users.name', 'like', "%{$search}%"); // Recherche sur auteur
+            });
+        }
+
+        // Filtres par colonne
+        if ($filterLibelle) {
+            $query->where('roles.libelle', 'like', "%{$filterLibelle}%");
+        }
+        if ($filterIsEnable !== null && $filterIsEnable !== '') {
+            $query->where('roles.is_enable', $filterIsEnable); // 0 ou 1
+        }
+        if ($filterUpdatedAt) {
+            $query->whereDate('roles.updated_at', $filterUpdatedAt);
+        }
+        if ($filterAuthor) {
+            $query->where('users.name', 'like', "%{$filterAuthor}%");
+        }
+
+        // Tri
+        if ($sortField === 'get_user_updated.name') {
+            $query->orderBy('users.name', $sortOrder);
+        } else {
+            $query->orderBy("roles.{$sortField}", $sortOrder);
+        }
+
+        $query->orderBy($sortField, $sortOrder);
+
+        return $query->paginate($perPage);
     }
 
     public function update(Request $data): \Illuminate\Http\JsonResponse

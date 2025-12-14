@@ -12,7 +12,7 @@ class PermissionsController extends Controller
 
     public function __construct(PermissionsServiceInterface $permissionService)
     {
-        $this->middleware('auth:api', ['except' => ['store','index','update','remove']]);
+        $this->middleware('auth:api', ['except' => ['remove']]);
         $this->permissionService = $permissionService;
     }
 

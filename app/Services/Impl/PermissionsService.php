@@ -48,7 +48,7 @@ class PermissionsService implements PermissionsServiceInterface
     {
         // TODO: Implement getPermissions() method.
         $queryPermissions = Permissions::with('getUserUpdated:id,name,email,code_user')
-            ->select('permissions.id', 'permissions.libelle', 'permissions.updated_at')
+            ->select('permissions.id', 'permissions.libelle', 'permissions.updated_at','permissions.enable','permissions.description','permissions.updated_by')
             ->paginate($perPage);
 
         return $queryPermissions;

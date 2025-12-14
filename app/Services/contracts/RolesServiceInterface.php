@@ -13,7 +13,7 @@ interface RolesServiceInterface
 
     public function getRole(int $id): Roles;
 
-    public function getRoles(int $perPage): LengthAwarePaginator;
+    public function getRoles(Request $request): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 

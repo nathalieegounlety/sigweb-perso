@@ -17,8 +17,8 @@ class RolesController extends Controller
 
         $this->rolesService = $rolesService;
         //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);
-        $this->middleware('role:ADMINISTRATEUR')->only(['index']);
-        $this->middleware('permission:CREATE')->only(['index']);
+        //$this->middleware('role:ADMIN')->only(['index']);
+        //$this->middleware('permission:CREATE')->only(['index']);
 
     }
 
@@ -27,7 +27,7 @@ class RolesController extends Controller
         // récupérer la liste des rôles
         try {
             $perPage = $request->get('per_page',50); // par défaut 50 éléments
-            $roles = $this->rolesService->getRoles($perPage);
+            $roles = $this->rolesService->getRoles($request);
 
             // Transformer pour enlever le bloc 'links'
             $response = [

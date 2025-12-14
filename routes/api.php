@@ -44,3 +44,16 @@ Route::prefix('v1/modepaiements')->group(function(){
     Route::post('remove',[\App\Http\Controllers\ModepaiementsController::class,'remove']);
 });
 
+Route::controller(\App\Http\Controllers\MaintenanceController::class)->prefix('v1/maintenance')->group(function () {
+    Route::post('update/composant', 'update');
+});
+
+// gestion des formations
+Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsController::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('unique','getFormation');
+    Route::post('update','update');
+    Route::post('remove','remove');
+});
+
