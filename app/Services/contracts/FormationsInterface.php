@@ -13,7 +13,7 @@ interface FormationsInterface
 
     public function getFormation(int $id): Formations;
 
-    public function getFormations(int $perPage): LengthAwarePaginator;
+    public function getFormations(Request $request): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 

@@ -7,11 +7,13 @@ use App\Repositories\Contracts\UsersRepositoryInterface;
 use App\Repositories\Eloquent\RolesRepository;
 use App\Repositories\Eloquent\UsersRepository;
 use App\Services\Contracts\AuthServiceInterface;
+use App\Services\contracts\DocumentsInterface;
 use App\Services\contracts\FormationsInterface;
 use App\Services\contracts\ModepaiementsInterface;
 use App\Services\contracts\RolesServiceInterface;
 use App\Services\contracts\PermissionsServiceInterface;
 use App\Services\Impl\AuthService;
+use App\Services\Impl\DocumentsService;
 use App\Services\Impl\FormationsService;
 use App\Services\Impl\ModepaiementsService;
 use App\Services\Impl\PermissionsService;
@@ -33,6 +35,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(PermissionsServiceInterface::class, PermissionsService::class);
         $this->app->bind(ModepaiementsInterface::class, ModepaiementsService::class);
         $this->app->bind(FormationsInterface::class, FormationsService::class);
+        $this->app->bind(DocumentsInterface::class, DocumentsService::class);
     }
 
     /**

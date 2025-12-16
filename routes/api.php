@@ -57,3 +57,8 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('remove','remove');
 });
 
+// gestion des formations
+Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsController::class)->group(function(){
+    Route::post('visuel/formation','showVisuelFormation');
+});
+

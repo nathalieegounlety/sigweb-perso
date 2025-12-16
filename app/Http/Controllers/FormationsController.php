@@ -18,7 +18,7 @@ class FormationsController extends Controller
         // récupérer la liste des rôles
         try {
             $perPage = $request->get('per_page',50); // par défaut 50 éléments
-            $roles = $this->formationsService->getFormations($perPage);
+            $roles = $this->formationsService->getFormations($request);
 
             // Transformer pour enlever le bloc 'links'
             $response = [

@@ -20,7 +20,7 @@ class RoleSeeder extends Seeder
         }
 
         // Ou demander confirmation en CLI
-        if (!$this->command->confirm('Voulez-vous vraiment insérer 1000 rôles ?')) {
+        if (!$this->command->confirm('Voulez-vous vraiment insérer 70 000 rôles ?')) {
             return;
         }
 
@@ -31,7 +31,7 @@ class RoleSeeder extends Seeder
         // On utilise sequence pour garantir un libelle unique sans utiliser unique()
         // Et create() pour que Laravel formate correctement les dates
         Roles::factory()
-            ->count(20000)
+            ->count(70000)
             ->sequence(fn ($sequence) => [
                 'libelle' => 'Role ' . ($sequence->index + 1),
             ])

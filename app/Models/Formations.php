@@ -41,7 +41,8 @@ class Formations extends Model
         'id_webinaire',
         'afficher',
         'is_formation_dsc',
-        'typeformation_id'
+        'typeformation_id',
+        'visuel'
     ];
 
     public function getUserCreated()

@@ -12,7 +12,7 @@ private ModepaiementsInterface $modepaiementInterface;
 
     public function __construct(ModepaiementsInterface $modepaiementInterface)
     {
-        $this->middleware('auth:api', ['except' => ['store','index','update','remove']]);
+        $this->middleware('auth:api', ['except' => ['store','update','remove']]);
         $this->modepaiementInterface = $modepaiementInterface;
     }
 
@@ -44,7 +44,6 @@ private ModepaiementsInterface $modepaiementInterface;
 
     public function getModepaiement(Request $request){
         try {
-
                     // validation des données du formulaire
                     $validated = $request->validate([
                         'idModepaiement' => 'required|integer',

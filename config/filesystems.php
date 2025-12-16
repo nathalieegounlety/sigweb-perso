@@ -38,6 +38,45 @@ return [
             'report' => false,
         ],
 
+        'backup_sigweb' => [
+            'driver' => 'local',
+            'root' => storage_path('app/backup_sigweb'),
+            'visibility' => 'private',
+        ],
+
+        'preuve' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/preuve'),
+            'visibility' => 'private',
+        ],
+
+        'documents_csv' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/documents_csv'),
+            'visibility' => 'private',
+        ],
+        'attestation' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/attestation'),
+            'visibility' => 'private',
+        ],
+        'signature' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/signature'),
+            'visibility' => 'private',
+        ],
+        'visuel_formation' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/visuel_formation'),
+            'visibility' => 'private',
+        ],
+
+        'pieces_auditeur' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/pieces_auditeur'),
+            'visibility' => 'private',
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
