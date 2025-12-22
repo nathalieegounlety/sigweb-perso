@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -61,4 +62,14 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
 Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsController::class)->group(function(){
     Route::post('visuel/formation','showVisuelFormation');
 });
+
+
+
+// gestion des api du frontoffice
+
+// Récupérer les 6 dernières formations (homepage)
+Route::get('v1/formations/recentes', [HomeController::class, 'FormationsRecentes']);
+
+// Récupérer toutes les formations (catalogue, avec pagination)
+Route::get('v1/formations/catalogue', [HomeController::class, 'catalogue']);
 
