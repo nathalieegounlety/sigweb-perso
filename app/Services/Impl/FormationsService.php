@@ -56,13 +56,22 @@ class FormationsService implements FormationsInterface
             $formation->setAttribute('date_fin',$request->get('date_fin')) ;
             $formation->setAttribute('date_limite',$request->get('date_limite')) ;
             $formation->setAttribute('visuel',$name_visuel) ;
-            $formation->setAttribute('fm_visio',$request->get('fm_visio')) ;
-            $formation->setAttribute('fm_presentielle',$request->get('fm_presentielle')) ;
+            if($request->get('fm_visio')){
+                $formation->setAttribute('fm_visio',1) ;
+            }else{
+                $formation->setAttribute('fm_visio',0) ;
+            }
+
+            if($request->get('fm_presentielle')){
+                $formation->setAttribute('fm_presentielle',1) ;
+            }else{
+                $formation->setAttribute('fm_presentielle',0) ;
+            }
             if ($request->get('is_formation_dsc')) {
                 # code...
-                $formation->setAttribute('is_formation_dsc',$request->get('is_formation_dsc')) ;
+                $formation->setAttribute('is_formation_dsc',1) ;
             }else{
-                $formation->setAttribute('is_formation_dsc',false) ;
+                $formation->setAttribute('is_formation_dsc',0) ;
             }
             $formation->setAttribute('lieu',$request->get('lieu')) ;
             //$formation->setAttribute('is_formation',$request->is_formation) ;
@@ -154,7 +163,7 @@ class FormationsService implements FormationsInterface
             }
 
             // save logo partenaire si disponible
-            if(isset($_POST['logos'])){
+             if($request->logos){
                 if(count($logo_partenaires) > 0){
                     $i=0;
                     foreach ($logo_partenaires as $key => $logo) {
@@ -171,6 +180,8 @@ class FormationsService implements FormationsInterface
                             $logo_partenaire = new Logopartenaires();
                             $logo_partenaire->setAttribute('logo_path',$name_logo);
                             $logo_partenaire->setAttribute('code_formation',$formation->code_formation);
+                            $logo_partenaire->setAttribute('created_by', auth('api')->id());
+                            $logo_partenaire->setAttribute('updated_by', auth('api')->id());
                             $logo_partenaire->save();
                         }
                     }
