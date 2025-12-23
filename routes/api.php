@@ -76,5 +76,8 @@ Route::get('v1/formations/catalogue', [HomeController::class, 'catalogue']);
 // Récupérer toutes les details des formations
 Route::get('v1/detailsformations/{id}', [HomeController::class, 'detailsformations']);
 
+// Inscription d'un auditeur
+Route::post('/auditeurs', [AuditeurController::class, 'store'])->name('auditeurs.store');
+
 
 
