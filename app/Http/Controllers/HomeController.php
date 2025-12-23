@@ -39,4 +39,20 @@ class HomeController extends Controller
             ]);
         return response()->json($formations);
     }
+
+    public function detailsformations($id)
+    {
+        // Récupérer la formation par son ID
+        $formation = Formations::find($id);
+
+        // Si la formation n'existe pas, retourner une erreur 404
+        if (!$formation) {
+            return response()->json([
+                'message' => 'Formation non trouvée',
+            ], 404);
+        }
+
+        // Retourner les détails de la formation
+        return response()->json($formation);
+    }
 }
