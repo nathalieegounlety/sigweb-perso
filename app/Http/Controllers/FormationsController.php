@@ -37,4 +37,36 @@ class FormationsController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+
+    public function store(Request $request)
+    {
+
+        try {
+
+            // validation des données du formulaire
+            $request->validate([
+                'code_formation'=>'required|unique:formations',
+                'theme'=>'required',
+                'description'=>'required',
+                'cout_formation'=>'required',
+                'date_debut'=>'required',
+                'date_fin'=>'required',
+                'typeformation_id' => 'required',
+                'is_event' => 'required',
+                'is_coorganisation' => 'required',
+                'visuel' => 'mimes:jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP|nullable'
+                // 'date_limite'=>'required',
+                // 'file'=>'required|mimes:jpg,jpeg,png,JPG,JPEG,PNG'
+            ]);
+
+            // procéder à l'enregistrement
+            return $processSave = $this->formationsService->saveFormation($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
 }

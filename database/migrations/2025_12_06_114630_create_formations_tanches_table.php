@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('formations_tanches', function (Blueprint $table) {
+        Schema::create('formations_tranches', function (Blueprint $table) {
             $table->id()->autoIncrement();
             $table->unsignedBigInteger('formation_id');
             $table->unsignedBigInteger('grilletarifaire_id');
