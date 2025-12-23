@@ -21,16 +21,22 @@ class DocumentsService implements DocumentsInterface
         }
 
         $path = 'visuel_formation/' . $doc->visuel;
+        $default_path = 'visuel_formation/visuel_not_found.png';
+        try {
+            $checkImg = true;
+            if (!Storage::disk('public')->exists($path)) {
+                //return ResponseHandler::error('Fichier non trouvé : ' . $doc->visuel, 404);
+                $checkImg = false;
+            }
+            if($checkImg){
+                return Storage::disk('public')->response($path);
+            }else{
+                return Storage::disk('public')->response($default_path);
 
-        if (!Storage::disk('public')->exists($path)) {
-            return ResponseHandler::error('Fichier non trouvé : ' . $doc->visuel, 404);
+            }
+        }catch (\Exception $exception){
+            return Storage::disk('public')->response($default_path);
         }
 
-        // Option 1 : Forcer le téléchargement (le navigateur propose "Enregistrer sous")
-        // return Storage::disk('public')->download($path, $doc->visuel);
-
-        // Option 2 : Afficher directement dans le navigateur (ex: pour images ou PDF)
-        //     sans forcer le download
-        return Storage::disk('public')->response($path);
     }
 }

@@ -86,7 +86,7 @@ class FormationsService implements FormationsInterface
             $queryFormations->orderBy("formations.{$sortField}", $sortOrder);
         }
 
-        $queryFormations->orderBy($sortField, $sortOrder);
+       // $queryFormations->orderBy($sortField, $sortOrder);
 
         return $queryFormations->paginate($perPage);
     }

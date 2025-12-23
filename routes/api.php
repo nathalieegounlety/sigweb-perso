@@ -61,4 +61,21 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
 Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsController::class)->group(function(){
     Route::post('visuel/formation','showVisuelFormation');
 });
+// gestion des types de formation
+Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('unique','getTypeFormation');
+    Route::post('update','update');
+    Route::post('remove','remove');
+});
+// gestion des grilles tarifaires
+Route::prefix('v1/grilletarifaires')->controller(\App\Http\Controllers\GrilletarifairesController::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('unique','getGrilleTarifaire');
+    Route::post('update','update');
+    Route::post('remove','remove');
+    Route::get('obj','objGrilleTarifaire');
+});
 
