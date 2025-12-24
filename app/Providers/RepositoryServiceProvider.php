@@ -7,7 +7,7 @@ use App\Repositories\Contracts\UsersRepositoryInterface;
 use App\Repositories\Eloquent\RolesRepository;
 use App\Repositories\Eloquent\UsersRepository;
 use App\Services\contracts\AuditeursInterface;
-use App\Services\Contracts\AuthServiceInterface;
+use App\Services\contracts\AuthServiceInterface;
 use App\Services\contracts\DocumentsInterface;
 use App\Services\contracts\FormationsInterface;
 use App\Services\contracts\GrilletarifairesInterface;
