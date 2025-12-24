@@ -5,7 +5,7 @@ namespace App\Services\Impl;
 use App\Models\Roles;
 use App\Models\User;
 use App\Repositories\Contracts\UsersRepositoryInterface;
-use App\Services\Contracts\AuthServiceInterface;
+use App\Services\contracts\AuthServiceInterface;
 use App\Services\util\GenarateurCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
