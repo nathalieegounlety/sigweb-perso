@@ -2,13 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHandler;
 use App\Models\Auditeurs;
 use App\Models\cr;
+use App\Services\contracts\AuditeursInterface;
 use Illuminate\Http\Request;
 
 class AuditeursContoller extends Controller
 {
-     /**
+
+    private AuditeursInterface $auditeurService;
+
+    public function __construct(AUDITEURSInterface $auditeurService)
+    {
+        $this->auditeurService = $auditeurService;
+    }
+
+    /**
      * Génère un mot de passe aléatoire.
      */
     private function genererPassword($length = 8)
@@ -20,9 +30,29 @@ class AuditeursContoller extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        // récupérer la liste
+        try {
+            $perPage = $request->get('per_page',50); // par défaut 50 éléments
+            $data = $this->auditeurService->getAuditeurs($request);
+
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
     }
 
     /**
@@ -106,7 +136,6 @@ class AuditeursContoller extends Controller
         // Retour avec un message de succès
         return redirect()->route('auditeurs.index')->with('success', 'Enregistrement effectué avec succès.');
     }
-}
 
     /**
      * Display the specified resource.

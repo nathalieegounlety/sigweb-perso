@@ -34,7 +34,16 @@ class MaintenanceController extends Controller
             if (Schema::hasColumn(trim($request->table), $champUpdate)) {
                 // La colonne existe
                 $champUpdate = 'enable';
-            } else {
+            } elseif (Schema::hasColumn(trim($request->table), 'actif')) {
+                // La colonne existe
+                $champUpdate = 'actif';
+                $update_table = DB::table(trim($request->table))->where('id', $request->identifiant)
+                    ->update([$champUpdate =>$request->actif, 'updated_at' => new \DateTime()]);
+                return response()->json([
+                    'message' => "Mise à jour effectuée avec succès.",
+                    'status' => true
+                ],200);
+            }else {
                 // La colonne n'existe pas
                 $champUpdate = 'is_enable';
             }

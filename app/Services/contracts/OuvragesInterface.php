@@ -13,10 +13,10 @@ interface OuvragesInterface
 
     public function getOuvrage(int $id): Ouvrages;
 
-    public function getOuvrages(int $perPage): LengthAwarePaginator;
+    public function getOuvrages(Request $request): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function remove(int $idRole): \Illuminate\Http\JsonResponse;
+    public function remove(int $id): \Illuminate\Http\JsonResponse;
 
 }

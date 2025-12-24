@@ -6,22 +6,32 @@ use App\Repositories\Contracts\RolesRepositoryInterface;
 use App\Repositories\Contracts\UsersRepositoryInterface;
 use App\Repositories\Eloquent\RolesRepository;
 use App\Repositories\Eloquent\UsersRepository;
+use App\Services\contracts\AuditeursInterface;
 use App\Services\Contracts\AuthServiceInterface;
 use App\Services\contracts\DocumentsInterface;
 use App\Services\contracts\FormationsInterface;
 use App\Services\contracts\GrilletarifairesInterface;
 use App\Services\contracts\ModepaiementsInterface;
+use App\Services\contracts\OuvragesInterface;
+use App\Services\contracts\ReductionsInterface;
 use App\Services\contracts\RolesServiceInterface;
 use App\Services\contracts\PermissionsServiceInterface;
+use App\Services\contracts\SignatairesInterface;
 use App\Services\contracts\TypeformationsInterface;
+use App\Services\contracts\UsersInterface;
+use App\Services\Impl\AuditeursService;
 use App\Services\Impl\AuthService;
 use App\Services\Impl\DocumentsService;
 use App\Services\Impl\FormationsService;
 use App\Services\Impl\GrilletarifairesService;
 use App\Services\Impl\ModepaiementsService;
+use App\Services\Impl\OuvragesService;
 use App\Services\Impl\PermissionsService;
+use App\Services\Impl\ReductionsService;
 use App\Services\Impl\RolesService;
+use App\Services\Impl\SignatairesService;
 use App\Services\Impl\TypeformationsService;
+use App\Services\Impl\UsersService;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -42,6 +52,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(DocumentsInterface::class, DocumentsService::class);
         $this->app->bind(GrilletarifairesInterface::class, GrilletarifairesService::class);
         $this->app->bind(TypeformationsInterface::class, TypeformationsService::class);
+        $this->app->bind(UsersInterface::class, UsersService::class);
+        $this->app->bind(AuditeursInterface::class, AuditeursService::class);
+        $this->app->bind(OuvragesInterface::class, OuvragesService::class);
+        $this->app->bind(ReductionsInterface::class, ReductionsService::class);
+        $this->app->bind(SignatairesInterface::class, SignatairesService::class);
     }
 
     /**

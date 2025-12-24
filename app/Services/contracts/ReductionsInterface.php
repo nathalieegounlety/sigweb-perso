@@ -13,10 +13,10 @@ interface ReductionsInterface
 
     public function getReduction(int $id): Reductions;
 
-    public function getReductions(int $perPage): LengthAwarePaginator;
+    public function getReductions(Request $request): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function remove(int $idRole): \Illuminate\Http\JsonResponse;
+    public function remove(int $id): \Illuminate\Http\JsonResponse;
 
 }

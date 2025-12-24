@@ -13,10 +13,10 @@ interface TypeformationsInterface
 
     public function getTypeformation(int $id): Typeformations;
 
-    public function getTypeformations(int $perPage): LengthAwarePaginator;
+    public function getTypeformations(Request $request): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function remove(int $idRole): \Illuminate\Http\JsonResponse;
+    public function remove(int $id): \Illuminate\Http\JsonResponse;
 
 }

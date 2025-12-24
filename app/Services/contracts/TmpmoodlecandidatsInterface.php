@@ -13,10 +13,10 @@ interface TmpmoodlecandidatsInterface
 
     public function getTmpmoodlecandidat(int $id): Tmpmoodlecandidats;
 
-    public function getTmpmoodlecandidats(int $perPage): LengthAwarePaginator;
+    public function getTmpmoodlecandidats(Request $request): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function remove(int $idRole): \Illuminate\Http\JsonResponse;
+    public function remove(int $id): \Illuminate\Http\JsonResponse;
 
 }

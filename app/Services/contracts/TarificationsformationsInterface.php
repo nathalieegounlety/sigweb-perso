@@ -13,10 +13,10 @@ interface TarificationsformationsInterface
 
     public function getTarificationsformation(int $id): Tarificationsformation;
 
-    public function getTarificationsformations(int $perPage): LengthAwarePaginator;
+    public function getTarificationsformations(Request $request): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function remove(int $idRole): \Illuminate\Http\JsonResponse;
+    public function remove(int $id): \Illuminate\Http\JsonResponse;
 
 }

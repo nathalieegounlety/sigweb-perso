@@ -13,12 +13,12 @@ interface GrilletarifairesInterface
 
     public function getGrilletarifaire(int $id): Grilletarifaires;
 
-    public function getGrilletarifaires(int $perPage): LengthAwarePaginator;
+    public function getGrilletarifaires(Request $request): LengthAwarePaginator;
 
     public function getGrilletarifairesObj(int $perPage): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function remove(int $idRole): \Illuminate\Http\JsonResponse;
+    public function remove(int $id): \Illuminate\Http\JsonResponse;
 
 }

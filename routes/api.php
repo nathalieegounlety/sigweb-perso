@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
     Route::post('register',[AuthController::class,'register']);
     Route::post('login',[AuthController::class,'login']);
+    Route::post('logout',[AuthController::class,'logout']);
 });
-
 
 Route::middleware('auth:api')->prefix('v1')->group(function(){
     Route::get('me',[AuthController::class,'me']);
@@ -58,7 +58,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('remove','remove');
 });
 
-// gestion des formations
+// gestion des documents
 Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsController::class)->group(function(){
     Route::post('visuel/formation','showVisuelFormation');
 });
@@ -70,6 +70,7 @@ Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\Typeformati
     Route::post('update','update');
     Route::post('remove','remove');
 });
+
 // gestion des grilles tarifaires
 Route::prefix('v1/grilletarifaires')->controller(\App\Http\Controllers\GrilletarifairesController::class)->group(function(){
     Route::post('store','store');
@@ -80,7 +81,23 @@ Route::prefix('v1/grilletarifaires')->controller(\App\Http\Controllers\Grilletar
     Route::get('obj','objGrilleTarifaire');
 });
 
+// gestion des utilisateurs
+Route::prefix('v1/utilisateurs')->controller(\App\Http\Controllers\UsersController::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('update','update');
+    Route::post('remove','remove');
+    Route::post('get_user','getUser');
+});
 
+// gestion des auditeurs
+Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoller::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('update','update');
+    Route::post('remove','remove');
+    Route::post('get_user','getUser');
+});
 
 // gestion des api du frontoffice
 
@@ -94,7 +111,46 @@ Route::get('v1/formations/catalogue', [HomeController::class, 'catalogue']);
 Route::get('v1/detailsformations/{id}', [HomeController::class, 'detailsformations']);
 
 // Inscription d'un auditeur
-Route::post('/auditeurs', [AuditeurController::class, 'store'])->name('auditeurs.store');
+//Route::post('/auditeurs', [AuditeurController::class, 'store'])->name('auditeurs.store');
+
+// gestion des ouvrages
+Route::prefix('v1/ouvrages')->controller(\App\Http\Controllers\OuvragesController::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('unique','getOuvrage');
+    Route::post('update','update');
+    Route::post('remove','remove');
+});
+
+// gestion des signataires
+Route::prefix('v1/signataires')->controller(\App\Http\Controllers\SignatairesController::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('unique','getSignataire');
+    Route::post('update','update');
+    Route::post('remove','remove');
+});
+
+// gestion des roles formateurs
+Route::prefix('v1/roleformateurs')->controller(\App\Http\Controllers\RoleformateursController::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('unique','getRoleformateur');
+    Route::post('update','update');
+    Route::post('remove','remove');
+});
+
+// gestion des reductions
+Route::prefix('v1/reductions')->controller(\App\Http\Controllers\ReductionsController::class)->group(function(){
+    Route::post('store','store');
+    Route::get('/','index');
+    Route::post('unique','getReduction');
+    Route::post('update','update');
+    Route::post('remove','remove');
+});
+
+
+
 
 
 
