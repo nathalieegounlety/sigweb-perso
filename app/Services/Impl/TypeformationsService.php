@@ -94,7 +94,7 @@ class TypeformationsService implements TypeformationsInterface
         if ($sortField === 'get_user_updated.name') {
             $query->orderBy('users.name', $sortOrder);
         } else {
-            $query->orderBy("typeformations{$sortField}", $sortOrder);
+            $query->orderBy("typeformations.{$sortField}", $sortOrder);
         }
 
         $query->orderBy($sortField, $sortOrder);

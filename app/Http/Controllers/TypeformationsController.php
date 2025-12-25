@@ -20,7 +20,7 @@ class TypeformationsController extends Controller
     {
         try {
             $perPage = $request->get('per_page',50); // par défaut 50 éléments
-            $data = $this->typeformationService->getTypeformations($perPage);
+            $data = $this->typeformationService->getTypeformations($request);
 
             // Transformer pour enlever le bloc 'links'
             $response = [
