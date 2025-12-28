@@ -31,7 +31,7 @@ class Modepaiements extends Model
             'updated_by',
             'created_at',
             'updated_at',
-            'statut',
+            'is_enable',
         ];
 
         public function getUserCreated()

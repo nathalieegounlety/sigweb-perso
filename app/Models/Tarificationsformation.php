@@ -36,7 +36,7 @@ class Tarificationsformation extends Model
     ];
     public function getGrilletarifaire()
     {
-        return $this->belongsTo(Grilletarifaires::class,'id_grilletarifaire');
+        return $this->belongsTo(Grilletarifaires::class,'id_grilletarifaire','id');
     }
 
     public function getFormation()

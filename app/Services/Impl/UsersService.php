@@ -26,18 +26,29 @@ class UsersService implements UsersInterface
         $hashPassword = Hash::make($data->password);
 
         // vérifier si l'utilisateur (staff) existe déjà
-        $checkData = User::whereUsername(trim($data->username))->exists();
-        if ($checkData){
-            return ResponseHandler::error("Le nom d'utilisateur existe déjà.", 409);
+        if($data->username){
+            $checkUsername = User::whereUsername(trim($data->username))->exists();
+            if ($checkUsername){
+                return ResponseHandler::error("Le nom d'utilisateur existe déjà.", 409);
+            }
+        }
+
+        if($data->email){
+            $checkEmail = User::whereEmail(trim($data->email))->exists();
+            if ($checkEmail){
+                return ResponseHandler::error("Le nom d'utilisateur existe déjà.", 409);
+            }
         }
 
         $code_user = $this->genarateurCodeService->genererCodeUser();
         $saveUser = new User();
 
         if (!empty($code_user)){
+            if($data->name){ $saveUser->setAttribute("name",trim($data->name)); }
+            if($data->nom){ $saveUser->setAttribute("name",trim($data->nom).' '.trim($data->prenoms)); }
             $saveUser->setAttribute("name",$data->name);
             if($data->username){ $saveUser->setAttribute("username",$data->username); }
-            $saveUser->setAttribute("email",$data->email);
+            $saveUser->setAttribute("email",trim($data->email));
             $saveUser->setAttribute("code_user",$code_user);
             $saveUser->setAttribute("password",$hashPassword);
             $saveUser->save();
@@ -57,7 +68,13 @@ class UsersService implements UsersInterface
             return  ResponseHandler::success("Création efféctuée");
 
         } else {
-            // return response without permission
+            // return response with default rôle
+            $getValidRolesId = Roles::whereId(6)->pluck('id')->toArray();
+            if (count($getValidRolesId) === 0){
+                return  ResponseHandler::success("Création efféctuée & aucun identifiant de role valide");
+            }
+            $idRole = $getValidRolesId[0];
+            $saveUser->roles()->sync($idRole);
             return  ResponseHandler::success("Création efféctuée");
         }
     }

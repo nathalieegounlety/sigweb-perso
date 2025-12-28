@@ -12,7 +12,7 @@ private ModepaiementsInterface $modepaiementInterface;
 
     public function __construct(ModepaiementsInterface $modepaiementInterface)
     {
-        $this->middleware('auth:api', ['except' => ['store','update','remove']]);
+        $this->middleware('auth:api', ['except' => ['getModepaiementsObj']]);
         $this->modepaiementInterface = $modepaiementInterface;
     }
 
@@ -110,6 +110,17 @@ private ModepaiementsInterface $modepaiementInterface;
            return  $this->permissionService->remove($request->id);
 
             // call update service
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    public function getModepaiementsObj(Request $request){
+        try {
+            // procéder à l'enregistrement
+            return $modepaiementsObj = $this->modepaiementInterface->getModepaiementsObj();
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

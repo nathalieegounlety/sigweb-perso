@@ -19,4 +19,6 @@ interface ModepaiementsInterface
 
     public function remove(int $id): \Illuminate\Http\JsonResponse;
 
+    public function getModepaiementsObj ():  \Illuminate\Http\JsonResponse;
+
 }

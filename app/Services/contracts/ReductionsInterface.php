@@ -19,4 +19,6 @@ interface ReductionsInterface
 
     public function remove(int $id): \Illuminate\Http\JsonResponse;
 
+    public  function getReductionObjet(): \Illuminate\Http\JsonResponse;
+
 }

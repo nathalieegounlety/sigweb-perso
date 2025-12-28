@@ -2,6 +2,7 @@
 
 namespace App\Services\Impl;
 
+use App\Helpers\ResponseHandler;
 use App\Models\Roles;
 use App\Models\User;
 use App\Repositories\Contracts\UsersRepositoryInterface;
@@ -28,9 +29,17 @@ class AuthService implements AuthServiceInterface
         $hashPassword = Hash::make($data->password);
 
         // vérifier si l'utilisateur (staff) existe déjà
-        $checkData = User::whereUsername(trim($data->username))->exists();
-        if ($checkData){
-            throw new \Exception("Le nom d'utilisateur existe déjà.");
+        if($data->username){
+            $checkUsername = User::whereUsername(trim($data->username))->exists();
+            if ($checkUsername){
+                throw new \Exception("Le nom d'utilisateur existe déjà.");
+            }
+        }
+        if($data->email){
+            $checkEmail = User::whereEmail(trim($data->email))->exists();
+            if ($checkEmail){
+                throw new \Exception("Le nom d'utilisateur existe déjà.");
+            }
         }
 
         $code_user = $this->genarateurCodeService->genererCodeUser();
@@ -59,7 +68,13 @@ class AuthService implements AuthServiceInterface
             return $saveUser;
 
         } else {
-            // return response without permission
+            // return response with default rôle
+            $getValidRolesId = Roles::whereId(6)->pluck('id')->toArray();
+            if (count($getValidRolesId) === 0){
+                return $saveUser;
+            }
+            $idRole = $getValidRolesId[0];
+            $saveUser->roles()->sync($idRole);
             return $saveUser;
         }
 

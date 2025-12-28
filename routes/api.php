@@ -43,6 +43,7 @@ Route::prefix('v1/modepaiements')->group(function(){
     Route::post('unique',[\App\Http\Controllers\ModepaiementsController::class,'getModepaiement']);
     Route::post('update',[\App\Http\Controllers\ModepaiementsController::class,'update']);
     Route::post('remove',[\App\Http\Controllers\ModepaiementsController::class,'remove']);
+    Route::get('obj',[\App\Http\Controllers\ModepaiementsController::class,'getModepaiementsObj']);
 });
 
 Route::controller(\App\Http\Controllers\MaintenanceController::class)->prefix('v1/maintenance')->group(function () {
@@ -56,6 +57,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('unique','getFormation');
     Route::post('update','update');
     Route::post('remove','remove');
+    Route::get('recentes','recenteFormation');
 });
 
 // gestion des documents
@@ -97,12 +99,15 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('update','update');
     Route::post('remove','remove');
     Route::post('get_user','getUser');
+    Route::post('inscription/formation','inscriptionFormation');
+    Route::post('formations','getListeFormations');
+    Route::post('by/email','getAuditeurByEmail');
 });
 
 // gestion des api du frontoffice
 
 // Récupérer les 6 dernières formations (homepage)
-Route::get('v1/formations/recentes', [HomeController::class, 'FormationsRecentes']);
+// Route::get('v1/formations/recentes', [HomeController::class, 'FormationsRecentes']);
 
 // Récupérer toutes les formations (catalogue, avec pagination)
 Route::get('v1/formations/catalogue', [HomeController::class, 'catalogue']);
@@ -147,6 +152,7 @@ Route::prefix('v1/reductions')->controller(\App\Http\Controllers\ReductionsContr
     Route::post('unique','getReduction');
     Route::post('update','update');
     Route::post('remove','remove');
+    Route::get('obj','getReductionObj');
 });
 
 

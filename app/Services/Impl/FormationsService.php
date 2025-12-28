@@ -279,4 +279,19 @@ class FormationsService implements FormationsInterface
     {
         // TODO: Implement remove() method.
     }
+
+    public function getRecentFormations(Request $request)
+    {
+        // TODO: Implement getRecentFormations() method.
+        $perPage = min($request->input('per_page', 6),6);
+
+        $queryFormations = Formations::select('formations.*')
+            ->with('getTypeformation:id,libelle')
+            ->with('tarifications')
+            ->where('formations.enable', true)
+            ->where('formations.visuel','!=',null)
+            ->orderBy("formations.date_debut","ASC")
+            ->limit(6) ;
+        return $queryFormations->get();
+    }
 }

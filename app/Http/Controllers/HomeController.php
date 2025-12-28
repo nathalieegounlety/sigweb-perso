@@ -12,7 +12,7 @@ class HomeController extends Controller
     public function FormationsRecentes()
     {
              //   $formations = Formations::where('date_limite', '>=', now())
-        $formations = Formations::where('statut', 'ACTIF')
+        $formations = Formations::whereEnable(true)
             ->where('enable', 1)
             ->where('afficher', 1)
           //  ->orderBy('date_limite', 'asc')

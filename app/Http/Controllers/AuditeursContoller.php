@@ -15,6 +15,8 @@ class AuditeursContoller extends Controller
 
     public function __construct(AUDITEURSInterface $auditeurService)
     {
+        // restriction des accès
+        $this->middleware('auth:api',['except' => ['store','getAuditeurByEmail','getListeFormations']]);
         $this->auditeurService = $auditeurService;
     }
 
@@ -56,116 +58,73 @@ class AuditeursContoller extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store a newly created resource in storage.
      */
-    public function create()
+    public function store(Request $request)
     {
-        //
+        try {
+            // Validation des données
+            $validatedData = $request->validate([
+                'email' => 'required|email|unique:auditeurs,email|unique:users,email',
+                'nom' => 'required|string|max:255',
+                'prenoms' => 'required|string|max:255',
+                'pays' => 'required|string|max:255',
+                'telephone' => 'required|string|max:20',
+                'ville' => 'nullable|string|max:255',
+                'genre' => 'nullable|string|max:1',
+                'secteur_activite' => 'nullable|string|max:255',
+                'organisation' => 'nullable|string|max:255',
+                'intitule_poste' => 'required|string|max:255',
+            ]);
+            // procéder à l'enregistrement
+            return $processSave = $this->auditeurService->saveAuditeur($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function inscriptionFormation(Request $request)
     {
-        // Validation des données
-        $validatedData = $request->validate([
-            'email' => 'required|email|unique:auditeurs,email|unique:users,email',
-            'nom' => 'required|string|max:255',
-            'prenoms' => 'required|string|max:255',
-            'pays' => 'required|string|max:255',
-            'telephone' => 'required|string|max:20',
-            'ville' => 'nullable|string|max:255',
-            'genre' => 'nullable|string|max:1',
-            'secteur_activite' => 'nullable|string|max:255',
-            'organisation' => 'nullable|string|max:255',
-            'intitule_poste' => 'required|string|max:255',
-        ]);
+        try {
+            // Validation des données
+            $validatedData = $request->validate([
+                'formations_classique' => 'required'
+            ]);
+            // procéder à l'enregistrement
+            return $processSave = $this->auditeurService->storeInscriptionFormation($request);
 
-        // Génération d'un mot de passe aléatoire
-        $generate_password = $this->genererPassword(8);
-        $hash_generate_password = Hash::make($generate_password);
-
-        // Vérification si l'utilisateur ou l'auditeur existe déjà
-        $check_user = User::where("email", $validatedData['email'])->exists();
-        $check_auditeur = Auditeurs::where("email", $validatedData['email'])->exists();
-
-        if ($check_user || $check_auditeur) {
-            return redirect()->back()->with("error", "Cet auditeur existe déjà.");
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation ".$request, 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
+    }
+    public function getAuditeurByEmail(Request $request){
+        try {
+            //
+            return $data = $this->auditeurService->getAuditeurByEmail($request->email);
 
-        // Création de l'utilisateur
-        $user = new User();
-        $user->name = trim($validatedData['prenoms']) . " " . trim($validatedData['nom']);
-        $user->email = $validatedData['email'];
-        $user->password = $hash_generate_password;
-        $user->email_verified_at = now();
-        $user->save();
-
-        // Attribution du rôle "auditeur" (ID 6)
-        $role_user = new ModelsRolesusers();
-        $role_user->roles_id = 6; // ID du rôle "auditeur"
-        $role_user->users_id = $user->id;
-        $role_user->save();
-
-        // Récupération du pays
-        $pays = Pays::where("nom_pays", $validatedData['pays'])->first();
-
-        // Création de l'auditeur
-        $auditeur = new Auditeurs();
-        $auditeur->nom = trim($validatedData['nom']);
-        $auditeur->prenoms = trim($validatedData['prenoms']);
-        $auditeur->email = trim($validatedData['email']);
-        $auditeur->telephone = trim($validatedData['telephone']);
-        $auditeur->ville = trim($validatedData['ville'] ?? '');
-        $auditeur->genre = trim($validatedData['genre'] ?? '');
-        $auditeur->secteur_activite = trim($validatedData['secteur_activite'] ?? '');
-        $auditeur->organisme = trim($validatedData['organisation'] ?? '');
-        $auditeur->intitule_poste = trim($validatedData['intitule_poste']);
-
-        if ($pays) {
-            $auditeur->pays = $pays->nom_pays;
-            $auditeur->code_pays = $pays->code_iso;
-            $auditeur->nationalite = $pays->nationalite;
-        } else {
-            $auditeur->pays = $validatedData['pays'];
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
-
-        $auditeur->save();
-
-        // Retour avec un message de succès
-        return redirect()->route('auditeurs.index')->with('success', 'Enregistrement effectué avec succès.');
     }
+    public function getListeFormations(Request $request){
+        try {
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(cr $cr)
-    {
-        //
-    }
+            return $data = $this->auditeurService->getListeFormationsByCodeInscription($request->code_inscription);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(cr $cr)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, cr $cr)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(cr $cr)
-    {
-        //
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
     }
 }

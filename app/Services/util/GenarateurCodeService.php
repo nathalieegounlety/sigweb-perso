@@ -1,5 +1,6 @@
 <?php
 namespace App\Services\util;
+use App\Models\Paiements;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -32,5 +33,45 @@ class GenarateurCodeService {
             return $codeUser;
         });
         return "";
+    }
+
+    public function genererCodeAlphaNumeric($length = 16): string {
+        $characters = '0123456789';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+            for ($i = 0; $i < $length; $i++) {
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
+            }
+        return $randomString;
+    }
+
+    public function genererNumeroPaiement(): string {$annee_actuelle = date('Y');
+        $type_reference = "FACT";
+        $indicatif = "ERS";
+
+        return DB::transaction(function () use ($type_reference, $indicatif, $annee_actuelle) {
+            // Recherche du dernier paiement de l'année en cours
+            $lastPaiement = Paiements::lockForUpdate()
+                ->whereYear('created_at', $annee_actuelle)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $increment = 1;
+
+            if ($lastPaiement && $lastPaiement->reference) {
+                $parts = explode('-', $lastPaiement->reference);
+
+                // Vérification du format
+                if (count($parts) === 4 && is_numeric($parts[3])) {
+                    $increment = (int) $parts[3] + 1;
+                }
+                // Sinon, on repart de 1 (sécurité)
+            }
+
+            $numeroFormate = str_pad($increment, 6, '0', STR_PAD_LEFT);
+
+            // Format final : ERS-2025-FACT-000001
+            return "{$indicatif}-{$annee_actuelle}-{$type_reference}-{$numeroFormate}";
+        });
     }
 }

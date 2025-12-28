@@ -47,23 +47,6 @@ class ReductionsController extends Controller
         }
     }
 
-    public function getOuvrage(Request $request){
-        try {
-            // validation des données du formulaire
-            $validated = $request->validate([
-                'id' => 'required|integer',
-            ]);
-
-            // procéder à l'enregistrement
-            return $data = $this->reductionsService->getSignataire($request->id);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
-        } catch (\Exception $e) {
-            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
-        }
-    }
-
     public function store(Request $request)
     {
 
@@ -115,6 +98,17 @@ class ReductionsController extends Controller
             return $response = $this->reductionsService->remove($request->id);
 
             // call update service
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    public function getReductionObj(Request $request){
+        try {
+            // procéder à l'enregistrement
+            return $data = $this->reductionsService->getReductionObjet();
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

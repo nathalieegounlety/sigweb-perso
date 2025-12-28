@@ -3,33 +3,71 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHandler;
+use App\Mail\Inscriptionpresentiel;
+use App\Mail\NotificationCompte;
 use App\Services\contracts\FormationsInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class FormationsController extends Controller
 {
+
     private FormationsInterface $formationsService;
 
     public function __construct(FormationsInterface $formationsService){
+        // restriction des accès
+        $this->middleware('auth:api', ['except' => ['recenteFormation','index']]);
+        //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);
+        //$this->middleware('role:ADMIN')->only(['index']);
+        //$this->middleware('permission:CREATE')->only(['index']);
         $this->formationsService = $formationsService;
     }
     public function index(Request $request)
     {
+
+        $request = new Request([
+            'formations_classique' => [
+                [
+                    'code_formation' => 'ERS2024-M4',
+                    'tarif'     => '343',
+                ],
+                [
+                    'code_formation' => 'SPO2024-S5',
+                    'tarif'     => '360',
+                ],
+            ],
+        ]);
+        $c = 360;
+        $email = 'blandine@yopmail.com';
+        $contenu = [
+            'nom' => 'DAYANA',
+            'prenoms' => 'Blandine',
+            'formations' => $request->formations_classique,
+            'subject' => 'Inscription sur SIGWEB de DAYANA Blandine',
+            'email' => $email,
+            'code_inscription' => '22939299329',
+        ];
+
+        //dd($contenu['formations']);
+
+
+        Mail::to($email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Inscriptionpresentiel($contenu));
+
+
         // récupérer la liste des rôles
         try {
-            $perPage = $request->get('per_page',50); // par défaut 50 éléments
-            $roles = $this->formationsService->getFormations($request);
+            $data = $this->formationsService->getFormations($request);
 
             // Transformer pour enlever le bloc 'links'
             $response = [
-                'current_page' => $roles->currentPage(),
-                'data'         => $roles->items(),
-                'first_page_url' => $roles->url(1),
-                'last_page_url'  => $roles->url($roles->lastPage()),
-                'next_page_url'  => $roles->nextPageUrl(),
-                'prev_page_url'  => $roles->previousPageUrl(),
-                'per_page'       => $roles->perPage(),
-                'total'          => $roles->total(),
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
             ];
             return ResponseHandler::success('ok',$response);
 
@@ -68,5 +106,16 @@ class FormationsController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
 
+    }
+    public function recenteFormation(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $data = $this->formationsService->getRecentFormations($request);
+            return ResponseHandler::success('ok',$data);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
     }
 }

@@ -151,4 +151,15 @@ class ReductionsService implements ReductionsInterface
             return ResponseHandler::error("Echec lors de la suppression, vous ne pouvez pas surpprimer cette données : $dataDelete->libelle.",401);
         }
     }
+
+    public function getReductionObjet(): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getReductionObjet() method.
+        $data = Reductions::whereEnable(true)
+            ->select('reductions.id as code', 'reductions.libelle as name','reductions.pourcentage')
+            ->get();
+
+        return ResponseHandler::success("ok",$data);
+
+    }
 }

@@ -19,4 +19,6 @@ interface FormationsInterface
 
     public function remove(int $id): \Illuminate\Http\JsonResponse;
 
+    public function getRecentFormations(Request $request);
+
 }

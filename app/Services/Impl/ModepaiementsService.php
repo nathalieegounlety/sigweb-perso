@@ -146,4 +146,11 @@ class ModepaiementsService implements ModepaiementsInterface
             return ResponseHandler::error("Echec lors de la suppression, vous ne pouvez pas surpprimer cette modepaiement : $modepaiement->libelle.",401);
         }
     }
+
+    public function getModepaiementsObj(): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getModepaiementsObj() method.
+        $data = Modepaiements::where('is_enable', true)->get(['id as code', 'libelle as name']);
+        return ResponseHandler::success("ok",$data);
+    }
 }
