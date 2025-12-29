@@ -102,6 +102,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('inscription/formation','inscriptionFormation');
     Route::post('formations','getListeFormations');
     Route::post('by/email','getAuditeurByEmail');
+    Route::post('inscription/store/paiement','inscriptionPaiement');
 });
 
 // gestion des api du frontoffice
@@ -153,6 +154,11 @@ Route::prefix('v1/reductions')->controller(\App\Http\Controllers\ReductionsContr
     Route::post('update','update');
     Route::post('remove','remove');
     Route::get('obj','getReductionObj');
+});
+
+// gestion des paiements
+Route::prefix('v1/paiements')->controller(\App\Http\Controllers\PaiementsController::class)->group(function(){
+    Route::post('infos','infosPaiement');
 });
 
 

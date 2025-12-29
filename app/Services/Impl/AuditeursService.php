@@ -10,14 +10,17 @@ use App\Models\Auditeurs;
 use App\Models\Detailspaiements;
 use App\Models\Formations;
 use App\Models\Inscriptions;
+use App\Models\Modepaiements;
 use App\Models\Paiements;
 use App\Models\Pays;
+use App\Models\Reductions;
 use App\Models\Tarificationsformation;
 use App\Models\User;
 use App\Services\contracts\AuditeursInterface;
 use App\Services\util\GenarateurCodeService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class AuditeursService implements AuditeursInterface
@@ -73,26 +76,27 @@ class AuditeursService implements AuditeursInterface
             # code...
             $auditeur->setAttribute('pays', $request->get('pays'));
         }
-        $auditeur->save();
-
-        // send mail for user to inform that about acount
-
-        // send identifiant to mail for user
-        $contenu = [
-            'nom_prenoms' => $user->name,
-            'email' => trim($user->email),
-            'mot_de_passe' => $generate_password,
-            'subject' => 'SIGWEB - CREATION DE COMPTE'
-        ];
-
-        # code...
-        Mail::to(trim($user->email))->queue(new NotificationCompte($contenu));
 
         try {
+            $auditeur->save();
+
+            // send mail for user to inform that about acount
+
+            // send identifiant to mail for user
+            $contenu = [
+                'nom_prenoms' => $user->name,
+                'email' => trim($user->email),
+                'mot_de_passe' => $generate_password,
+                'subject' => 'SIGWEB - CREATION DE COMPTE'
+            ];
+
+            # code...
+            Mail::to(trim($user->email))->queue(new NotificationCompte($contenu));
+
 
         } catch (\Exception $e) {
             // Get error here
-
+            return  ResponseHandler::success("Enregistrement effectué avec succès", $e->getMessage());
 
         }
 
@@ -386,8 +390,8 @@ class AuditeursService implements AuditeursInterface
                                 // enregistrement détails paiement
                                 $details_paiement = new Detailspaiements();
                                 $details_paiement->setAttribute('reference_paiement', $paiement->reference);
-                                $details_paiement->setAttribute('code_formation', $inscrit->code_formation);
-                                $details_paiement->setAttribute('code_inscription', $inscrit->code_inscription);
+                                $details_paiement->setAttribute('code_formation', $formations->code_formation);
+                                $details_paiement->setAttribute('code_inscription', $formations->code_inscription);
                                 $details_paiement->setAttribute('montant_restant', $montant);
                                 $details_paiement->setAttribute('email', $email);
                                 $details_paiement->setAttribute('id_tarification_formation', $id_tarification_formation);
@@ -465,5 +469,152 @@ class AuditeursService implements AuditeursInterface
             'auditeur' => $auditeur
         ];
         return  ResponseHandler::success("ok",$dataResponse);
+    }
+
+    public function storeInscriptionPaiement(Request $data): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement storeInscriptionPaiement() method.
+        // récupérer les objet
+        $inscrit = Inscriptions::where("code_inscription", $data->code_inscription)->orderBy("id", "DESC")->get()->first();
+        $auditeur = Auditeurs::whereEmail($inscrit->email)->first();
+        $modePaiement = Modepaiements::whereLibelle($data->mode_paiement)->first();
+        $formations = collect($data->formations)->map(fn($item) => (object) $item);
+
+        // vérifier si le paiement existe déjà sinon on crée le paiement
+        $checkPaiement = Paiements::whereEmail(trim($data->email))->whereCodeInscription($inscrit->code_inscription)->exists();
+        if($checkPaiement){
+            try {
+                //############################  le paiement existe ############################
+                // 1 - Mise à jours des informations (montant à payer) dans la table paiement
+                $getPaiement = Paiements::whereEmail(trim($data->email))->whereCodeInscription($inscrit->code_inscription)->first();
+                $paiement = Paiements::find($getPaiement->id);
+                $paiement->setAttribute('montant_total', $data->montant_total);
+                $paiement->setAttribute('montant_restant', $data->montant_total);
+                $paiement->setAttribute('id_modepaiement', $modePaiement->id);
+                if ($data->montant_total == 0) {
+                    # code...
+                    $paiement->setAttribute('num_transaction', "GRATUIT");
+                    $paiement->setAttribute('statut_transaction', "GRATUIT");
+                }
+                $paiement->update();
+
+                // 2- Mise à jour des informations dans la table détails paiements
+                foreach ($formations as $formation) {
+                    $checkDetail = Detailspaiements::where("reference_paiement",$paiement->reference)
+                        ->where('code_formation', $formation->code_formation)
+                        ->where('code_inscription', $formation->code_inscription)
+                        ->where('id_tarification_formation', $formation->tarif_formation_id)
+                        ->first();
+                    if ($checkDetail) {
+                        // si l'objet existe, on fait la mise à jour des informations
+                        $upDetail = Detailspaiements::find($checkDetail->id);
+                        $upDetail->setAttribute('montant_restant', $formation->montant_a_payer);
+                        // vérifier si la réduction est appliquée
+                        if ($formation->taux_reduction > 0){
+                            $reduction = Reductions::where('pourcentage', $formation->taux_reduction)->first();
+                            $upDetail->setAttribute('id_reduction', $reduction->id);
+                        }
+                        // enregistrement de la preuve si ça existe
+                        if (!empty($data->preuve)) {
+                            $preuve_paiement = $data->preuve;
+                            $extension = $preuve_paiement->getClientOriginalExtension();
+                            $preuve_name = date('Ymd-His') . '.' . $extension;
+                            $preuve_paiement->move(public_path('preuve'), $preuve_name);
+                            $upDetail->setAttribute('preuve_path', $preuve_name);
+                        }
+                        // do update
+                        $upDetail->update();
+                    }
+                }
+
+                // 3- response API
+                $dataResponse = [
+                    'reference_paiement' => $paiement->reference,
+                    'message' => 'Enregistrement effectué',
+                    'option' => $modePaiement->libelle,
+                    'success' => true,
+                ];
+
+                return ResponseHandler::success("Opération effectuée avec succès",$dataResponse);
+
+            }catch (\Exception $e) {
+                // Get error here
+                return  ResponseHandler::success("Erreur lors de l'enregistrement", $e->getMessage(),500);
+            }
+
+        }else{
+            //############################ il faut créer le paiement ############################
+            // 1- générer le numero de reference facture : ERS-2025-FAC-000001
+                $reference_paiement =$this->genarateurCodeService->genererNumeroPaiement();
+
+                // enregistrement du paiement
+                $statut_details_paiement = "IMPAYE";
+                $statut_paiement = "EN ATTENTE";
+
+                //2-  vérifier si le paiement n'est pas déjà enregistré pour procéder à l'enregistrement
+                $checkExistingPaiement = Paiements::whereReference($reference_paiement)->exists();
+                if (!$checkExistingPaiement) { // si le paiement n'existe pas encore
+
+                    $paiement = new Paiements();
+                    $paiement->setAttribute('reference', $reference_paiement);
+                    $paiement->setAttribute('email', $auditeur->email);
+                    $paiement->setAttribute('telephone', $auditeur->telephone);
+                    $paiement->setAttribute('code_inscription', $inscrit->code_inscription);
+                    $paiement->setAttribute('montant_total', $data->montant_total);
+                    $paiement->setAttribute('montant_restant', $data->montant_total);
+                    $paiement->setAttribute('statut_paiement', $statut_paiement);
+                    $paiement->setAttribute('type', "FORMATION");
+
+                    // enregistrement des détails de la facture
+
+                    try {
+                        //code...
+                        $paiement->save();
+
+                        foreach ($formations as $formation) {
+                            // enregistrement détails paiement
+                            $details_paiement = new Detailspaiements();
+                            $details_paiement->setAttribute('reference_paiement', $paiement->reference);
+                            $details_paiement->setAttribute('code_formation', $inscrit->code_formation);
+                            $details_paiement->setAttribute('code_inscription', $inscrit->code_inscription);
+                            $details_paiement->setAttribute('montant_restant', $formation->montant_a_payer);
+                            $details_paiement->setAttribute('email', $inscrit->email);
+                            $details_paiement->setAttribute('id_tarification_formation', $formation->tarif_formation_id);
+                            $details_paiement->setAttribute('statut_paiement', 'IMPAYE');
+                            // vérifier si la réduction est appliquée
+                            if ($formation->taux_reduction > 0){
+                                $reduction = Reductions::where('pourcentage', $formation->taux_reduction)->first();
+                                $details_paiement->setAttribute('id_reduction', $reduction->id);
+                            }
+                            // enregistrement de la preuve si ça existe
+                            if (!empty($data->preuve)) {
+                                $preuve_paiement = $data->preuve;
+                                $extension = $preuve_paiement->getClientOriginalExtension();
+                                $preuve_name = date('Ymd-His') . '.' . $extension;
+                                $preuve_paiement->move(public_path('preuve'), $preuve_name);
+                                $details_paiement->setAttribute('preuve_path', $preuve_name);
+                            }
+                            $details_paiement->save();
+                        }
+
+                        // 3- response API
+                        $dataResponse = [
+                            'reference_paiement' => $paiement->reference,
+                            'message' => 'Enregistrement effectué',
+                            'option' => $modePaiement->libelle,
+                            'success' => true,
+                        ];
+
+                        return ResponseHandler::success("Opération effectuée avec succès",$dataResponse);
+
+
+                    } catch (\Exception $e) {
+                        //throw $th;
+                        return  ResponseHandler::success("Erreur lors de l'enregistrement", $e->getMessage(), 500);
+                    }
+
+                }
+        }
+
     }
 }

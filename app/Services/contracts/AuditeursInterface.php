@@ -20,8 +20,11 @@ interface AuditeursInterface
     public function remove(int $id): \Illuminate\Http\JsonResponse;
 
     public function storeInscriptionFormation(Request $data): \Illuminate\Http\JsonResponse;
+
     public function getAuditeurByEmail(string $email): \Illuminate\Http\JsonResponse;
 
     public function getListeFormationsByCodeInscription(string $codeInscription): \Illuminate\Http\JsonResponse;
+
+    public function storeInscriptionPaiement(Request $data): \Illuminate\Http\JsonResponse;
 
 }

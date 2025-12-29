@@ -13,6 +13,7 @@ use App\Services\contracts\FormationsInterface;
 use App\Services\contracts\GrilletarifairesInterface;
 use App\Services\contracts\ModepaiementsInterface;
 use App\Services\contracts\OuvragesInterface;
+use App\Services\contracts\PaiementsInterface;
 use App\Services\contracts\ReductionsInterface;
 use App\Services\contracts\RolesServiceInterface;
 use App\Services\contracts\PermissionsServiceInterface;
@@ -26,6 +27,7 @@ use App\Services\Impl\FormationsService;
 use App\Services\Impl\GrilletarifairesService;
 use App\Services\Impl\ModepaiementsService;
 use App\Services\Impl\OuvragesService;
+use App\Services\Impl\PaiementsService;
 use App\Services\Impl\PermissionsService;
 use App\Services\Impl\ReductionsService;
 use App\Services\Impl\RolesService;
@@ -57,6 +59,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(OuvragesInterface::class, OuvragesService::class);
         $this->app->bind(ReductionsInterface::class, ReductionsService::class);
         $this->app->bind(SignatairesInterface::class, SignatairesService::class);
+        $this->app->bind(PaiementsInterface::class, PaiementsService::class);
     }
 
     /**
