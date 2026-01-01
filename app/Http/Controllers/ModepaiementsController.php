@@ -117,6 +117,7 @@ private ModepaiementsInterface $modepaiementInterface;
         }
     }
     public function getModepaiementsObj(Request $request){
+
         try {
             // procéder à l'enregistrement
             return $modepaiementsObj = $this->modepaiementInterface->getModepaiementsObj();

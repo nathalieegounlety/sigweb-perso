@@ -8,6 +8,8 @@
     "require": {
         "php": "^8.2",
         "darkaonline/l5-swagger": "^9.0",
+        "fedapay/fedapay-php": "^0.4.7",
+        "kkiapay/kkiapay-php": "dev-master",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "prettus/l5-repository": "^2.10",

@@ -16,7 +16,7 @@ class AuditeursContoller extends Controller
     public function __construct(AUDITEURSInterface $auditeurService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['store','getAuditeurByEmail','getListeFormations','inscriptionPaiement']]);
+        $this->middleware('auth:api',['except' => ['store','getAuditeurByEmail','getListeFormations','inscriptionPaiement','listePays']]);
         $this->auditeurService = $auditeurService;
     }
 
@@ -68,7 +68,7 @@ class AuditeursContoller extends Controller
                 'email' => 'required|email|unique:auditeurs,email|unique:users,email',
                 'nom' => 'required|string|max:255',
                 'prenoms' => 'required|string|max:255',
-                'pays' => 'required|string|max:255',
+                'pays' => 'required',
                 'telephone' => 'required|string|max:20',
                 'ville' => 'nullable|string|max:255',
                 'genre' => 'nullable|string|max:1',
@@ -128,8 +128,6 @@ class AuditeursContoller extends Controller
         }
     }
 
-
-
     /**
      * Store a newly created resource in storage.
      */
@@ -149,6 +147,18 @@ class AuditeursContoller extends Controller
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation ".$request, 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function listePays(Request $request){
+        try {
+            //
+            return $data = $this->auditeurService->getListePays();
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }

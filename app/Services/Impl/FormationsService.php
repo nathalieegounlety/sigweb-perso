@@ -294,4 +294,14 @@ class FormationsService implements FormationsInterface
             ->limit(6) ;
         return $queryFormations->get();
     }
+
+    public function getDetailsFormation(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $queryFormations = Formations::select('formations.*')
+            ->with('getTypeformation:id,libelle')
+            ->with('tarifications')
+            ->where('formations.id', $request->id)
+            ->get()->first();
+        return ResponseHandler::success('ok', $queryFormations);
+    }
 }

@@ -58,6 +58,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('update','update');
     Route::post('remove','remove');
     Route::get('recentes','recenteFormation');
+    Route::post('details','detailFormation');
 });
 
 // gestion des documents
@@ -103,6 +104,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('formations','getListeFormations');
     Route::post('by/email','getAuditeurByEmail');
     Route::post('inscription/store/paiement','inscriptionPaiement');
+    Route::get('liste/pays','listePays');
 });
 
 // gestion des api du frontoffice
@@ -160,6 +162,17 @@ Route::prefix('v1/reductions')->controller(\App\Http\Controllers\ReductionsContr
 Route::prefix('v1/paiements')->controller(\App\Http\Controllers\PaiementsController::class)->group(function(){
     Route::post('infos','infosPaiement');
 });
+
+// gestion des paiements via fedapay
+Route::prefix('v1/fedapay')->controller(\App\Http\Controllers\FedapayController::class)->group(function(){
+    Route::post('store/paiement','savePaiement');
+});
+
+// gestion des paiements via kkiapay
+Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController::class)->group(function(){
+    Route::post('store/paiement','savePaiement');
+});
+
 
 
 

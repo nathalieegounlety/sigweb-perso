@@ -65,8 +65,8 @@ class AuditeursService implements AuditeursInterface
         $auditeur->setAttribute("organisme", trim($request->organisation));
         $auditeur->setAttribute("intitule_poste", trim($request->intitule_poste));
         // récupéré l'objet pays
-        $pays = Pays::where("nom_pays", $request->get('pays'))->get()->first();
-        $count_pays = Pays::where("nom_pays", trim($request->get('pays')))->count();
+        $pays = Pays::where("id", $request->get('pays'))->get()->first();
+        $count_pays = Pays::where("id", trim($request->get('pays')))->count();
         if ($count_pays > 0) {
             # code...
             $auditeur->setAttribute('pays', $pays->nom_pays);
@@ -74,7 +74,7 @@ class AuditeursService implements AuditeursInterface
             $auditeur->setAttribute('nationalite', $pays->nationalite);
         } else {
             # code...
-            $auditeur->setAttribute('pays', $request->get('pays'));
+            // $auditeur->setAttribute('pays', $request->get('pays'));
         }
 
         try {
@@ -175,7 +175,7 @@ class AuditeursService implements AuditeursInterface
                 'success' => false,
                 'message' => "Le compte de l'auditeur n'existe pas"
             ];
-            return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse,500);
+            return ResponseHandler::success("Le compte de l'auditeur n'existe pas",$dataResponse,500);
         }
 
         // ### generer code inscription
@@ -464,9 +464,15 @@ class AuditeursService implements AuditeursInterface
             )->get();
         $oneInscription = Inscriptions::where("code_inscription", $codeInscription)->first();
         $auditeur = Auditeurs::whereEmail($oneInscription->email)->first();
+        $paiement = Paiements::whereCodeInscription($codeInscription)->first();
+        $havePaiement = false;
+        if($paiement && !empty($paiement->num_transaction) && $paiement->is_paiementpartiel == 0){
+            $havePaiement = true;
+        }
         $dataResponse = [
             'liste_formation' => $liste_formation,
-            'auditeur' => $auditeur
+            'auditeur' => $auditeur,
+            'havePaiement' => $havePaiement
         ];
         return  ResponseHandler::success("ok",$dataResponse);
     }
@@ -615,6 +621,15 @@ class AuditeursService implements AuditeursInterface
 
                 }
         }
+
+    }
+
+    public function getListePays(): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getListePays() method.
+        $data = Pays::orderBy('nom_pays')->get(['nom_pays as name','id as code']);
+
+        return  ResponseHandler::success("ok",$data);
 
     }
 }

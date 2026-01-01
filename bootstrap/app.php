@@ -12,12 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // enregistrement des middlewares personnalisés
+        //$middleware->prepend(\App\Http\Middleware\OwnCors::class);
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\HasRole::class,
             'permission' => \App\Http\Middleware\HasPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
     })->create();

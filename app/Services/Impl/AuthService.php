@@ -11,6 +11,7 @@ use App\Services\util\GenarateurCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthService implements AuthServiceInterface
 {
@@ -106,9 +107,15 @@ class AuthService implements AuthServiceInterface
         ];
     }
 
-    public function logout(): void
+    public function logout(): \Illuminate\Http\JsonResponse
     {
-        Auth::logout();
+        // Auth::logout();
+        try {
+            JWTAuth::invalidate(JWTAuth::getToken());
+            return ResponseHandler::success('Successfully logged out');
+        } catch (\Exception $e) {
+            return ResponseHandler::error('Erreur lors de la déconnexion', 500);
+        }
     }
 
     public function refresh(): string

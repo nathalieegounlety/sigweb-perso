@@ -26,5 +26,6 @@ interface AuditeursInterface
     public function getListeFormationsByCodeInscription(string $codeInscription): \Illuminate\Http\JsonResponse;
 
     public function storeInscriptionPaiement(Request $data): \Illuminate\Http\JsonResponse;
+    public function getListePays(): \Illuminate\Http\JsonResponse;
 
 }

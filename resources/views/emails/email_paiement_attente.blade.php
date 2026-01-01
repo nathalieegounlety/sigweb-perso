@@ -5,16 +5,16 @@
     <meta charset="utf-8">
 </head>
 
-<body> 
-    
+<body>
+
 <div style=" display:block; max-width:800px; margin:20px auto;  padding:0; color:#fff; background: #071093; border-radius:5px;border:1px solid #138496;font-size:15px; font-family: Montserrat, sans serif;">
-      
+
       <div style=" display:block;  text-align:center;padding:20px;margin: 0;">
-         
+
           <h3 style="font-size: 150%; margin-top:10px;">Système Intégré de Gestion des WEBinaires (SIGWEB)</h3>
-            {{-- Tél. : +229 01 97 97 05 37 - E-mail:  <a style="color: #fff; text-decoration: none;"  href="mailto:formation.ersuma@ohada.org">formation.ersuma@ohada.org</a>   --}}          
+            {{-- Tél. : +229 01 97 97 05 37 - E-mail:  <a style="color: #fff; text-decoration: none;"  href="mailto:formation.ersuma@ohada.org">formation.ersuma@ohada.org</a>   --}}
       </div>
-      
+
       <div style="background:#fff; color: #000; display:block;padding:30px; text-align: justify; ">
       <p>Bonjour {{ $contenu['prenoms'] }} {{ $contenu['nom'] }},</p>
       {{--<br><br>
@@ -29,16 +29,16 @@
     <p>Nous vous remercions de votre confiance et de votre fidélité à l'ERSUMA. <br>
     <center>« L’ERSUMA, pour une règle de droit effective, efficace et efficiente »</center>
     </p>
-    
+
           <!-- source notification -->
             @include('emails.source_notification')
             <!-- end source notification -->
-    
+
       </div>
-      <!-- inc footer -->     
-      @include('emails.email_footer') 
+      <!-- inc footer -->
+      @include('emails.email_footer')
       <!-- end footer -->
-</div> 
-   
+</div>
+
 </body>
 </html>

@@ -14,7 +14,7 @@ interface AuthServiceInterface
     public function login(array $credentials): ?array;
 
     // gestion de la déconnexion
-    public function logout(): void;
+    public function logout(): \Illuminate\Http\JsonResponse;
 
     // rafraîchir le token
     public function refresh(): string;
