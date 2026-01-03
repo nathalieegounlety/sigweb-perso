@@ -27,5 +27,7 @@ interface AuditeursInterface
 
     public function storeInscriptionPaiement(Request $data): \Illuminate\Http\JsonResponse;
     public function getListePays(): \Illuminate\Http\JsonResponse;
+    public function getLastThreeFormation(): \Illuminate\Http\JsonResponse;
+    public function getIndicateurs(): \Illuminate\Http\JsonResponse;
 
 }

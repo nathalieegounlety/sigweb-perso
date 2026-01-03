@@ -289,7 +289,6 @@ class FormationsService implements FormationsInterface
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
             ->where('formations.enable', true)
-            ->where('formations.visuel','!=',null)
             ->orderBy("formations.date_debut","ASC")
             ->limit(6) ;
         return $queryFormations->get();

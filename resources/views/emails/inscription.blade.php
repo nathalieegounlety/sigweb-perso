@@ -52,7 +52,7 @@
       @endforeach
       @endif
     </p>
-          <p>Si le paiement n'a pas abouti, vous pouvez  <a href="/inscription-paiement/{{$contenu['code_inscription']}}" target="_blank" ><b>retourner sur la page de paiement</b></a> pour essayer à nouveau. </p>
+          <p>Si le paiement n'a pas abouti, vous pouvez  <a href="{{env('FRONTEND_URL')}}/paiements/{{$contenu['code_inscription']}}" target="_blank" ><b>retourner sur la page de paiement</b></a> pour essayer à nouveau. </p>
           <p>En cas d’échec de paiement en ligne, merci de contacter l’ERSUMA : </p>
           <i class="bi bi-envelope-fill"></i>- Par e-mail à l’adresse ersuma@ohada.org <br>
           <i class="bi bi-telephone-fill"></i>- Par téléphone au +229 01 97 97 05 37 <br>

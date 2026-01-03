@@ -632,4 +632,27 @@ class AuditeursService implements AuditeursInterface
         return  ResponseHandler::success("ok",$data);
 
     }
+
+    public function getIndicateurs(): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getListePays() method.
+        $data = "ok";
+
+        return  ResponseHandler::success("ok",$data);
+
+    }
+
+    public function getLastThreeFormation(): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getListePays() method.
+        $data = Formations::select('formations.id','formations.code_formation','formations.theme','formations.date_debut')
+            ->with('getTypeformation:id,libelle')
+            ->with('tarifications')
+            ->where('formations.enable', true)
+            ->orderBy("formations.date_debut","ASC")
+            ->limit(3)->get() ;
+
+        return  ResponseHandler::success("ok",$data);
+
+    }
 }

@@ -163,4 +163,28 @@ class AuditeursContoller extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function threeFormation(Request $request){
+        try {
+            //
+            return $data = $this->auditeurService->getLastThreeFormation();
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function indicateurs(Request $request){
+        try {
+            //
+            return $data = $this->auditeurService->getIndicateurs();
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 }

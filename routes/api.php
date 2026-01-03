@@ -105,6 +105,8 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('by/email','getAuditeurByEmail');
     Route::post('inscription/store/paiement','inscriptionPaiement');
     Route::get('liste/pays','listePays');
+    Route::get('last/three/formations','threeFormation');
+    Route::get('indicateurs','indicateurs');
 });
 
 // gestion des api du frontoffice
