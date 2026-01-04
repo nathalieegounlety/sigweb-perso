@@ -30,4 +30,25 @@ class FedapayController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+
+
+    public function savePaiementPartiel(Request $request){
+        try {
+            $validated = $request->validate([
+                'transaction_id' => 'required|string',
+                'formations' => 'required',
+                'montant_total' => 'required',
+                'mode_paiement' => 'required',
+                'reference_paiement' => 'required'
+            ]);
+
+            return $data = $this->fedapayInterferce->storePaiementPartielFedapay($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 }

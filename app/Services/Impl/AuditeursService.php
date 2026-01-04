@@ -22,6 +22,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 
 class AuditeursService implements AuditeursInterface
 {
@@ -654,5 +655,47 @@ class AuditeursService implements AuditeursInterface
 
         return  ResponseHandler::success("ok",$data);
 
+    }
+
+    public function getListeInscriptions(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getListeInscriptions() method.
+        $data = Inscriptions::query()
+            ->leftJoin('formations', 'formations.code_formation', '=', 'inscriptions.code_formation')
+            ->leftJoin('inscriptions_dscs', 'inscriptions_dscs.code_inscription', '=', 'inscriptions.code_inscription')
+            ->leftJoin('paiements', 'paiements.code_inscription', '=', 'inscriptions.code_inscription')
+            ->select([
+                'formations.id as id_formation',
+                'formations.code_formation',
+                'formations.theme',
+                'formations.date_debut',
+                'formations.is_formation_dsc',
+                'inscriptions_dscs.id as id_dsc',
+                'inscriptions.id as id_inscription',
+                'inscriptions.code_inscription',
+                'inscriptions.email',
+                'paiements.reference',
+                'paiements.num_transaction',
+                'paiements.statut_paiement'
+            ])
+            ->addSelect([
+                // verifier le paiement
+                \DB::raw('CASE WHEN paiements.num_transaction IS NOT NULL THEN 1 ELSE 0 END as checkPaiement'),
+                // verifier le paiement
+                \DB::raw('CASE WHEN paiements.reference IS NOT NULL THEN 1 ELSE 0 END as checkReferencePaiement'),
+                // check dsc valide
+                DB::raw('CASE WHEN inscriptions_dscs.id IS NOT NULL THEN 1 ELSE 0 END as checkdsc'),
+
+                // checkdate : true si l'année de date_paiement > 2024
+                \DB::raw('CASE
+                    WHEN formations.date_debut IS NOT NULL
+                     AND YEAR(formations.date_debut) > 2024
+                    THEN 1 ELSE 0
+                  END as checkDsc2024')
+            ])
+            ->where('inscriptions.email', $request->email)
+            ->get();
+
+        return  ResponseHandler::success("ok",$data);
     }
 }

@@ -107,6 +107,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::get('liste/pays','listePays');
     Route::get('last/three/formations','threeFormation');
     Route::get('indicateurs','indicateurs');
+    Route::post('liste/inscriptions','listeInscriptions');
 });
 
 // gestion des api du frontoffice
@@ -163,16 +164,20 @@ Route::prefix('v1/reductions')->controller(\App\Http\Controllers\ReductionsContr
 // gestion des paiements
 Route::prefix('v1/paiements')->controller(\App\Http\Controllers\PaiementsController::class)->group(function(){
     Route::post('infos','infosPaiement');
+    Route::post('info/partiel','infoPaiementPartiel');
+    Route::post('partiel/store','savePaiementPartiel');
 });
 
 // gestion des paiements via fedapay
 Route::prefix('v1/fedapay')->controller(\App\Http\Controllers\FedapayController::class)->group(function(){
     Route::post('store/paiement','savePaiement');
+    Route::post('store/paiement/partiel','savePaiementPartiel');
 });
 
 // gestion des paiements via kkiapay
 Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController::class)->group(function(){
     Route::post('store/paiement','savePaiement');
+    Route::post('store/paiement/partiel','savePaiementPartiel');
 });
 
 
