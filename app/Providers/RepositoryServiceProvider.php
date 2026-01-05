@@ -8,6 +8,7 @@ use App\Repositories\Eloquent\RolesRepository;
 use App\Repositories\Eloquent\UsersRepository;
 use App\Services\contracts\AuditeursInterface;
 use App\Services\contracts\AuthServiceInterface;
+use App\Services\contracts\ComptabilitesInterface;
 use App\Services\contracts\DocumentsInterface;
 use App\Services\contracts\FedapayInterfarce;
 use App\Services\contracts\FormationsInterface;
@@ -24,6 +25,7 @@ use App\Services\contracts\TypeformationsInterface;
 use App\Services\contracts\UsersInterface;
 use App\Services\Impl\AuditeursService;
 use App\Services\Impl\AuthService;
+use App\Services\Impl\ComptabilitesService;
 use App\Services\Impl\DocumentsService;
 use App\Services\Impl\FedapayService;
 use App\Services\Impl\FormationsService;
@@ -66,6 +68,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(PaiementsInterface::class, PaiementsService::class);
         $this->app->bind(FedapayInterfarce::class, FedapayService::class);
         $this->app->bind(KkiapayInterfarce::class, KkiapayService::class);
+        $this->app->bind(ComptabilitesInterface::class, ComptabilitesService::class);
     }
 
     /**

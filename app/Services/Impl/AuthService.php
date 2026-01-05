@@ -97,6 +97,7 @@ class AuthService implements AuthServiceInterface
             'user'         => [
                 'name'  => $user->name,
                 'email' => $user->email,
+                'photo' => $user->logo_path,
                 'roles' => $user->roles->pluck('libelle'),
                 'permissions' => $user->roles
                     ->flatMap->permissions

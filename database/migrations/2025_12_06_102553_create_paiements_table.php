@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('num_transaction',100)->nullable();
             $table->string('statut_transaction',100)->nullable();
             $table->string('statut_paiement',100)->nullable();
-            $table->boolean('is_paiementpartiel')->default(false);
+            $table->boolean('is_paiement_partiel')->default(false);
             $table->boolean('facnormalisee')->default(false);
             $table->string('codemcf',100)->nullable();
             $table->string('nim',100)->nullable();

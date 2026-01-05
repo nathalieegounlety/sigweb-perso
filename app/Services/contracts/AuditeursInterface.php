@@ -30,5 +30,6 @@ interface AuditeursInterface
     public function getLastThreeFormation(): \Illuminate\Http\JsonResponse;
     public function getIndicateurs(): \Illuminate\Http\JsonResponse;
     public function getListeInscriptions(Request $request): \Illuminate\Http\JsonResponse;
+    public function updateAuditeur(Request $request): \Illuminate\Http\JsonResponse;
 
 }

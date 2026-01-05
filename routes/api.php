@@ -180,6 +180,11 @@ Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController:
     Route::post('store/paiement/partiel','savePaiementPartiel');
 });
 
+// gestion de la comptabilité
+Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\ComptabilitesController::class)->group(function(){
+    Route::get('commandes','listeCommandes');
+});
+
 
 
 

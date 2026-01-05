@@ -73,7 +73,7 @@ class AuditeursContoller extends Controller
                 'ville' => 'nullable|string|max:255',
                 'genre' => 'nullable|string|max:1',
                 'secteur_activite' => 'nullable|string|max:255',
-                'organisation' => 'nullable|string|max:255',
+                'organisme' => 'nullable|string|max:255',
                 'intitule_poste' => 'required|string|max:255',
             ]);
             // procéder à l'enregistrement
@@ -193,6 +193,37 @@ class AuditeursContoller extends Controller
         try {
             //
             return $data = $this->auditeurService->getListeInscriptions($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function update(Request $request)
+    {
+        try {
+            // Validation des données
+            $validatedData = $request->validate([
+                'email' => 'required|email',
+                'nom' => 'required|string|max:255',
+                'prenoms' => 'required|string|max:255',
+                'pays' => 'required',
+                'telephone' => 'required|string|max:20',
+                'ville' => 'nullable|string|max:255',
+                'genre' => 'nullable|string|max:1',
+                'secteur_activite' => 'nullable|string|max:255',
+                'organisme' => 'nullable|string|max:255',
+                'intitule_poste' => 'required|string|max:255',
+            ]);
+            // procéder à l'enregistrement
+            return $processSave = $this->auditeurService->updateAuditeur($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());

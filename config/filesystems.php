@@ -70,6 +70,11 @@ return [
             'root' => storage_path('app/public/visuel_formation'),
             'visibility' => 'private',
         ],
+        'photo' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/photo'),
+            'visibility' => 'private',
+        ],
 
         'pieces_auditeur' => [
             'driver' => 'local',

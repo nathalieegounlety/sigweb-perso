@@ -63,7 +63,7 @@ class AuditeursService implements AuditeursInterface
         $auditeur->setAttribute("civilite", trim($request->civilite));
         $auditeur->setAttribute("genre", trim($request->genre));
         $auditeur->setAttribute("secteur_activite", trim($request->secteur_activite));
-        $auditeur->setAttribute("organisme", trim($request->organisation));
+        $auditeur->setAttribute("organisme", trim($request->organisme));
         $auditeur->setAttribute("intitule_poste", trim($request->intitule_poste));
         // récupéré l'objet pays
         $pays = Pays::where("id", $request->get('pays'))->get()->first();
@@ -698,4 +698,74 @@ class AuditeursService implements AuditeursInterface
 
         return  ResponseHandler::success("ok",$data);
     }
+
+    public function updateAuditeur(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement updateAuditeur() method.
+        $check_auditeur = Auditeurs::where("email", $request->email)->exists();
+        $check_user = User::where("email", $request->email)->exists();
+
+        if (!$check_auditeur) {
+            // le compte de l'auditeur n'existe pas
+            return  ResponseHandler::error("Le compte de l'auditeur n'existe pas.",500 );
+        }
+
+        if (!$check_user) {
+            // le compte de l'auditeur n'existe pas
+            return  ResponseHandler::error("Le compte de l'utilisateur n'existe pas.",500 );
+        }
+
+        $getAuditeur = Auditeurs::where("email", $request->email)->first();
+
+        // register data into auditeur table
+        $auditeur = Auditeurs::find($getAuditeur->id);
+        $auditeur->setAttribute("nom", trim($request->nom));
+        $auditeur->setAttribute("prenoms", trim($request->prenoms));
+        $auditeur->setAttribute("telephone", trim($request->telephone));
+        $auditeur->setAttribute("ville", trim($request->ville));
+        $auditeur->setAttribute("civilite", trim($request->civilite));
+        $auditeur->setAttribute("genre", trim($request->genre));
+        $auditeur->setAttribute("secteur_activite", trim($request->secteur_activite));
+        $auditeur->setAttribute("organisme", trim($request->organisme));
+        $auditeur->setAttribute("intitule_poste", trim($request->intitule_poste));
+        // récupéré l'objet pays
+        $pays = Pays::where("id", $request->get('pays'))->get()->first();
+        $count_pays = Pays::where("id", trim($request->get('pays')))->count();
+        if ($count_pays > 0) {
+            # code...
+            $auditeur->setAttribute('pays', $pays->nom_pays);
+            $auditeur->setAttribute('code_pays', $pays->code_iso);
+            $auditeur->setAttribute('nationalite', $pays->nationalite);
+        }
+
+        try {
+            $auditeur->save();
+
+            // mise à jour des informations dans le compte auditeur
+            $getUser = User::whereEmail($request->email)->first();
+            $user = User::find($getUser->id);
+            $user->setAttribute('name',$request->get('nom').' '.$request->get('prenoms'));
+            // sauvegarde photo si disponible
+            $name_photo = null;
+            //if ($request->photo) {
+                $photo = $request->photo;
+                $extension = $photo->getClientOriginalExtension();
+                $name_photo = 'photo_'.date('Ymd-His'). '.'.$photo->extension();
+                //$photo->move(public_path('img/visuel/'), $name_photo);
+                $photo->storeAs('photo', $name_photo, 'public');
+                $user->setAttribute('logo_path', $name_photo);
+            //}
+            Log::info($request->photo);
+            $user->update();
+
+        } catch (\Exception $e) {
+            // Get error here
+            return  ResponseHandler::success("Echec lors de la mise à jour", $e->getMessage(),400);
+
+        }
+
+        return  ResponseHandler::success("Mise à jour effectuée avec succès");
+    }
+
+
 }
