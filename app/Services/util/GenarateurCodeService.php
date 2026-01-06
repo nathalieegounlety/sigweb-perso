@@ -3,6 +3,7 @@ namespace App\Services\util;
 use App\Models\Paiements;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 
 class GenarateurCodeService {
 
@@ -73,5 +74,10 @@ class GenarateurCodeService {
             // Format final : ERS-2025-FACT-000001
             return "{$indicatif}-{$annee_actuelle}-{$type_reference}-{$numeroFormate}";
         });
+    }
+
+    public function generateUrlSigned(string $routeName, array $params = []): string
+    {
+        return URL::signedRoute($routeName, $params);
     }
 }

@@ -7,12 +7,15 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "arius/number-formatter": "^1.1",
+        "barryvdh/laravel-dompdf": "^3.1",
         "darkaonline/l5-swagger": "^9.0",
         "fedapay/fedapay-php": "^0.4.7",
         "kkiapay/kkiapay-php": "dev-master",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "prettus/l5-repository": "^2.10",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

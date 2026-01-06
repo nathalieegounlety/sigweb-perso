@@ -64,6 +64,14 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
 // gestion des documents
 Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsController::class)->group(function(){
     Route::post('visuel/formation','showVisuelFormation');
+    // reçu de paiement
+    Route::get('/paiements/recu/{reference}', 'recuPaiement')->name('paiements.recu')->middleware('signed');
+    Route::get('/proforma/pm/{reference}', 'proformaPm')->name('proforma-pm')->middleware('signed');
+    Route::get('/facture/normalisee/{reference}', 'genereFactureNormalise')->name('emcef.proforma-pm')->middleware('signed');
+    Route::get('/paiements/recu/ouvrage/{reference}', 'recuPaiementOuvrage')->name('paiements.recu-ouvrage')->middleware('signed');
+    Route::get('/proforma/ouvrage/{reference}', 'proformaOuvrage')->name('proforma-ouvrage')->middleware('signed');
+    Route::post('url/signed/recu/paiement','urlRecuPaiement');
+    Route::post('url/signed/recu/paiement/ouvrage','urlRecuPaiementOuvrage');
 });
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function(){
@@ -183,6 +191,13 @@ Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController:
 // gestion de la comptabilité
 Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\ComptabilitesController::class)->group(function(){
     Route::get('commandes','listeCommandes');
+    Route::post('details/commande/formation','detailCommandeFormation');
+    Route::post('details/commande/ouvrage','detailCommandeOuvrage');
+    Route::post('details/commande/dsc','detailCommandeDsc');
+    Route::post('deplacer/commande','deplacerCommandeFormation');
+    Route::post('deplacer/commande/dsc','deplacerCommandeFormationDsc');
+    Route::post('declasser/commande','declasserCommande');
+    Route::get('paiements/attente','listePaiementsEnAttente');
 });
 
 
