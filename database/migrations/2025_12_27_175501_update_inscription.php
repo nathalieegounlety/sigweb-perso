@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::table('inscriptions', function (Blueprint $table) {
             $table->string('etat_approbation',20)->nullable()->change();
             $table->string('heure_inscription',100)->nullable()->change();
-            $table->string('statut_dossier',20)->default('N/A')->change();
-        });
+            if (!Schema::hasColumn('inscriptions', 'statut_dossier')) {
+                $table->string('statut_dossier', 20)->default('N/A');
+            } else {
+                $table->string('statut_dossier', 20)->default('N/A')->change();
+            }        });
     }
 
     /**
