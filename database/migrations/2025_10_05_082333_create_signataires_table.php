@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('titre',200);
             $table->string('fonction',200)->nullable();
             $table->date('date_debut');
-            $table->date('date_fin');
+            $table->date('date_fin')->nullable();
             $table->string('signature')->nullable();
             $table->boolean('enable')->default(true);
             $table->unsignedBigInteger('created_by');

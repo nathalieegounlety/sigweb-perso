@@ -13,7 +13,7 @@ class ComptabilitesController extends Controller
     public function __construct(ComptabilitesInterface $comptabiliteService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['listeCommandes']]);
+        $this->middleware('auth:api',['except' => ['listePaiementsEnAttente']]);
         $this->comptabiliteService = $comptabiliteService;
     }
 
@@ -21,6 +21,119 @@ class ComptabilitesController extends Controller
         // récupérer la liste
         try {
             $resultat = $this->comptabiliteService->getCommandes($request);
+            $data = $resultat['pagination'];
+            $montant_total = $resultat['montant_total'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
+                'montant_total'   => $montant_total
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+
+    public function detailCommandeFormation(Request $request){
+        try {
+            //
+            return $data = $this->comptabiliteService->getDetailsCommandeFormation($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function detailCommandeOuvrage(Request $request){
+        try {
+            //
+            return $data = $this->comptabiliteService->getDetailsCommandeOuvrage($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function detailCommandeDsc(Request $request){
+        try {
+            //
+            return $data = $this->comptabiliteService->getDetailsCommandeDsc($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function deplacerCommandeFormation(Request $request){
+        try {
+            $validated = $request->validate([
+                'statut_traitement' => 'required',
+                'montant_total' => 'required',
+                'modepaiement_id' => 'required',
+            ]);
+
+            return $data = $this->comptabiliteService->storeDeplacerCommandeFormation($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    public function deplacerCommandeFormationDsc(Request $request){
+        try {
+            $validated = $request->validate([
+                'statut_traitement' => 'required',
+                'montant_total' => 'required',
+                'modepaiement_id' => 'required',
+                'get_frais_inscription' => 'required',
+                'get_frais_scolarite' => 'required'
+            ]);
+
+            return $data = $this->comptabiliteService->storeDeplacerCommandeDsc($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function declasserCommande(Request $request){
+        try {
+
+            $validated = $request->validate([
+                'reference' => 'required|string|max:20'
+            ]);
+
+            return $data = $this->comptabiliteService->saveDeclassercommande($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function listePaiementsEnAttente(Request $request){
+        // récupérer la liste
+        try {
+            $resultat = $this->comptabiliteService->getPaiementsattente($request);
+
             $data = $resultat['pagination'];
             $montant_total = $resultat['montant_total'];
             // Transformer pour enlever le bloc 'links'

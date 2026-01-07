@@ -12,7 +12,7 @@ class DocumentsController extends Controller
 
     public function __construct(DocumentsInterface $documentService){
         $this->documentService = $documentService;
-        $this->middleware('auth:api');
+        $this->middleware('auth:api',['except' => ['recuPaiement']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -32,5 +32,31 @@ class DocumentsController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
 
+    }
+
+
+
+    public function recuPaiement(Request $request, $reference)
+    {
+        try {
+
+            return $data = $this->documentService->downloadRecuPaiement($reference);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function urlRecuPaiement(Request $request)
+    {
+        return $this->documentService->getUrlSignedRecuPaiement($request->reference);
+    }
+
+    public function urlRecuPaiementOuvrage(Request $request)
+    {
+        return $this->documentService->getUrlSignedRecuPaiement($request->reference);
     }
 }
