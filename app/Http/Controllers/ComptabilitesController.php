@@ -41,7 +41,6 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
-
     public function detailCommandeFormation(Request $request){
         try {
             //
@@ -53,7 +52,6 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
-
     public function detailCommandeOuvrage(Request $request){
         try {
             //
@@ -65,7 +63,17 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+    public function detailPaiementOuvrage(Request $request){
+        try {
+            //
+            return $data = $this->comptabiliteService->getDetailsPaiementOuvrage($request);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
     public function detailCommandeDsc(Request $request){
         try {
             //
@@ -77,7 +85,17 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+    public function detailPaiementDsc(Request $request){
+        try {
+            //
+            return $data = $this->comptabiliteService->getDetailsPaiementDsc($request);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
     public function deplacerCommandeFormation(Request $request){
         try {
             $validated = $request->validate([
@@ -112,7 +130,6 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
-
     public function declasserCommande(Request $request){
         try {
 
@@ -128,12 +145,10 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
-
     public function listePaiementsEnAttente(Request $request){
-        // récupérer la liste
+
         try {
             $resultat = $this->comptabiliteService->getPaiementsattente($request);
-
             $data = $resultat['pagination'];
             $montant_total = $resultat['montant_total'];
             // Transformer pour enlever le bloc 'links'
@@ -152,6 +167,61 @@ class ComptabilitesController extends Controller
 
         }catch (\Exception $e){
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    public function traitementPaiement(Request $request){
+        try {
+            $validated = $request->validate([
+                'statut_traitement' => 'required',
+                'montant_total' => 'required',
+                'modepaiement_id' => 'required',
+                'num_transaction' => 'required',
+                'reference' => 'required'
+            ]);
+
+            return $data = $this->comptabiliteService->validerPaiement($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    public function traitementPaiementPartiel(Request $request){
+        try {
+            $validated = $request->validate([
+                'statut_traitement' => 'required',
+                'montant_total' => 'required',
+                'modepaiement_id' => 'required',
+                'num_transaction' => 'required',
+                'identifiant' => 'required',
+                'reference' => 'required'
+            ]);
+
+            return $data = $this->comptabiliteService->validerPaiementPartiel($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    public function traitementPaiementDsc(Request $request){
+        try {
+            $validated = $request->validate([
+                'statut_traitement' => 'required',
+                'montant_total' => 'required',
+                'modepaiement_id' => 'required',
+                'reference' => 'required',
+                'num_transaction' => 'required'
+            ]);
+
+            return $data = $this->comptabiliteService->validerPaiementDsc($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
 }

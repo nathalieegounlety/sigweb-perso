@@ -23,7 +23,7 @@
     <b>Mode de Paiement : </b> {{ $contenu['mode_paiement'] }} <br>
     <b>Montant Payé : </b> {{ $contenu['montant'] }} <br>
     <p>Veuillez cliquer sur le lien suivant pour télécharger votre
-      <a href="{{route('paiements.recu',$contenu['url_recu'])}}" target="_blank"  title="Télécharger / Imprimer">reçu de paiement</a>.</p>
+      <a href="{{$contenu['url_recu']}}" target="_blank"  title="Télécharger / Imprimer">reçu de paiement</a>.</p>
     <p>Nous vous remercions de votre confiance et de votre fidélité à l'ERSUMA. <br>
     <center>« L’ERSUMA, pour une règle de droit effective, efficace et efficiente »</center>
     </p>

@@ -3,12 +3,17 @@
 namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
+use App\Mail\NotificationComptable;
+use App\Mail\Paiementattente;
 use App\Models\Auditeurs;
 use App\Models\Detailspaiements;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
+use App\Models\User;
 use App\Services\contracts\PaiementsInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class PaiementsService implements PaiementsInterface
 {
@@ -38,12 +43,10 @@ class PaiementsService implements PaiementsInterface
         return  ResponseHandler::success("Paiement non retrouvé ou référence invalide",$dataResponse);
     }
 
-
-
     public function getInfoPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getInfoPaiementPartiel() method.
-        $paiement = Paiements::whereReference($request->reference)->select('paiements.id','paiements.reference','paiements.montant_restant','paiements.telephone','paiements.email')->first();
+        $paiement = Paiements::whereReference($request->reference)->select('paiements.id','paiements.reference','paiements.montant_restant','paiements.telephone','paiements.email','paiements.num_transaction')->first();
         $auditeur = Auditeurs::whereEmail($paiement->email)->select('auditeurs.id','auditeurs.nom','auditeurs.prenoms','auditeurs.email')->first();
         $liste_modepaiements = Modepaiements::where('is_enable',true)->get(['id','libelle']);
 
@@ -60,12 +63,21 @@ class PaiementsService implements PaiementsInterface
                 \DB::raw('CASE WHEN detailspaiements.id_reduction IS NOT NULL THEN 1 ELSE 0 END as checkReduction')
             ])
             ->get();
+
+        // check details paiements
+        $checkDetails = Detailspaiements::where('statut_paiement','!=', 'PAYE')->exists();
+        $havePaiement = false;
+        if($checkDetails){ $havePaiement = true; }
+        if(!empty($paiement->num_transaction)){ $havePaiement = true; }
+
         $dataResponse = [
             'liste_modepaiements' => $liste_modepaiements,
             'detail_paiement' => $detailPaiement,
             'auditeur' => $auditeur,
-            'paiement' => $paiement
+            'paiement' => $paiement,
+            'havePaiement' => $havePaiement
         ];
+
         return  ResponseHandler::success("ok",$dataResponse);
     }
 
@@ -137,13 +149,72 @@ class PaiementsService implements PaiementsInterface
             }
             // $get_preuve = $request->preuve_paiement;
             // enregistrement de la preuve si ça existe
-            if (!empty($request->preuve)) {
+            if ($request->hasFile('preuve') && $request->file('preuve')->isValid()) {
                 $extension = $request->preuve->getClientOriginalExtension();
                 $preuve_name = date('Ymd-His') . '.' . $extension;
                 $request->preuve->storeAs('preuve', $preuve_name, 'public');
                 $update_detailspaiement->setAttribute('preuve_path', $preuve_name);
             }
             $update_detailspaiement->update();
+        }
+
+        // send mail
+        $auditeur = Auditeurs::where("email",$paiement->email)->first();
+
+        if ($auditeur) {
+            # code...
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'reference_paiement' => $paiement->reference_paiement,
+                'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$paiement->reference_paiement,
+                'email' => $paiement->email,
+                'montant' => $request->montant_total,
+                'mode_paiement' => $mode_paiement->libelle
+            ];
+        } else {
+            # code...
+            $contenu = [
+                'nom' => "",
+                'prenoms' => "",
+                'reference_paiement' => $paiement->reference_paiement,
+                'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$paiement->reference_paiement,
+                'email' => $paiement->email,
+                'montant' => $request->montant_total,
+                'mode_paiement' => $mode_paiement->libelle
+            ];
+        }
+        try {
+            # code...
+            Mail::to($paiement->email)->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new Paiementattente($contenu));
+        } catch (\Exception $e) {
+            // Get error here
+            Log::info('echec de l\'envoi du mail');
+        }
+
+        if(env('PAIEMENT_NOTIFIER_COMPTABLE')){
+
+            $liste_comptable = User::whereHas('roles', function ($q) {
+                $q->where('libelle', 'COMPTABLE');
+            })->pluck('email');
+
+            //foreach ($liste_comptable as $comptable) {
+            $contenu = [
+                'name' => 'COMPTABLE',
+                'reference_paiement' => $paiement->reference_paiement,
+                'email_auditeur' => $paiement->email,
+                'nom_auditeur' => $auditeur->prenoms.' '.$auditeur->nom,
+                'subject' => 'NOUVEAU PAIEMENT ' . date('d-m-Y H:i:s'),
+                'email' => '',
+                'montant' => $request->montant_total,
+                'mode_paiement' => $mode_paiement->libelle
+            ];
+            try {
+                # code...
+                Mail::to(env('MAIL_CC'))->cc($liste_comptable)->queue(new NotificationComptable($contenu));
+            } catch (\Exception $e) {
+                // Get error here
+            }
         }
 
         $dataResponse = [

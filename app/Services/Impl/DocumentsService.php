@@ -6,8 +6,11 @@ use App\Helpers\ResponseHandler;
 use App\Models\Auditeurs;
 use App\Models\Detailspaiements;
 use App\Models\Formations;
+use App\Models\Inscriptions;
+use App\Models\Modepaiements;
 use App\Models\Paiements;
 use App\Models\PaiementsTranche;
+use App\Models\Reductions;
 use App\Services\contracts\DocumentsInterface;
 use App\Services\util\GenarateurCodeService;
 use Arius\NumberFormatter;
@@ -166,5 +169,32 @@ class DocumentsService implements DocumentsInterface
         return  ResponseHandler::success("ok",$data,200);
     }
 
+    public function downloadProforma(string $reference)
+    {
+        // TODO: Implement downloadProforma() method.
+        $inscrit = Inscriptions::where("code_inscription",$reference)->orderBy("id","DESC")->get()->first();
+        $auditeur = Auditeurs::where("email",$inscrit->email)->first();
+        $liste_formation = Inscriptions::where("code_inscription",$reference)->orderBy("id","DESC")->get();
 
+        $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
+        $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
+
+        // share data to view
+        view()->share(['formatter'=>$formatter,'inscrit'=>$inscrit,'auditeur'=>$auditeur,'liste_formation'=>$liste_formation]);
+        $pdf = PDF::loadView('documents.pro_forma');
+        $customPaper = array(0,0,720,1440);
+        $pdf->setPaper($customPaper, 'landscape');
+
+        $date = date('d_m_Y_His');
+        // download PDF file with download method
+        return $pdf->download('proforma_'.$reference.'_'.$date.'.pdf');
+    }
+
+    public function getUrlProformaSigned(string $reference): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getUrlProformaSigned() method.
+        $url = $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' => $reference]);
+        $data = ['url'=>$url];
+        return  ResponseHandler::success("ok",$data,200);
+    }
 }

@@ -12,7 +12,7 @@ class DocumentsController extends Controller
 
     public function __construct(DocumentsInterface $documentService){
         $this->documentService = $documentService;
-        $this->middleware('auth:api',['except' => ['recuPaiement']]);
+        $this->middleware('auth:api',['except' => ['recuPaiement','proforma']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -34,8 +34,6 @@ class DocumentsController extends Controller
 
     }
 
-
-
     public function recuPaiement(Request $request, $reference)
     {
         try {
@@ -52,11 +50,61 @@ class DocumentsController extends Controller
 
     public function urlRecuPaiement(Request $request)
     {
-        return $this->documentService->getUrlSignedRecuPaiement($request->reference);
+        try{
+            $validated = $request->validate([
+                'reference' => 'required|string',
+            ]);
+
+            return $this->documentService->getUrlSignedRecuPaiement($request->reference);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
     }
 
     public function urlRecuPaiementOuvrage(Request $request)
     {
-        return $this->documentService->getUrlSignedRecuPaiement($request->reference);
+        try{
+            $validated = $request->validate([
+                'reference' => 'required|string',
+            ]);
+
+            return $this->documentService->getUrlSignedRecuPaiement($request->reference);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function proforma(Request $request, $reference)
+    {
+        try {
+
+            return $data = $this->documentService->downloadProforma($reference);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function genererUrlProformaSigned(Request $request)
+    {
+
+        try{
+            $validated = $request->validate([
+                'reference' => 'required|string',
+            ]);
+
+        return $this->documentService->getUrlProformaSigned($request->reference);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
     }
 }
