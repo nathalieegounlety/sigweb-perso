@@ -9,7 +9,6 @@
 </head>
 
 <body>
-@inject('functionMail', 'App\Helpers\functionMail')
 
 <div style=" display:block; max-width:800px; margin:20px auto;  padding:0; color:#fff; background: #071093; border-radius:5px;border:1px solid #138496;font-size:15px; font-family: Montserrat, sans serif;">
 

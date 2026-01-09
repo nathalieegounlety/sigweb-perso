@@ -313,8 +313,6 @@ class AuditeursService implements AuditeursInterface
                 'email' => $auditeur->email,
                 'code_inscription' => $generateCode,
             ];
-
-
             if ($check_exist == $total_formation) {
                 # code...
                 $ok = true;
@@ -331,7 +329,7 @@ class AuditeursService implements AuditeursInterface
                     }
                 } catch (\Exception $e) {
                     // Get error here
-
+                    Log::info($e->getMessage());
                 }
             }
 
