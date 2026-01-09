@@ -70,7 +70,7 @@ class DocumentsController extends Controller
                 'reference' => 'required|string',
             ]);
 
-            return $this->documentService->getUrlSignedRecuPaiement($request->reference);
+            return $this->documentService->getUrlSignedRecuPaiementOuvrage($request->reference);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
@@ -92,6 +92,18 @@ class DocumentsController extends Controller
 
     }
 
+    public function proformaDsc(Request $request, $reference)
+    {
+        try {
+            return $data = $this->documentService->downloadProformaDsc($reference);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
     public function genererUrlProformaSigned(Request $request)
     {
 
@@ -101,6 +113,20 @@ class DocumentsController extends Controller
             ]);
 
         return $this->documentService->getUrlProformaSigned($request->reference);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function genererUrlProformaDscSigned(Request $request)
+    {
+        try{
+            $validated = $request->validate([
+                'reference' => 'required|string',
+            ]);
+            return $this->documentService->getUrlProformaDscSigned($request->reference);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

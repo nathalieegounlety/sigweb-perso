@@ -65,15 +65,17 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
 Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsController::class)->group(function(){
     Route::post('visuel/formation','showVisuelFormation');
     // reçu de paiement
-    Route::get('/paiements/recu/{reference}', 'recuPaiement')->name('paiements.recu')->middleware('signed');
-    Route::get('/proforma/{reference}', 'proforma')->name('pro-forma')->middleware('signed');
-    Route::get('/proforma/pm/{reference}', 'proformaPm')->name('proforma-pm')->middleware('signed');
-    Route::get('/facture/normalisee/{reference}', 'genereFactureNormalise')->name('emcef.proforma-pm')->middleware('signed');
-    Route::get('/paiements/recu/ouvrage/{reference}', 'recuPaiementOuvrage')->name('paiements.recu-ouvrage')->middleware('signed');
-    Route::get('/proforma/ouvrage/{reference}', 'proformaOuvrage')->name('proforma-ouvrage')->middleware('signed');
-    Route::post('/url/signed/recu/paiement','urlRecuPaiement');
-    Route::post('/url/signed/recu/paiement/ouvrage','urlRecuPaiementOuvrage');
-    Route::post('/generer/url/proforma/signed','genererUrlProformaSigned');
+    Route::get('paiements/recu/{reference}', 'recuPaiement')->name('paiements.recu')->middleware('signed');
+    Route::get('proforma/{reference}', 'proforma')->name('pro-forma')->middleware('signed');
+    Route::get('formationsdiplomantes/proforma/{reference}/', 'proformaDSc')->name('pro-forma-dsc')->middleware('signed');
+    Route::get('proforma/pm/{reference}', 'proformaPm')->name('proforma-pm')->middleware('signed');
+    Route::get('facture/normalisee/{reference}', 'genereFactureNormalise')->name('emcef.proforma-pm')->middleware('signed');
+    Route::get('paiements/recu/ouvrage/{reference}', 'recuPaiementOuvrage')->name('paiements.recu-ouvrage')->middleware('signed');
+    Route::get('proforma/ouvrage/{reference}', 'proformaOuvrage')->name('proforma-ouvrage')->middleware('signed');
+    Route::post('url/signed/recu/paiement','urlRecuPaiement');
+    Route::post('url/signed/recu/paiement/ouvrage','urlRecuPaiementOuvrage');
+    Route::post('generer/url/proforma/signed','genererUrlProformaSigned');
+    Route::post('generer/url/proforma/dsc/signed','genererUrlProformaDscSigned');
 });
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function(){
@@ -118,6 +120,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::get('last/three/formations','threeFormation');
     Route::get('indicateurs','indicateurs');
     Route::post('liste/inscriptions','listeInscriptions');
+    Route::post('mespaiements','mesPaiements');
 });
 
 // gestion des api du frontoffice
@@ -205,6 +208,7 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
     Route::post('traitement/paiement/partiel','traitementPaiementPartiel');
     Route::post('traitement/paiement/dsc','traitementPaiementDsc');
     Route::post('traitement/paiement','traitementPaiement');
+    Route::get('paiements/valide','listePaiementsValide');
 });
 
 

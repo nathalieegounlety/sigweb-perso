@@ -287,9 +287,174 @@ class ComptabilitesService implements ComptabilitesInterface
 
     }
 
-    public function getPaiementsvalides(Request $request): LengthAwarePaginator
+    public function getPaiementsvalides(Request $request) //: LengthAwarePaginator
     {
         // TODO: Implement getPaiementsvalides() method.
+        $perPage   = $request->input('per_page', 50);
+        $search    = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $filterDate = $request->input('filter_date');
+
+        /** PAIEMENTS CLASSIQUES */
+        $classiques = DB::table('paiements')
+            ->leftJoin('auditeurs', 'auditeurs.email', '=', 'paiements.email')
+            ->leftJoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
+            ->where('statut_traitement', 'VALIDER')
+            ->where('paiements.type', '!=', 'dsc')
+            ->where('is_paiement_partiel', false)
+            ->whereNotNull('num_transaction')
+            ->selectRaw("
+            paiements.id,
+            auditeurs.nom,
+            auditeurs.prenoms,
+            auditeurs.email,
+            paiements.reference,
+            paiements.montant_restant as montant,
+            paiements.num_transaction,
+            paiements.type,
+            paiements.updated_at as date,
+            paiements.reference as action_ref,
+            'classique' as route_type,
+            modepaiements.id as id_modepaiement,
+            modepaiements.libelle as libelle_modepaiement,
+            0 as id_reduction,
+            0 as pourcentage,
+            0 as have_reduction,
+            '' as code_formation,
+            '' as theme
+        ");
+
+        /** PAIEMENTS PARTIELS */
+        $partiels = DB::table('detailspaiements')
+            ->leftJoin('auditeurs', 'auditeurs.email', '=', 'detailspaiements.email')
+            ->leftJoin('reductions','reductions.id','=','detailspaiements.id_reduction')
+            ->leftJoin('modepaiements', 'modepaiements.id', '=', 'detailspaiements.modepaiement_id')
+            ->leftJoin('formations', 'formations.code_formation', '=', 'detailspaiements.code_formation')
+            ->where('detailspaiements.statut_paiement', 'PAYE')
+            ->where('detailspaiements.statut_traitement', 'VALIDER')
+            ->where('detailspaiements.is_paiement_partiel', true)
+            ->selectRaw("
+            detailspaiements.id,
+            auditeurs.nom,
+            auditeurs.prenoms,
+            auditeurs.email,
+            detailspaiements.reference_paiement as reference,
+            detailspaiements.montant_restant as montant,
+            detailspaiements.reference_paiement_partiel as num_transaction,
+            'FORMATION PARTIEL' as type,
+            detailspaiements.updated_at as date,
+            detailspaiements.id as action_ref,
+            'partiel' as route_type,
+            modepaiements.id as id_modepaiement,
+            modepaiements.libelle as libelle_modepaiement,
+            reductions.id as id_reduction,
+            reductions.pourcentage,
+            0 as have_reduction,
+            formations.code_formation,
+            formations.theme
+        ");
+
+        /** PAIEMENTS DSC (TRANCHES) */
+        $dsc = DB::table('paiements_tranches')
+            ->leftJoin('modepaiements', 'modepaiements.id', '=', 'paiements_tranches.modepaiement_id')
+            ->leftJoin('detailspaiements', 'detailspaiements.id', '=', 'paiements_tranches.details_paiements_id')
+            ->leftJoin('reductions','reductions.id','=','detailspaiements.id_reduction')
+            ->leftJoin('formations', 'formations.code_formation', '=', 'detailspaiements.code_formation')
+            ->leftJoin('auditeurs', 'auditeurs.email', '=', 'detailspaiements.email')
+            ->where('paiements_tranches.statut_traitement', 'VALIDER')
+            ->whereNotNull('paiements_tranches.num_transaction')
+            ->groupBy('paiements_tranches.reference')
+            ->selectRaw("
+            MIN(paiements_tranches.id) as id,
+            MAX(auditeurs.nom) as nom,
+            MAX(auditeurs.prenoms) as prenoms,
+            MAX(auditeurs.email) as email,
+            paiements_tranches.reference,
+            SUM(paiements_tranches.montant_paye) as montant,
+            MAX(paiements_tranches.num_transaction) as num_transaction,
+            'DSC' as type,
+            MAX(paiements_tranches.updated_at) as date,
+            paiements_tranches.reference as action_ref,
+            'dsc' as route_type,
+            MAX(modepaiements.id) as id_modepaiement,
+            MAX(modepaiements.libelle) as libelle_modepaiement,
+            MAX(reductions.id) as id_reduction,
+            MAX(reductions.pourcentage) as pourcentage,
+            MAX(detailspaiements.have_reduction_dsc) as have_reduction,
+            MAX(formations.code_formation) as code_formation,
+            MAX(formations.theme) as theme
+            ");
+
+        /** UNION GLOBAL */
+        $unionQuery = $classiques
+            ->unionAll($partiels)
+            ->unionAll($dsc);
+
+        /** PAGINATION */
+        $query = DB::query()->fromSub($unionQuery, 't');
+        //->orderBy('date', 'desc')
+        //->paginate($perPage);
+
+        /* ==============================
+     |  SEARCH GLOBAL
+     ============================== */
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('t.nom', 'like', "%{$search}%")
+                    ->orWhere('t.prenoms', 'like', "%{$search}%")
+                    ->orWhere('t.reference', 'like', "%{$search}%")
+                    ->orWhere('t.num_transaction', 'like', "%{$search}%")
+                    ->orWhere('t.type', 'like', "%{$search}%")
+                    ->orWhere('t.libelle_modepaiement', 'like', "%{$search}%");
+
+                $clean = str_replace([' ', ','], '', $search);
+                if (is_numeric($clean)) {
+                    $q->orWhere('t.montant', (float) $clean);
+                }
+            });
+        }
+
+        if ($filterDate) {
+            $query->whereDate('t.date', $filterDate);
+        }
+
+
+        $allowedSortFields = [
+            'id',
+            'nom',
+            'prenoms',
+            'reference',
+            'email',
+            'montant',
+            'num_transaction',
+            'type',
+            'date',
+            'id_modepaiement',
+            'libelle_modepaiement',
+            'pourcentage',
+            'have_reduction'
+        ];
+
+        $sortField = in_array($sortField, $allowedSortFields) ? $sortField : 'date';
+        $sortOrder = $sortOrder === 'asc' ? 'asc' : 'desc';
+
+        $query->orderBy("t.$sortField", $sortOrder);
+
+
+        /* ==============================
+         |  PAGINATION
+         ============================== */
+        $paiements = $query->paginate($perPage);
+
+        /** TOTAL GLOBAL */
+        $total = (clone $query)->sum('montant'); // collect($paiements->items())->sum('montant');
+
+        return [
+            'pagination' => $paiements,
+            'montant_total' => $total
+        ];
+
     }
 
     public function getDetailsCommandeFormation(Request $request): \Illuminate\Http\JsonResponse

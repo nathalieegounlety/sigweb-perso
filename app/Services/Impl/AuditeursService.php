@@ -13,6 +13,7 @@ use App\Models\Inscriptions;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
 use App\Models\Pays;
+use App\Models\Rapports;
 use App\Models\Reductions;
 use App\Models\Tarificationsformation;
 use App\Models\User;
@@ -637,7 +638,19 @@ class AuditeursService implements AuditeursInterface
     public function getIndicateurs(): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getListePays() method.
-        $data = "ok";
+        $user = auth('api')->user();
+        $nbreInscription = Inscriptions::whereEmail($user->email)->count();
+        $nbreAttestation = Rapports::whereEmail($user->email)->whereAttestationSend(true)->count();
+        $nbreParticipation = Paiements::whereEmail($user->email)->where('montant_paye','>',0)->count();
+        $nbreParticipationGratuit = Paiements::whereEmail($user->email)
+            ->whereIn('montant_paye',[0,10000])->count();
+
+        $data = [
+            'nbreInscription' => $nbreInscription,
+            'nbreAttestation' => $nbreAttestation,
+            'nbreParticipation' => $nbreParticipation,
+            'nbreParticipationGratuit' => $nbreParticipationGratuit
+        ];
 
         return  ResponseHandler::success("ok",$data);
 
@@ -768,4 +781,135 @@ class AuditeursService implements AuditeursInterface
     }
 
 
+    public function getMesPaiements(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getMesPaiements() method.
+        /** PAIEMENTS EN ATTENTE */
+        $paiements_attente = DB::table('detailspaiements')
+            ->join('paiements', 'detailspaiements.reference_paiement', '=', 'paiements.reference')
+            ->where("detailspaiements.email", $request->email)
+            ->where('detailspaiements.statut_paiement', 'IMPAYE')
+            ->where('detailspaiements.statut_traitement', 'ATTENTE')
+            ->where('detailspaiements.montant_restant', '>', 0)
+            ->where('paiements.type', '!=', 'dsc')
+            ->orderBy('detailspaiements.updated_at', 'desc')
+            ->select([
+                'detailspaiements.reference_paiement as reference',
+                'detailspaiements.montant_restant as montant',
+                'detailspaiements.code_inscription',
+                'detailspaiements.email',
+                'detailspaiements.updated_at',
+                'detailspaiements.code_formation',
+                'paiements.type',
+                'paiements.is_paiement_partiel'
+            ])->get();
+
+        $paiements_attente_dsc = DB::table('paiements')
+            ->join('inscriptions','inscriptions.code_inscription','=','paiements.code_inscription')
+            ->join('formations','formations.code_formation','=','inscriptions.code_formation')
+            ->leftJoin('inscriptions_dscs', 'inscriptions_dscs.code_inscription', '=', 'inscriptions.code_inscription')
+            ->where("paiements.email", $request->email)
+            ->whereNull('num_transaction')
+            ->where('montant_restant', '>', 0)
+            ->where('paiements.type', '=', 'dsc')
+            ->orderBy('paiements.updated_at', 'desc')
+            ->select([
+                'paiements.reference',
+                'paiements.montant_restant as montant',
+                'paiements.code_inscription',
+                'paiements.email',
+                'paiements.updated_at',
+                'inscriptions.code_formation',
+                'paiements.type',
+                'paiements.is_paiement_partiel',
+                'inscriptions_dscs.id as id_insc_dsc',
+                'formations.date_debut'
+            ])
+            ->addSelect([
+                // check dsc valide
+                DB::raw('CASE WHEN inscriptions_dscs.id IS NOT NULL THEN 1 ELSE 0 END as checkValidationDsc'),
+
+                // checkdate : true si l'année de date_paiement > 2024
+                \DB::raw('CASE
+                    WHEN formations.date_debut IS NOT NULL
+                     AND YEAR(formations.date_debut) > 2024
+                    THEN 1 ELSE 0
+                  END as checkDsc2024')
+            ])->get();
+
+
+        // Liste des paiements en cours de validation
+        $liste_paiement_encours_dsc = DB::table('paiements_tranches')
+            ->leftjoin('detailspaiements', 'detailspaiements.id', '=', 'paiements_tranches.details_paiements_id')
+            ->leftjoin('auditeurs', 'auditeurs.email', '=', 'detailspaiements.email')
+            ->join('modepaiements', 'modepaiements.id', '=', 'paiements_tranches.modepaiement_id')
+            ->where('paiements_tranches.statut_traitement', 'ATTENTE')
+            ->where("detailspaiements.email", $request->email)
+            ->select('paiements_tranches.montant_paye', 'paiements_tranches.reference', 'paiements_tranches.updated_at', 'modepaiements.libelle as mode_paiement')
+            ->orderBy('paiements_tranches.id', 'DESC')
+            ->get();
+
+        $liste_paiement_encours = DB::table('paiements')
+            ->leftjoin('auditeurs', 'auditeurs.email', '=', 'paiements.email')
+            ->join('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
+            ->select('paiements.reference', 'paiements.montant_paye', 'paiements.num_transaction', 'paiements.updated_at', 'paiements.created_at', 'modepaiements.libelle as mode_paiement', 'paiements.type', 'paiements.code_inscription')
+            ->where('statut_traitement', 'ATTENTE')
+            ->where('is_paiement_partiel', false)
+            ->where('paiements.type', '!=', 'dsc')
+            ->where("paiements.email", $request->email)
+            ->whereNotNull('num_transaction')
+            ->orderBy('paiements.id', 'DESC')
+            ->get();
+
+        $liste_paiement_partiel_encours = DB::table('detailspaiements')
+            ->join('modepaiements', 'modepaiements.id', '=', 'detailspaiements.modepaiement_id')
+            ->where("detailspaiements.email", $request->email)
+            ->where('statut_paiement', 'PAYE')
+            ->where('statut_traitement', 'ATTENTE')
+            ->where('is_paiement_partiel', true)
+            ->get(["detailspaiements.id","detailspaiements.montant_paye", "detailspaiements.reference_paiement as reference", "modepaiements.libelle as mode_paiement", "detailspaiements.updated_at", "detailspaiements.code_inscription"]);
+
+        // Liste des paiements validés
+        $liste_paiement_partiel_dsc = DB::table('paiements_tranches')
+            ->leftjoin('detailspaiements', 'detailspaiements.id', '=', 'paiements_tranches.details_paiements_id')
+            ->leftjoin('auditeurs', 'auditeurs.email', '=', 'detailspaiements.email')
+            ->join('modepaiements', 'modepaiements.id', '=', 'paiements_tranches.modepaiement_id')
+            ->where('paiements_tranches.statut_traitement', 'VALIDER')
+            ->where("detailspaiements.email", $request->email)
+            ->select('paiements_tranches.montant_paye', 'detailspaiements.code_inscription', 'auditeurs.nom', 'auditeurs.prenoms', 'auditeurs.telephone', 'auditeurs.email', 'paiements_tranches.reference', 'paiements_tranches.num_transaction', 'paiements_tranches.updated_at', 'modepaiements.libelle as mode_paiement')
+            ->orderBy('paiements_tranches.id', 'DESC')
+            ->get();
+
+        $paiements = DB::table('paiements')
+            ->join('modepaiements','modepaiements.id','=','paiements.id_modepaiement')
+            ->where("email", $request->email)
+            ->whereNotNull('num_transaction')
+            ->where('statut_traitement', 'VALIDER')
+            ->where('is_paiement_partiel', false)
+            ->where('paiements.type', '!=', 'dsc')
+            ->get(['paiements.reference','paiements.montant_paye','paiements.updated_at','modepaiements.libelle as mode_paiement']);
+
+        $paiements_partiel = DB::table('detailspaiements')
+            ->join('modepaiements', 'modepaiements.id', '=', 'detailspaiements.modepaiement_id')
+            ->where("email", $request->email)
+            ->where('statut_paiement', 'PAYE')
+            ->where('statut_traitement', 'VALIDER')
+            ->where('is_paiement_partiel', true)
+            ->get(["detailspaiements.id", "detailspaiements.reference_paiement as reference", "modepaiements.libelle as mode_paiement", "detailspaiements.updated_at"]);
+
+
+        $data = [
+            'paiementNonEffectue' => $paiements_attente,
+            'paiementNoneffectueDsc' => $paiements_attente_dsc,
+            'liste_paiement_partiel_encours' => $liste_paiement_partiel_encours,
+            'liste_paiement_encours' => $liste_paiement_encours,
+            'liste_paiement_encours_dsc' => $liste_paiement_encours_dsc,
+            'liste_paiement_partiel_dsc' => $liste_paiement_partiel_dsc,
+            'paiements' => $paiements,
+            'paiements_partiel' => $paiements_partiel
+        ];
+
+        return  ResponseHandler::success("ok",$data);
+
+    }
 }

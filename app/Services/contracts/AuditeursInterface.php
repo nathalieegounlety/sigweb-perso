@@ -31,5 +31,6 @@ interface AuditeursInterface
     public function getIndicateurs(): \Illuminate\Http\JsonResponse;
     public function getListeInscriptions(Request $request): \Illuminate\Http\JsonResponse;
     public function updateAuditeur(Request $request): \Illuminate\Http\JsonResponse;
+    public function getMesPaiements(Request $request): \Illuminate\Http\JsonResponse;
 
 }

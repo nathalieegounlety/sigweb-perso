@@ -13,4 +13,6 @@ interface DocumentsInterface
     public function getUrlSignedRecuPaiementOuvrage(string $reference): \Illuminate\Http\JsonResponse;
     public function downloadProforma(string $reference);
     public function getUrlProformaSigned(string $reference): \Illuminate\Http\JsonResponse;
+    public function getUrlProformaDscSigned(string $reference): \Illuminate\Http\JsonResponse;
+    public function downloadProformaDsc(string $reference);
 }
