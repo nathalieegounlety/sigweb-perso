@@ -146,8 +146,6 @@ class DocumentsService implements DocumentsInterface
 
     }
 
-
-
     public function getUrlSignedRecuPaiement(string $reference): \Illuminate\Http\JsonResponse
     {
         $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference' => $reference]);
@@ -196,5 +194,37 @@ class DocumentsService implements DocumentsInterface
         $url = $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' => $reference]);
         $data = ['url'=>$url];
         return  ResponseHandler::success("ok",$data,200);
+    }
+
+    public function getUrlProformaDscSigned(string $reference): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getUrlProformaDscSigned() method.
+        $url = $this->genarateurCodeService->generateUrlSigned('pro-forma-dsc',['reference' => $reference]);
+        $data = ['url'=>$url];
+        return  ResponseHandler::success("ok",$data,200);
+    }
+
+    public function downloadProformaDsc(string $reference)
+    {
+        // TODO: Implement downloadProformaDsc() method.
+        $inscrit = Inscriptions::where("code_inscription", $reference)->orderBy("id", "DESC")->get()->first();
+        $auditeur = Auditeurs::where("email", $inscrit->email)->first();
+        $liste_formation = Inscriptions::where("code_inscription", $reference)->orderBy("id", "DESC")->get();
+        $details = Detailspaiements::where("code_inscription", $reference)->orderBy("id", "DESC")->get();
+        $liste_modepaiements = Modepaiements::where('statut', 'ACTIF')->get();
+        $liste_reduction = Reductions::all();
+
+        $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
+        $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
+
+        // share data to view
+        view()->share(['formatter' => $formatter, 'inscrit' => $inscrit, 'auditeur' => $auditeur, 'liste_formation' => $liste_formation, 'details' => $details]);
+        $pdf = PDF::loadView('documents.pro_forma_dsc');
+        $customPaper = array(0, 0, 720, 1440);
+        $pdf->setPaper($customPaper, 'landscape');
+
+        $date = date('d_m_Y_His');
+        // download PDF file with download method
+        return $pdf->download('proforma_' . $reference . '_' . $date . '.pdf');
     }
 }

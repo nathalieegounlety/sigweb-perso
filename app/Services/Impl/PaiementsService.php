@@ -166,8 +166,8 @@ class PaiementsService implements PaiementsInterface
             $contenu = [
                 'nom' => $auditeur->nom,
                 'prenoms' => $auditeur->prenoms,
-                'reference_paiement' => $paiement->reference_paiement,
-                'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$paiement->reference_paiement,
+                'reference_paiement' => $request->reference_paiement,
+                'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$request->reference_paiement,
                 'email' => $paiement->email,
                 'montant' => $request->montant_total,
                 'mode_paiement' => $mode_paiement->libelle
@@ -177,8 +177,8 @@ class PaiementsService implements PaiementsInterface
             $contenu = [
                 'nom' => "",
                 'prenoms' => "",
-                'reference_paiement' => $paiement->reference_paiement,
-                'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$paiement->reference_paiement,
+                'reference_paiement' => $request->reference_paiement,
+                'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$request->reference_paiement,
                 'email' => $paiement->email,
                 'montant' => $request->montant_total,
                 'mode_paiement' => $mode_paiement->libelle
