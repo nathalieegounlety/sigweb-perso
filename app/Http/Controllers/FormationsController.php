@@ -16,7 +16,7 @@ class FormationsController extends Controller
 
     public function __construct(FormationsInterface $formationsService){
         // restriction des accès
-        $this->middleware('auth:api', ['except' => ['recenteFormation','index','detailFormation']]);
+        $this->middleware('auth:api', ['except' => ['recenteFormation','index','detailFormation','listeFormationAttestation']]);
         //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);
         //$this->middleware('role:ADMIN')->only(['index']);
         //$this->middleware('permission:CREATE')->only(['index']);
@@ -24,36 +24,6 @@ class FormationsController extends Controller
     }
     public function index(Request $request)
     {
-
-        $request = new Request([
-            'formations_classique' => [
-                [
-                    'code_formation' => 'ERS2024-M4',
-                    'tarif'     => '343',
-                ],
-                [
-                    'code_formation' => 'SPO2024-S5',
-                    'tarif'     => '360',
-                ],
-            ],
-        ]);
-        $c = 360;
-        $email = 'blandine@yopmail.com';
-        $contenu = [
-            'nom' => 'DAYANA',
-            'prenoms' => 'Blandine',
-            'formations' => $request->formations_classique,
-            'subject' => 'Inscription sur SIGWEB de DAYANA Blandine',
-            'email' => $email,
-            'code_inscription' => '22939299329',
-        ];
-
-        //dd($contenu['formations']);
-
-
-        Mail::to($email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Inscriptionpresentiel($contenu));
-
-
         // récupérer la liste des rôles
         try {
             $data = $this->formationsService->getFormations($request);
@@ -126,6 +96,17 @@ class FormationsController extends Controller
                 'id'=>'required',
             ]);
             $data = $this->formationsService->getDetailsFormation($request);
+            return ResponseHandler::success('ok',$data);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    public function listeFormationAttestation(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $data = $this->formationsService->getFormationsAttestation($request);
             return ResponseHandler::success('ok',$data);
 
         }catch (\Exception $e){

@@ -5,6 +5,7 @@ namespace App\Services\Impl;
 use App\Helpers\ResponseHandler;
 use App\Models\Auditeurs;
 use App\Models\Detailspaiements;
+use App\Models\Dureeformations;
 use App\Models\Formations;
 use App\Models\Inscriptions;
 use App\Models\Modepaiements;
@@ -15,6 +16,8 @@ use App\Services\contracts\DocumentsInterface;
 use App\Services\util\GenarateurCodeService;
 use Arius\NumberFormatter;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -226,5 +229,76 @@ class DocumentsService implements DocumentsInterface
         $date = date('d_m_Y_His');
         // download PDF file with download method
         return $pdf->download('proforma_' . $reference . '_' . $date . '.pdf');
+    }
+
+    public function getListeAttestationParticipant(Request $request, string $code_formation) //: LengthAwarePaginator
+    {
+        // TODO: Implement getListeAttestationParticipant() method.
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $query = DB::table('rapports')
+            ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->leftJoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+            ->leftJoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+            ->leftJoin('detailspaiements', function ($join) {
+                $join->on('detailspaiements.email', '=', 'inscriptions.email');
+                $join->on('detailspaiements.id_tarification_formation', '=', 'inscriptions.tarif_formation_id');
+            })
+            ->select(
+                'rapports.email',
+                'rapports.attestation_send',
+                'rapports.code_formation',
+                'rapports.temps_presence',
+                'inscriptions.id as id_inscrit',
+                'auditeurs.nom',
+                'auditeurs.prenoms',
+                'auditeurs.pays',
+                'detailspaiements.statut_paiement'
+            )
+            ->where('rapports.code_formation', $code_formation)
+            ->where('inscriptions.code_formation', $code_formation);
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('auditeurs.nom', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('rapports.email', 'like', "%{$search}%")
+                    ->orWhere('rapports.temps_presence', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.pays', 'like', "%{$search}%"); // Recherche sur auteur
+            });
+        }
+        $query->orderBy("rapports.{$sortField}", $sortOrder);
+
+        $check_duree_formation = Dureeformations::where("code_formation",$code_formation)->first();
+
+        if ($check_duree_formation) {
+            $nbr_duree_enregistrement = $check_duree_formation->duree_enregistrement;
+        } else {
+            # code... create durée
+            $nbr_duree_enregistrement = 0;
+        }
+
+        $data = $query->paginate($perPage);
+
+        //variable temps de latence
+        $temps_latence = 90; // par jour de formation ||
+        // récupérer le nbre de jour de formation pour la formation en cours
+        //$nbre_session_formation = Sessionformation::where('code_formation',$code_formation)->count();
+        //$total_temps_latence = $temps_latence * $nbre_session_formation;
+
+        $duree_formation = DB::table('sessionformations')
+            ->select(DB::raw('sum(duree_reel - ' . $temps_latence . ') as duree_session'))
+            ->where('code_formation', $code_formation)
+            ->get();
+
+        return [
+            'pagination' => $data,
+            'nbr_duree_enregistrement' => $nbr_duree_enregistrement,
+            'duree_formation' => $duree_formation
+        ];
     }
 }
