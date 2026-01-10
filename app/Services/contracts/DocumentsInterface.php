@@ -3,6 +3,8 @@
 namespace App\Services\contracts;
 
 use App\Models\Formations;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 
 interface DocumentsInterface
 {
@@ -15,4 +17,5 @@ interface DocumentsInterface
     public function getUrlProformaSigned(string $reference): \Illuminate\Http\JsonResponse;
     public function getUrlProformaDscSigned(string $reference): \Illuminate\Http\JsonResponse;
     public function downloadProformaDsc(string $reference);
+    public function getListeAttestationParticipant(Request $request, string $code_formation); //: LengthAwarePaginator;
 }

@@ -11,6 +11,7 @@ use App\Models\Tarificationsformation;
 use App\Services\contracts\FormationsInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FormationsService implements FormationsInterface
 {
@@ -302,5 +303,23 @@ class FormationsService implements FormationsInterface
             ->where('formations.id', $request->id)
             ->get()->first();
         return ResponseHandler::success('ok', $queryFormations);
+    }
+
+    public function getFormationsAttestation(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getFormationsAttestation() method.
+        $liste_formations = Formations::query()
+            ->where('statut', 'INACTIF')
+            ->where(function ($q) {
+                $q->where('enable', true)
+                    ->orWhere('presentiel', 1);
+            })
+            ->select([
+                'code_formation as code',
+                DB::raw("CONCAT(formations.code_formation, ' - ', formations.theme) AS name")
+            ])
+            ->orderBy('id', 'DESC')
+            ->get();
+        return ResponseHandler::success('ok', $liste_formations);
     }
 }

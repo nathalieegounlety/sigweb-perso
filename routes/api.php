@@ -59,6 +59,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('remove','remove');
     Route::get('recentes','recenteFormation');
     Route::post('details','detailFormation');
+    Route::get('for/attestation','listeFormationAttestation');
 });
 
 // gestion des documents
@@ -76,6 +77,7 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('url/signed/recu/paiement/ouvrage','urlRecuPaiementOuvrage');
     Route::post('generer/url/proforma/signed','genererUrlProformaSigned');
     Route::post('generer/url/proforma/dsc/signed','genererUrlProformaDscSigned');
+    Route::get('attestations','listeAttestationParticipant');
 });
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function(){

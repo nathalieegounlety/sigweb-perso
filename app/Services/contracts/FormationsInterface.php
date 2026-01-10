@@ -22,5 +22,6 @@ interface FormationsInterface
     public function getRecentFormations(Request $request);
 
     public function getDetailsFormation(Request $request): \Illuminate\Http\JsonResponse;
+    public function getFormationsAttestation(Request $request): \Illuminate\Http\JsonResponse;
 
 }
