@@ -1,21 +1,18 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!DOCTYPE html>
 <html>
-
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <title></title>
+    <title>Reçu de paiement</title>
     <style type="text/css">
         @page {
             size: 21cm 29.7cm;
-            margin-left: 1.75cm;
-            1.27cm;
-            margin-right: 1.75cm;
-            1.27cm;
-            margin-top: 1.27cm;
-            0.73cm;
-            margin-bottom: 1.27cm;
-            0.97cm
+            margin: 1.27cm 1.75cm 1.27cm 1.75cm;
             font-family: Tahoma, serif;
+        }
+
+        body {
+            font-family: Tahoma, sans-serif;
+            line-height: 1.5;
         }
 
         p {
@@ -23,349 +20,205 @@
             direction: ltr;
             line-height: 115%;
             text-align: justify;
-            font-family: Tahoma, serif;
             orphans: 2;
             widows: 2;
-            background: transparent
+            background: transparent;
         }
 
-        p.western {
-            font-family: Tahoma, serif;
-            so-language: fr-FR
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        p.cjk {
-            font-family: Tahoma, sans-serif;
+        th, td {
+            border: 1px solid black;
+            padding: 5px;
         }
 
-        p.ctl {
-            font-family: Tahoma, sans-serif;
-            font-size: 10pt
-        }
-        div, table, pr, span, p {
-            font-family: Tahoma, sans-serif;
-        }
-
-        a:link {
-            color: #1571c6;
-            text-decoration: underline
-        }
-
-        /** Define the header rules **/
-        header {
-            position: fixed;
-            top: 0cm;
-            left: 0cm;
-            right: 0cm;
-            height: 3cm;
-        }
-
-        /** Define the footer rules **/
-        footer {
-            position: fixed;
-            bottom: 0cm;
-            left: 0cm;
-            right: 0cm;
-            height: 5cm;
+        @media print {
+            header {
+                position: fixed;
+                top: 0;
+            }
+            footer {
+                position: fixed;
+                bottom: 0;
+            }
         }
     </style>
-
 </head>
 
-
-<body lang="fr-BJ" link="#0563c1" vlink="#800000" dir="ltr"
-      style="font-family: Tahoma, sans-serif;
-   z-index: 100;">
-
-<div style="z-index: 10; background:none;">
-
-
-    <div style="z-index:30;">
-        <div style="float:left;width:86%;">
-
-            <div style=" border-bottom:5px double #2681ca; max-width:75%; padding: 0 0 10px 0; ">
-
-                <div style="float:left; width: 90px; margin:0px; height:90px; ">
-                    <img src="img/logo/logo-ohada.png" alt="" height="75px" style="height: 75px;">
+<body lang="fr-BJ" dir="ltr">
+    <header>
+        <div style="width: 86%; float: left;">
+            <div style="border-bottom: 5px double #2681ca; max-width: 75%; padding: 0 0 10px 0;">
+                <div style="float: left; width: 90px; margin: 0; height: 90px;">
+                    <img src="/img/logo/logo-ohada.png" alt="Logo OHADA" style="height: 75px;">
                 </div>
-                <div
-                    style=" font-size:65%; line-height:1.5; margin: -25px 0 0 95px; padding:0px; top:0; font-family: Tahoma, serif; font-weight:bold; text-align:justify;">
-                    Organisation &nbsp;pour &nbsp;l’Harmonisation &nbsp;en &nbsp;Afrique &nbsp;du &nbsp;Droit &nbsp;des &nbsp;Affaires <br>
-                    Organization &nbsp;&nbsp; for&nbsp; &nbsp;the&nbsp; &nbsp;Harmonization &nbsp;&nbsp; of &nbsp;&nbsp;Business
-                    &nbsp;&nbsp; Law &nbsp;in &nbsp;&nbsp; Africa <br>
-                    Organización para la Armonización en África del Derecho de los Negocios <br>
-                    Organização &nbsp;para &nbsp;a &nbsp;Harmonização &nbsp;em &nbsp;África &nbsp;do &nbsp;Direito dos Negócios
+                <div style="font-size: 65%; line-height: 1.5; margin: -25px 0 0 95px; padding: 0; font-weight: bold; text-align: justify;">
+                    Organisation pour l’Harmonisation en Afrique du Droit des Affaires<br>
+                    Organization for the Harmonization of Business Law in Africa<br>
+                    Organización para la Armonización en África del Derecho de los Negocios<br>
+                    Organização para a Harmonização em África do Direito dos Negócios
                 </div>
             </div>
         </div>
-        <div style="float:right;width:14%;position:relative; text-align:right;">
-            <img src="img/logo/attestation_flyers2.png" alt="" height="80px">
+        <div style="width: 14%; float: right; text-align: right;">
+            <img src="/img/logo/attestation_flyers2.png" alt="Attestation" style="height: 80px;">
         </div>
-    </div>
+    </header>
 
-    <div
-        style="background: url('img/logo/logo-ohada-new500.png');
-    opacity: 0.1;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center 150px bottom 20px;
-    z-index: -1;
-    bottom:0;
-    display:block;
-    ">
-        <!-- div opacity -->
-        <div style="z-index: 300; opacity:0; margin:0;">
+    <main>
+        <div style="text-align: center; margin: 50px 0 20px; font-size: 22pt; color: #006fc0; font-weight: bold;">
+            REÇU DE PAIEMENT
+        </div>
 
-            <div
-                style="z-index: 100;clear:both; display:block; margin: 50px 0 0px 0;text-align: center;line-height: 115%;font-size: 22pt; color:#006fc0; font-weight:bold;">
-                <div style="margin: 50px 0 5px 0;">
-                    REÇU DE PAIEMENT
-                </div>
-            </div>
+        <table style="width: 100%; margin: 20px 0;">
+            <tr>
+                <td style="width: 45%; padding: 4px; background: #1571c6; color: #fff; text-align: center;">
+                    N° RECU
+                </td>
+                <td style="width: 20%;">&nbsp;</td>
+                <td style="width: 35%; padding: 4px; background: #1571c6; color: #fff; text-align: center;">
+                    DATE
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">
+                    <b>{{ $paiement->reference }}</b>
+                </td>
+                <td>&nbsp;</td>
+                <td style="text-align: center;">
+                    <b>{{ \Carbon\Carbon::parse($paiement->updated_at)->format('d/m/Y') }}</b>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" style="padding: 4px; background: #1571c6; color: #fff; text-align: center;">
+                    <b>DELIVRE A</b>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" style="line-height: 1.5; padding: 10px;">
+                    <b>{{ $auditeur->prenoms ?? '' }} <span style="text-transform: uppercase;">{{ $auditeur->nom ?? '' }}</span></b><br>
+                    @if ($auditeur->telephone)
+                        Tél : {{ $auditeur->telephone }} -
+                    @endif
+                    E-mail : {{ $auditeur->email }}
+                    @if ($auditeur->ville || $auditeur->pays)
+                        <br>
+                        {{ $auditeur->ville ?? '' }}, {{ $auditeur->pays ?? '' }}
+                    @endif
+                </td>
+            </tr>
+        </table>
 
-            <div style="clear:both; display:block;"> </div>
+        <div style="text-align: center; margin: 10px 0; padding: 4px; background: #1571c6; color: #fff; line-height: 1.3;">
+            <b>Détails du paiement</b>
+        </div>
 
-            <div style="clear:both; ">
-                <table style="width: 100%; z-index:1000;  padding: 20px 0 0 0; margin: 0 ;">
-                    <tbody>
-                    <tr>
-                        <td style="width: 45%;padding:4px;background:#1571c6; color:#fff; text-align:center;">
-                            N° RECU
-                        </td>
-                        <td style="width: 20%;">
-                            &nbsp;
-                        </td>
-                        <td style="width: 35%;padding:4px;background:#1571c6; color:#fff; text-align:center;">
-                            DATE
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align:center;">
-                            <b>{{ $paiement->reference }}</b>
-                        </td>
-                        <td style="">
-                            &nbsp;
-                        </td>
-                        <td style="text-align:center;">
-                            <b>{{ \Carbon\Carbon::parse($paiement->updated_at)->format('d/m/Y') }}</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" style="padding:4px; margin-top:10px;background:#1571c6; color:#fff; text-align:center; ">
-                            <b>DELIVRE A</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" style="line-height: 1.5;  ">
-                            <b>{{ $auditeur->prenoms ?  $auditeur->prenoms : '' }}
-                                <span style="text-transform:uppercase;">{{ $auditeur->nom ? $auditeur->nom : '' }}</span></b><br>
-
-                            @if ($auditeur->telephone)
-                                Tél : {{ $auditeur->telephone }} -
-                            @endif
-                            E-mail : {{ $auditeur->email }}
-                            @if ($auditeur->ville)
-                                <br>
-                                {{ $auditeur->ville }},
-                            @endif
-                            @if ($auditeur->pays)
-                                {{ $auditeur->pays }}
-                            @endif
-
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div style="line-height: 1.3; margin:10px 0; padding:4px; text-align:center;text-transform:uppercase;background:#1571c6; color:#fff;">
-
-                <b>Détails du paiement</b>
-
-            </div>
-            <div style="clear:both; ">
-
-                <table cellspacing="0" cellpadding="0"
-                       style=" cellspacing : 0; cellpadding:0; border:0; width: 100%; z-index:1000;  padding: 10px 0 0 0; margin: 0 ; font-size:10.5pt;">
-                    <thead>
-                    <tr style="margin:0;background-color: #abd">
-                        <th style="padding:5px; margin:0; border: 1px solid black;">#</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black; text-align:left;">Formation
-                        </th>
-                        <th style="padding:5px; margin:0; border: 1px solid black; min-width:85%;">Frais</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black;">Réf. transaction</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black;">Réduction</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black; min-width:90%;">Montant</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black;">Etat</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @php
-                        $i = 0; $montant_paye = 0; $montant_restant = 0;
-                    @endphp
-                    @foreach ($details_paiement as $item)
-                        @php
-                            $pourcentage = 0;
-                            $i = $i + 1;
-                        @endphp
-                        @if ($item->pourcentage != '')
-                            @php
-                                $pourcentage = $item->pourcentage / 100;
-                            @endphp
-                        @endif
-                        @if ($item->statut_paiement == "PAYE")
-                            @php
-                                $montant_paye = $montant_paye + ($item->montant - ($item->montant * $pourcentage));
-                            @endphp
-                        @else
-                            @php
-                                $montant_restant = $montant_restant + ($item->montant - ($item->montant * $pourcentage));
-                            @endphp
-                        @endif
-
-                        <tr style="margin:0;">
-                            <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-                                <b>{{ $i }}</b></td>
-                            <td style="margin:0; padding:5px; border: 1px solid black;">
-                                <b>{{ $item->code_formation }}</b> - {{ $item->theme }}</td>
-                            <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-                                {{ $item->libelle }}</td>
-                            <td style="margin:0; padding:5px; border: 1px solid black;">
-                                {{ $item->num_transaction }}</td>
-                            <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-                                @if ($item->pourcentage != '')
-                                    {{ $item->pourcentage }}
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">
-                                {{ number_format($item->montant - $item->montant * $pourcentage, 0, ',', '.') }}
-                            </td>
-                            <td style="margin:0; padding:5px; border: 1px solid black;">
-                                {{ $item->statut_paiement }}</td>
-                        </tr>
-                    @endforeach
-                    <tr style="margin:0;background-color: #abd">
-                        <th colspan="5" style="padding:5px; border: 1px solid black;">Montant total hors taxe
-                        </th>
-                        <th style="padding:5px; border: 1px solid black; text-align:right;">
-                            <b>{{ number_format($paiement->montant_total, 0, ',', '.') }}</b></th>
-                        <th style="border: 0; border-left:1px solid black; border-top:1px solid black; background:none;">
-                            &nbsp;
-                        </th>
-                    </tr>
-                    <tr style="margin:0;background-color: #abd">
-                        <th colspan="5" style="padding:5px; border: 1px solid black;">Montant payé
-                        </th>
-                        <th style="padding:5px; border: 1px solid black; text-align:right;">
-                            <b>{{ number_format($montant_paye, 0, ',', '.') }}</b></th>
-                        <th style="border: 0; border-left:1px solid black; background:none;">
-                            &nbsp;
-                        </th>
-                    </tr>
-                    <tr style="margin:0;background-color: #abd">
-                        <th colspan="5" style="padding:5px; border: 1px solid black;">Montant restant
-                        </th>
-                        <th style="padding:5px; border: 1px solid black; text-align:right;">
-                            <b>{{ number_format($montant_restant, 0, ',', '.') }}</b></th>
-                        <th style="border: 0; border-left:1px solid black; background:none;">
-                            &nbsp;
-                        </th>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            <p>
-                <pr style="text-decoration: underline;">Montant total en lettres</pr> :
-                <b>{{ $formatter->format($paiement->montant_total) }} francs CFA</b> (XOF).
-            </p>
-
-
-            @php
-                $date = date('d M Y');
-            @endphp
-
-            <table style="width: 100%;  padding: 0; margin: 0 ;">
-                <tbody>
-
-                <tr>
-                    <td style="width:40%;vertical-align: bottom;">
-                        &nbsp;
-                    </td>
-
-                    <td style="vertical-align: bottom;">
-                        &nbsp;
-                    </td>
-
-                    <td style="width:45%;vertical-align: bottom;padding:0; ">
-                        @php
-                            $signataire = getSignataireByDate(\Carbon\Carbon::parse(date('Y-m-d'))->format('Y-m-d'));
-                        @endphp
-
-                        <div style=" text-align:left;margin:0; ;padding:0; z-index: 10;">
-                            <img src="storage/signature/{{$signataire->signature}}" alt="Signature"
-                                 style="margin: 0 0 -20px -45px; padding:0;height: 105px; opacity:;0.9;text-align:left;center; ">
-                        </div>
-                        <div style="padding:0; margin:-10px 0 0; text-align:center; z-index: 100;">
-                            <b><u>{{$signataire->titre}} {{$signataire->nom}} {{$signataire->prenoms}}</u></b><br>
-                            <small>{{$signataire->fonction}}</small>
-                        </div>
-                    </td>
+        <table style="width: 100%; margin: 10px 0; font-size: 10.5pt;">
+            <thead>
+                <tr style="background-color: #abd;">
+                    <th style="padding: 5px;">#</th>
+                    <th style="padding: 5px; text-align: left;">Formation</th>
+                    <th style="padding: 5px;">Frais</th>
+                    <th style="padding: 5px;">Réf. transaction</th>
+                    <th style="padding: 5px;">Réduction</th>
+                    <th style="padding: 5px;">Montant</th>
+                    <th style="padding: 5px;">Etat</th>
                 </tr>
-                </tbody>
-            </table>
+            </thead>
+            <tbody>
+                @php
+                    $i = 0;
+                    $montant_paye = 0;
+                    $montant_restant = 0;
+                @endphp
+                @foreach ($details_paiement as $item)
+                    @php
+                        $i++;
+                        $pourcentage = $item->pourcentage ? $item->pourcentage / 100 : 0;
+                        $montant = $item->montant - ($item->montant * $pourcentage);
+                        if ($item->statut_paiement == "PAYE") {
+                            $montant_paye += $montant;
+                        } else {
+                            $montant_restant += $montant;
+                        }
+                    @endphp
+                    <tr>
+                        <td style="text-align: center;">{{ $i }}</td>
+                        <td><b>{{ $item->code_formation }}</b> - {{ $item->theme }}</td>
+                        <td style="text-align: center;">{{ $item->libelle }}</td>
+                        <td>{{ $item->num_transaction }}</td>
+                        <td style="text-align: center;">{{ $item->pourcentage ?? '-' }}</td>
+                        <td style="text-align: right;">{{ number_format($montant, 0, ',', '.') }}</td>
+                        <td>{{ $item->statut_paiement }}</td>
+                    </tr>
+                @endforeach
+                <tr style="background-color: #abd;">
+                    <th colspan="5" style="padding: 5px;">Montant total hors taxe</th>
+                    <th style="padding: 5px; text-align: right;"><b>{{ number_format($paiement->montant_total, 0, ',', '.') }}</b></th>
+                    <th style="border: none;"></th>
+                </tr>
+                <tr style="background-color: #abd;">
+                    <th colspan="5" style="padding: 5px;">Montant payé</th>
+                    <th style="padding: 5px; text-align: right;"><b>{{ number_format($montant_paye, 0, ',', '.') }}</b></th>
+                    <th style="border: none;"></th>
+                </tr>
+                <tr style="background-color: #abd;">
+                    <th colspan="5" style="padding: 5px;">Montant restant</th>
+                    <th style="padding: 5px; text-align: right;"><b>{{ number_format($montant_restant, 0, ',', '.') }}</b></th>
+                    <th style="border: none;"></th>
+                </tr>
+            </tbody>
+        </table>
 
+        <p>
+            <span style="text-decoration: underline;">Montant total en lettres</span> :
+            <b>{{ $formatter->format($paiement->montant_total) }} francs CFA</b> (XOF).
+        </p>
 
-
-        </div>
-        <!-- end div opacity -->
-
-    </div><!-- fermeture div background-image -->
+        <table style="width: 100%; margin: 20px 0;">
+            <tr>
+                <td style="width: 40%;">&nbsp;</td>
+                <td>&nbsp;</td>
+                <td style="width: 45%; text-align: center;">
+                    @php
+                        $signataire = getSignataireByDate(\Carbon\Carbon::parse(date('Y-m-d'))->format('Y-m-d'));
+                    @endphp
+                    <div>
+                        <img src="{{ public_path('storage/signature/' . $signataire->signature) }}" alt="Signature" style="height: 105px; opacity: 0.9;">
+                    </div>
+                    <div>
+                        <b><u>{{ $signataire->titre }} {{ $signataire->nom }} {{ $signataire->prenoms }}</u></b><br>
+                        <small>{{ $signataire->fonction }}</small>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </main>
 
     <footer>
-        <div style="clear:both; margin-top:20px; ">
-            <table style="width: 100%; z-index:1000;  padding: 20px 0 0 0; margin: 0 ;">
-                <tbody>
+        <div style="margin-top: 20px;">
+            <table style="width: 100%;">
                 <tr>
-                    @php
-                        $nom_auditeur = $auditeur->nom ?? '';
-                        $prenoms_auditeur = $auditeur->prenoms ?? '';
-                    @endphp
-
-                    <td style="width: 95px; margin:0; border: 0px solid black;">
-                        <img width="80" height="80"
-                             src="data:image/png;base64, {!! base64_encode(
-                                        QrCode::encoding('UTF-8')->format('svg')->size(95)->generate(
-                                                'REFERENCE : ' . $paiement->reference . 'Prénoms & nom : ' . $prenoms_auditeur . ' ' . $nom_auditeur,
-                                            ),
-                                    ) !!} ">
+                    <td style="width: 95px;">
+                        <img width="80" height="80" src="data:image/png;base64, {!! base64_encode(QrCode::encoding('UTF-8')->format('svg')->size(95)->generate('REFERENCE : ' . $paiement->reference . ' Prénoms & nom : ' . ($auditeur->prenoms ?? '') . ' ' . ($auditeur->nom ?? ''))) !!}">
                     </td>
-
-                    <td style="margin:0; font-size:8pt; border: 0px solid black;">
-                        <b>NB :</b> Traité relatif à l'Harmonisation du Droit des Affaires en Afrique <br>
+                    <td style="font-size: 8pt;">
+                        <b>NB :</b> Traité relatif à l'Harmonisation du Droit des Affaires en Afrique<br>
                         <span><b>Article 51: </b></span><br>
-                        <span>L'OHADA, ses avoirs, ses biens et ses revenus ainsi que les opérations autorisées
-                                    par le présent Traité sont exonérés de tous impôts, taxes et droits de douane.
-                                </span> <br>
-                        <span>L'OHADA est également exempte de toute obligation relative au recouvrement ou au
-                                    paiement d'impôts, de taxes ou de droits de douane. </span>
-
+                        <span>L'OHADA, ses avoirs, ses biens et ses revenus ainsi que les opérations autorisées par le présent Traité sont exonérés de tous impôts, taxes et droits de douane.</span><br>
+                        <span>L'OHADA est également exempte de toute obligation relative au recouvrement ou au paiement d'impôts, de taxes ou de droits de douane.</span>
                     </td>
-
                 </tr>
-                </tbody>
             </table>
         </div>
-        <div
-            style="display:block; clear:both; width:100%; background: #fff; border: 0; border-top: 8px solid #9cc2e5; border-bottom:  8px solid #1571c6;  margin: 10px 0 10px 0; color:#000000; text-align:center; font-size:9pt; padding:5px 0 5px 0">
-            ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>Tél. : +229 01 97
-            97 05 37 - E-mail : ersuma@ohada.org -
-            Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org">https://ersuma.ohada.org</a></u>
-            </font>
+        <div style="width: 100%; background: #fff; border-top: 8px solid #9cc2e5; border-bottom: 8px solid #1571c6; margin: 10px 0; text-align: center; font-size: 9pt; padding: 5px;">
+            ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN<br>
+            Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
+            Web : <a href="https://ersuma.ohada.org" style="color: #0563c1; text-decoration: underline;">https://ersuma.ohada.org</a>
         </div>
     </footer>
-
-</div>
 </body>
-
 </html>
