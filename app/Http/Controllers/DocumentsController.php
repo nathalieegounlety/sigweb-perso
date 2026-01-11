@@ -13,7 +13,7 @@ class DocumentsController extends Controller
 
     public function __construct(DocumentsInterface $documentService){
         $this->documentService = $documentService;
-        $this->middleware('auth:api',['except' => ['recuPaiement','proforma','listeAttestationParticipant']]);
+        $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipantVisio']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -107,7 +107,6 @@ class DocumentsController extends Controller
 
     public function genererUrlProformaSigned(Request $request)
     {
-
         try{
             $validated = $request->validate([
                 'reference' => 'required|string',
@@ -160,4 +159,33 @@ class DocumentsController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+
+
+
+    public function consultationAttestationParticipantVisio(Request $request,$rapport_id)
+    {
+        try{
+            return $this->documentService->showAttestationParticipantVisio($rapport_id);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function urlConsultationAttestationVisio(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'rapport_id' => 'required',
+            ]);
+
+            return $this->documentService->getUrlConsultationAttestationVisio($request->rapport_id);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
 }

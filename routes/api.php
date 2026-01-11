@@ -78,6 +78,8 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('generer/url/proforma/signed','genererUrlProformaSigned');
     Route::post('generer/url/proforma/dsc/signed','genererUrlProformaDscSigned');
     Route::get('attestations','listeAttestationParticipant');
+    Route::get('consultation/attestation/participant/visio/{rapport_id}','consultationAttestationParticipantVisio')->name('consultation.attestation.participant.visio');
+    Route::post('get/url/consultation/attestation/visio','urlConsultationAttestationVisio');
 });
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function(){

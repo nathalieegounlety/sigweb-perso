@@ -2,8 +2,10 @@
 namespace App\Services\util;
 use App\Models\Paiements;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 
 class GenarateurCodeService {
 
@@ -79,5 +81,68 @@ class GenarateurCodeService {
     public function generateUrlSigned(string $routeName, array $params = []): string
     {
         return URL::signedRoute($routeName, $params);
+    }
+
+    public function getBladeAttestationParticipant($is_event, $formation)
+    {
+        $pdf = null;
+
+        if ($is_event && ($formation->typeformation_id == 3 || $formation->typeformation_id == 5 )) {
+            # code...
+            $pdf = PDF::loadView('attestations.modele_attestation_evenement');
+
+        } elseif ($is_event && $formation->typeformation_id == 1) { // formation
+            # code...
+            $pdf = PDF::loadView('attestations.modele_attestation_formation_evenement');
+        }
+        else{
+
+            switch ($formation->typeformation_id) {
+                case 1: // formation
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation');
+                    break;
+                case 2: // conférence
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation');
+                    break;
+                case 3: // colloque
+                    # code...
+
+                    $dynamique_blade = 'attestations.attestation_colloque_'.$formation->code_formation ;
+                    $default_blade = 'attestations.modele_attestation_colloque';
+
+                    if (View::exists($dynamique_blade)) {
+                        $pdf = PDF::loadView($dynamique_blade);
+
+                    } else {
+                        $pdf = PDF::loadView($default_blade);
+                    }
+                    break;
+                case 4: // forum
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation_forum');
+                    break;
+                case 5: // atelier
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation_atelier');
+                    break;
+                case 6: // université
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation_universite');
+                    break;
+                case 7: // salon
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation_salon');
+                    break;
+
+                default:
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation');
+                    break;
+            }
+        }
+
+        return $pdf;
     }
 }

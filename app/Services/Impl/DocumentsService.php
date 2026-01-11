@@ -8,6 +8,7 @@ use App\Models\Detailspaiements;
 use App\Models\Dureeformations;
 use App\Models\Formations;
 use App\Models\Inscriptions;
+use App\Models\Logopartenaires;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
 use App\Models\PaiementsTranche;
@@ -16,8 +17,10 @@ use App\Services\contracts\DocumentsInterface;
 use App\Services\util\GenarateurCodeService;
 use Arius\NumberFormatter;
 use Barryvdh\DomPDF\Facade\Pdf;
+use http\Url;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -234,6 +237,37 @@ class DocumentsService implements DocumentsInterface
     public function getListeAttestationParticipant(Request $request, string $code_formation) //: LengthAwarePaginator
     {
         // TODO: Implement getListeAttestationParticipant() method.
+        // ##################### calcul scoring ###########################################
+        $getDuree = 0;
+        $check_duree_formation = Dureeformations::where("code_formation",$code_formation)->first();
+
+        if ($check_duree_formation) {
+            $nbr_duree_enregistrement = $check_duree_formation->duree_enregistrement;
+        } else {
+            # code... create durée
+            $nbr_duree_enregistrement = 0;
+        }
+        //variable temps de latence
+        $temps_latence = 90; // par jour de formation ||
+        // récupérer le nbre de jour de formation pour la formation en cours
+        //$nbre_session_formation = Sessionformation::where('code_formation',$code_formation)->count();
+        //$total_temps_latence = $temps_latence * $nbre_session_formation;
+
+        $duree_formation = DB::table('sessionformations')
+            ->select(DB::raw('sum(duree_reel - ' . $temps_latence . ') as duree_session'))
+            ->where('code_formation', $code_formation)
+            ->get();
+
+        if($nbr_duree_enregistrement > 0){
+            $getDuree = $nbr_duree_enregistrement;
+        }else{
+            $getDuree = $duree_formation[0]->duree_session;
+        }
+
+        $scoring = intval(($getDuree*2)/3);
+        //####################### end calcul scoring ####################################################
+
+
         $perPage = $request->input('per_page', 50);
         $search = $request->input('search');
         $sortField = $request->input('sort_field', 'id');
@@ -260,7 +294,11 @@ class DocumentsService implements DocumentsInterface
                 'detailspaiements.statut_paiement'
             )
             ->where('rapports.code_formation', $code_formation)
-            ->where('inscriptions.code_formation', $code_formation);
+            ->where('inscriptions.code_formation', $code_formation)
+            ->where(function ($q) use ($scoring) {
+                $q->where('rapports.temps_presence', 0)
+                    ->orWhere('rapports.temps_presence', '>=', $scoring);
+            });
         // Recherche globale sur plusieurs champs
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -273,32 +311,82 @@ class DocumentsService implements DocumentsInterface
         }
         $query->orderBy("rapports.{$sortField}", $sortOrder);
 
-        $check_duree_formation = Dureeformations::where("code_formation",$code_formation)->first();
-
-        if ($check_duree_formation) {
-            $nbr_duree_enregistrement = $check_duree_formation->duree_enregistrement;
-        } else {
-            # code... create durée
-            $nbr_duree_enregistrement = 0;
-        }
-
         $data = $query->paginate($perPage);
-
-        //variable temps de latence
-        $temps_latence = 90; // par jour de formation ||
-        // récupérer le nbre de jour de formation pour la formation en cours
-        //$nbre_session_formation = Sessionformation::where('code_formation',$code_formation)->count();
-        //$total_temps_latence = $temps_latence * $nbre_session_formation;
-
-        $duree_formation = DB::table('sessionformations')
-            ->select(DB::raw('sum(duree_reel - ' . $temps_latence . ') as duree_session'))
-            ->where('code_formation', $code_formation)
-            ->get();
 
         return [
             'pagination' => $data,
             'nbr_duree_enregistrement' => $nbr_duree_enregistrement,
             'duree_formation' => $duree_formation
         ];
+    }
+
+    public function showAttestationParticipantVisio($rapport_id)
+    {
+        // TODO: Implement showAttestationParticipantVisio() method.
+        set_time_limit(0);
+        $fichier = "";
+        // ******************************************* //
+
+        $rapport = DB::table('rapports')
+            ->select('rapports.code_formation')
+            ->where('rapports.id', $rapport_id)
+            ->get()
+            ->first();
+
+        $code_formation = $rapport->code_formation;
+
+
+        $date = date('d-m-YH:i:s');
+        $date_jour = date('d-m-Y');
+        $date_jour = Carbon::now()->locale('fr_FR');
+        $date_jour = $date_jour->isoFormat('DD MMM YYYY');
+        $liste_participants = DB::table('rapports')
+            ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+            ->join('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->join('formations', 'formations.code_formation', '=', 'rapports.code_formation')
+            ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays','formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'inscriptions.presentiel', 'formations.code_formation')
+            ->where('rapports.id', $rapport_id)
+            ->where('rapports.code_formation', $code_formation)
+            ->where('inscriptions.code_formation', $code_formation)
+            ->orderBy('auditeurs.nom', 'ASC')
+            ->get();
+
+        $duree_formation = Dureeformations::all()->where('code_formation', $code_formation)->sortByDesc("id");
+        $temps_latence = 90;
+        $duree_session = DB::table('sessionformations')
+            ->select(DB::raw('sum(duree_reel - ' . $temps_latence . ') as duree_session'))
+            ->where('code_formation', $code_formation)
+            ->get();
+        // formation
+        $formation = Formations::where("code_formation", $code_formation)->first();
+        $logo_partenaires = Logopartenaires::where('code_formation',$code_formation)->get();
+
+        //dd($formation->typeformation_id);
+        if ($formation->typeformation_id != null) {
+            # code...
+            $typeformation_id = $formation->typeformation_id;
+        } else {
+            # code...
+            $typeformation_id = 1;
+        }
+
+        // share data to view
+        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session, "typeformation_id" => $typeformation_id,'logo_partenaires' => $logo_partenaires,'formation' => $formation]);
+
+        // service permettant de retourner la vue sur condition
+        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event,$formation);
+
+        $pdf->setPaper('A4', 'landscape');
+
+
+        return $pdf->stream();
+    }
+
+    public function getUrlConsultationAttestationVisio($rapport_id)
+    {
+        // TODO: Implement getUrlConsultationAttestationVisio() method.
+
+        $url = route('consultation.attestation.participant.visio', ['rapport_id' => $rapport_id]);
+        return  ResponseHandler::success("ok",$url,200);
     }
 }

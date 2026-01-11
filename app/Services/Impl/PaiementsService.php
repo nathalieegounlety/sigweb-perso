@@ -23,7 +23,7 @@ class PaiementsService implements PaiementsInterface
         // TODO: Implement getInfosPaiement() method.
         $paiement = Paiements::leftjoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
             ->whereReference($reference)
-            ->get(['paiements.id','num_transaction','is_paiementpartiel','reference','montant_total','montant_paye','montant_restant','email','code_inscription','paiements.id_modepaiement','modepaiements.libelle'])
+            ->get(['paiements.id','num_transaction','is_paiement_partiel','reference','montant_total','montant_paye','montant_restant','email','code_inscription','paiements.id_modepaiement','modepaiements.libelle'])
             ->first();
 
         if($paiement){
