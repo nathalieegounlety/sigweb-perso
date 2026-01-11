@@ -18,6 +18,15 @@ interface DocumentsInterface
     public function getUrlProformaDscSigned(string $reference): \Illuminate\Http\JsonResponse;
     public function downloadProformaDsc(string $reference);
     public function getListeAttestationParticipant(Request $request, string $code_formation); //: LengthAwarePaginator;
-    public function showAttestationParticipantVisio($rapport_id);
-    public function getUrlConsultationAttestationVisio($rapport_id);
+    public function showAttestationParticipant($rapport_id);
+    public function getUrlConsultationAttestation($rapport_id);
+    public function sendMailAttestationParticipant($rapport_id): \Illuminate\Http\JsonResponse;
+    public function downloadAttestationParticipant($rapport_id);
+    public function downloadListeParticipantVisio($code_formation);
+    public function downloadListeParticipantPresentiel($code_formation);
+    public function getUrlListeParticipantPresentiel($code_formation);
+    public function getUrlListeParticipantVisio($code_formation);
+    public function getUrlAllAttestationParticipant($code_formation);
+    public function downloadAllAttestationParticipant($code_formation);
+    public function sendAllMailAttestationParticipant(Request $request): \Illuminate\Http\JsonResponse;
 }

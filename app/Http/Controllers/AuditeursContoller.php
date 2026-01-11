@@ -239,4 +239,27 @@ class AuditeursContoller extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function updateInscriptionInfo(Request $request)
+    {
+        try {
+            // Validation des données
+            $validatedData = $request->validate([
+                'nom'  =>  'required',
+                'prenoms'  =>  'required',
+                'email'  =>  'required',
+                'civilite'  =>  'required',
+                'genre'  =>  'required',
+                'inscription_id' => 'required',
+                'pays_id' => 'required'
+            ]);
+            // procéder à l'enregistrement
+            return $processSave = $this->auditeurService->updateInformationInscription($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 }

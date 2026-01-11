@@ -910,4 +910,38 @@ class AuditeursService implements AuditeursInterface
         return  ResponseHandler::success("ok",$data);
 
     }
+
+    public function updateInformationInscription(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement updateInformationInscription() method.
+        $inscrit = Inscriptions::find($request->inscription_id);
+        $pays = Pays::find($request->pays_id);
+        // update auditeur
+        $auditeurs = Auditeurs::where("email",$inscrit->email)->first();
+        // sauvegarde de la modification
+        $auditeurs->setAttribute('nom', trim($request->get('nom')));
+        $auditeurs->setAttribute('prenoms', trim($request->get('prenoms')));
+        $auditeurs->setAttribute('genre', trim($request->get('genre')));
+        $auditeurs->setAttribute('civilite', trim($request->get('civilite')));
+        // récupéré l'objet pays
+        if ($pays) {
+            # code...
+            $auditeurs->setAttribute('pays', $pays->nom_pays);
+            $auditeurs->setAttribute('code_pays', $pays->code_iso);
+            $auditeurs->setAttribute('nationalite', $pays->nationalite);
+        }
+        $auditeurs->setAttribute('updated_at', new \DateTime());
+        $auditeurs->update();
+        // update info dans la table user
+        $user = User::whereEmail($request->email)->first();
+        if($user){
+            $updUser = User::find($user->id);
+            $name = trim($request->nom).' '.trim($request->prenoms);
+            $updUser->setAttribute('name', $name);
+            $updUser->update();
+        }
+
+        return ResponseHandler::success("Modification effectuée avec succès",['success'=>true,'code_formation' => $inscrit->code_formation]);
+
+    }
 }

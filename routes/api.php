@@ -78,8 +78,17 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('generer/url/proforma/signed','genererUrlProformaSigned');
     Route::post('generer/url/proforma/dsc/signed','genererUrlProformaDscSigned');
     Route::get('attestations','listeAttestationParticipant');
-    Route::get('consultation/attestation/participant/visio/{rapport_id}','consultationAttestationParticipantVisio')->name('consultation.attestation.participant.visio');
-    Route::post('get/url/consultation/attestation/visio','urlConsultationAttestationVisio');
+    Route::get('consultation/attestation/participant/{rapport_id}','consultationAttestationParticipant')->name('consultation.attestation.participant')->middleware('signed');
+    Route::post('get/url/consultation/attestation','urlConsultationAttestation');
+    Route::post('send/attestation/participant','sendAttestationParticipant');
+    Route::get('telecharger/attestation/participant/{rapport_id}', 'telechargerAttestationParticipant')->name('telecharger.attestation_participant')->middleware('signed');
+    Route::get('export/liste/participant/presentiel/{code_formation}','listeParticipantPresentiel')->name('liste.participant.presentiel')->middleware('signed');
+    Route::get('export/liste/participant/visio/{code_formation}','listeParticipantVisio')->name('liste.participant.visio')->middleware('signed');
+    Route::post('get/url/liste/participant/presentiel','urlListeParticipantPresentiel');
+    Route::post('get/url/liste/participant/visio','urlListeParticipantVisio');
+    Route::get('export/all/attestation/participant/{code_formation}','exportAllAttestationParticipant')->name('export.all.attestattion.participant')->middleware('signed');
+    Route::post('get/url/all/attestation/participant','urlAllAttestationParticipant');
+    Route::post('send/all/attestation/participant','sendAllAttestationParticipant');
 });
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function(){
@@ -125,6 +134,8 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::get('indicateurs','indicateurs');
     Route::post('liste/inscriptions','listeInscriptions');
     Route::post('mespaiements','mesPaiements');
+    Route::post('update/inscription','updateInscriptionInfo');
+
 });
 
 // gestion des api du frontoffice

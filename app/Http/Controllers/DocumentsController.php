@@ -6,6 +6,7 @@ use App\Helpers\ResponseHandler;
 use Illuminate\Http\Request;
 use App\Services\contracts\DocumentsInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DocumentsController extends Controller
 {
@@ -13,7 +14,9 @@ class DocumentsController extends Controller
 
     public function __construct(DocumentsInterface $documentService){
         $this->documentService = $documentService;
-        $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipantVisio']]);
+        $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
+            'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel',
+            'exportAllAttestationParticipant']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -160,12 +163,10 @@ class DocumentsController extends Controller
         }
     }
 
-
-
-    public function consultationAttestationParticipantVisio(Request $request,$rapport_id)
+    public function consultationAttestationParticipant(Request $request,$rapport_id)
     {
         try{
-            return $this->documentService->showAttestationParticipantVisio($rapport_id);
+            return $this->documentService->showAttestationParticipant($rapport_id);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
@@ -173,14 +174,144 @@ class DocumentsController extends Controller
         }
     }
 
-    public function urlConsultationAttestationVisio(Request $request){
+    public function urlConsultationAttestation(Request $request){
 
         try{
             $validated = $request->validate([
                 'rapport_id' => 'required',
             ]);
 
-            return $this->documentService->getUrlConsultationAttestationVisio($request->rapport_id);
+            return $this->documentService->getUrlConsultationAttestation($request->rapport_id);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function sendAttestationParticipant(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'rapport_id' => 'required',
+            ]);
+
+            return $this->documentService->sendMailAttestationParticipant($request->rapport_id);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+
+    public function telechargerAttestationParticipant($rapport_id)
+    {
+        try {
+
+            return $data = $this->documentService->downloadAttestationParticipant($rapport_id);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function listeParticipantVisio($code_formation)
+    {
+        try {
+            Log::info($code_formation);
+            return $data = $this->documentService->downloadListeParticipantVisio($code_formation);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function listeParticipantPresentiel($code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadListeParticipantPresentiel($code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function urlListeParticipantPresentiel(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required',
+            ]);
+
+            return $this->documentService->getUrlListeParticipantPresentiel($request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+
+    public function urlListeParticipantVisio(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required',
+            ]);
+
+            return $this->documentService->getUrlListeParticipantVisio($request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function urlAllAttestationParticipant(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required',
+            ]);
+
+            return $this->documentService->getUrlAllAttestationParticipant($request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function exportAllAttestationParticipant($code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadAllAttestationParticipant($code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function sendAllAttestationParticipant(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'listeAuditeurs' => 'required',
+                'code_formation' => 'required'
+            ]);
+
+            return $this->documentService->sendAllMailAttestationParticipant($request);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
