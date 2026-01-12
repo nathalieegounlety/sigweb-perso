@@ -5,54 +5,175 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <title>Attestation de formation - ERSUMA</title>
     <style type="text/css">
+        /* Réinitialisation et base */
         body {
-            font-family: Tahoma, sans-serif;
-            font-size: 10pt;
-            background: url('img/logo/logo-ohada-new500.png');
-            opacity: 0.1;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            background-position: center;
-            100px bottom 10px;
-            z-index: -1;
-        }
+    font-family: Tahoma, sans-serif;
+    font-size: 12pt;
+    margin: 0;
+    padding: 0;
+}
 
-        header {
-            position: fixed;
-            top: 0cm;
-            left: 0cm;
-            right: 0cm;
-            height: 3.5cm;
-        }
-
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('img/logo/logo-ohada-new500.png') no-repeat fixed center 100px / contain;
+    opacity: 0.1;
+    z-index: -1;
+}
+    
+        /* Configuration de la page */
         @page {
             size: 29.7cm 21cm;
-            margin-left: 1.27cm;
-            margin-right: 1.27cm;
-            margin-top: 0.73cm;
-            margin-bottom: 0.97cm;
+            margin: 1.27cm;
         }
-
-        p {
-            margin-bottom: 0.25cm;
-            direction: ltr;
-            line-height: 115%;
-            text-align: justify;
-            orphans: 2;
-            widows: 2;
-            background: transparent;
-            font-size: 12pt;
+    
+        /* Conteneur principal */
+        .attestation-container {
+            position: relative;
+            min-height: 29.7cm;
+            padding: 0;
         }
-
-        /** Define the footer rules **/
+    
+        /* Fond d'eau (filigrane) */
+        .watermark {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('img/logo/logo-ohada-new500.png') no-repeat center;
+            background-size: contain;
+            opacity: 0.1;
+            z-index: -1;
+        }
+    
+        /* En-tête */
+        header {
+            position: relative;
+            margin-bottom: 1cm;
+            padding: 0;
+        }
+    
+        /* Contenu principal */
+        .content {
+            position: relative;
+            min-height: calc(100% - 8.7cm);
+            margin-top: 0.5cm;
+            padding: 0 1cm;
+            z-index: 1;
+        }
+    
+        /* Pied de page */
         footer {
             position: fixed;
-            bottom: 0cm;
-            left: 0cm;
-            right: 0cm;
+            bottom: 0;
+            left: 0;
+            right: 0;
             height: 5.2cm;
+            font-size: 10pt;
+            padding: 0.5cm 1cm;
+            border-top: 10px solid #9cc2e5;
+        }
+    
+        /* Titres et sections */
+        .main-title {
+            text-align: center;
+            font-size: 36px;
+            color: #006fc0;
+            font-weight: bold;
+            margin: 10px 0;
+            line-height: 1.1;
+        }
+    
+        .sub-title {
+            text-align: center;
+            font-size: 20px;
+            color: #1a0642;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    
+        .director-title {
+            text-align: center;
+            font-size: 20px;
+            color: #000000;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    
+        /* Texte principal */
+        .main-text {
+            text-align: justify;
+            line-height: 1.5;
+            font-size: 11.6pt;
+            margin: 15px 0;
+        }
+    
+        .participant-name {
+            text-align: center;
+            font-size: 20pt;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    
+        .theme-title {
+            text-align: center;
+            font-size: 16pt;
+            font-style: italic;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    
+        /* Section signature */
+        .signature-section {
+            margin: 20px 0;
+            position: relative;
+        }
+    
+        .qr-code {
+            text-align: left;
+            margin-left: 10px;
+        }
+    
+        /* Tableaux */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            padding: 0;
+        }
+    
+        /* Liens */
+        a {
+            color: #0563c1;
+            text-decoration: none;
+        }
+    
+        a:hover {
+            text-decoration: underline;
+        }
+    
+        /* Correction pour l'impression */
+        @media print {
+            .watermark {
+                opacity: 0.1;
+            }
+    
+            body {
+                margin: 0;
+                padding: 0;
+            }
+    
+            .content {
+                margin-top: 0;
+            }
         }
     </style>
+    
 </head>
 
 <body>

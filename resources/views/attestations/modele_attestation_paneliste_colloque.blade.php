@@ -15,17 +15,24 @@
     <meta name="LinksUpToDate" content="false" />
     <meta name="ScaleCrop" content="false" />
     <meta name="ShareDoc" content="false" />
-    <style type="text/css">
-        body {
-            font-family: Tahoma, sans-serif; 
-            font-size: ;12pt;
-            background: url('img/logo/logo-ohada-new500.png');
-            opacity: 0.1;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            background-position: center; 100px bottom 10px;
-            z-index: -1;
-        }
+    <style type="text/css"> body {
+        font-family: Tahoma, sans-serif;
+        font-size: 12pt;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('img/logo/logo-ohada-new500.png') no-repeat fixed center 100px / contain;
+        opacity: 0.1;
+        z-index: -1;
+    }
 
         header {
             position: fixed;
