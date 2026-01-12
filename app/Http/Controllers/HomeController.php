@@ -32,7 +32,7 @@ class HomeController extends Controller
             where('statut', 'ACTIF')
             ->where('enable', 1)
             ->where('afficher', 1)
-           // ->orderBy('date_limite', 'asc')
+           ->orderBy('date_debut', 'DESC')
             ->paginate(9, [
                 'id', 'code_formation', 'theme as titre', 'date_debut', 'date_fin',
                 'date_limite', 'lieu', 'visuel', 'fm_presentielle', 'fm_visio', 'cout_formation'

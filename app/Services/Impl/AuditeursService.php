@@ -312,6 +312,7 @@ class AuditeursService implements AuditeursInterface
                 'subject' => 'Inscription sur SIGWEB de ' . $auditeur->nom . ' ' . $auditeur->prenoms,
                 'email' => $auditeur->email,
                 'code_inscription' => $generateCode,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma',$generateCode)
             ];
             if ($check_exist == $total_formation) {
                 # code...

@@ -26,11 +26,34 @@ class PaiementsService implements PaiementsInterface
             ->get(['paiements.id','num_transaction','is_paiement_partiel','reference','montant_total','montant_paye','montant_restant','email','code_inscription','paiements.id_modepaiement','modepaiements.libelle'])
             ->first();
 
+        // récupération des clés pour les apis
+        if(env('KKIAPAY_SANDBOX') == 1){
+            $code_kkiapay = env('KKIAPAY_SANDBOX_PUBLIC_KEY');
+            $code_fedapay = env('FEDAPAY_CLE_PUBLIQUE');
+            $code_pawapay = env('PAWAPAY_SANDBOX_TOKEN_ID');
+            $code_cinetpay = env('CINETPAY_APIKEY');
+            $env_fedapay = env('FEDAPAY_ENVIRONNEMENT');
+            $env_kkiapay = env('KKIAPAY_SANDBOX');
+        }else{
+            $code_kkiapay = env('KKIAPAY_LIVE_PUBLIC_KEY');
+            $code_fedapay = env('FEDAPAY_CLE_PUBLIQUE');
+            $code_pawapay = env('PAWAPAY_SANDBOX_TOKEN_ID');
+            $code_cinetpay = env('CINETPAY_APIKEY');
+            $env_fedapay = env('FEDAPAY_ENVIRONNEMENT');
+            $env_kkiapay = env('KKIAPAY_SANDBOX');
+        }
+
         if($paiement){
             $auditeur = Auditeurs::whereEmail($paiement->email)->first();
             $dataResponse = [
                 'paiement' => $paiement,
                 'auditeur' => $auditeur,
+                'code_kkiapay' => $code_kkiapay,
+                'code_fedapay' => $code_fedapay,
+                'code_pawapay' => $code_pawapay,
+                'code_cinetpay' => $code_cinetpay,
+                'env_kkiapay' => $env_kkiapay,
+                'env_fedapay' => $env_fedapay,
                 'success' => true,
             ];
             return  ResponseHandler::success("ok",$dataResponse);
@@ -47,7 +70,7 @@ class PaiementsService implements PaiementsInterface
     {
         // TODO: Implement getInfoPaiementPartiel() method.
         $paiement = Paiements::whereReference($request->reference)->select('paiements.id','paiements.reference','paiements.montant_restant','paiements.telephone','paiements.email','paiements.num_transaction')->first();
-        $auditeur = Auditeurs::whereEmail($paiement->email)->select('auditeurs.id','auditeurs.nom','auditeurs.prenoms','auditeurs.email')->first();
+        $auditeur = Auditeurs::whereEmail($paiement->email)->select('auditeurs.id','auditeurs.nom','auditeurs.prenoms','auditeurs.email','auditeurs.telephone')->first();
         $liste_modepaiements = Modepaiements::where('is_enable',true)->get(['id','libelle']);
 
         $detailPaiement = Detailspaiements::query()
@@ -70,12 +93,35 @@ class PaiementsService implements PaiementsInterface
         if($checkDetails){ $havePaiement = true; }
         if(!empty($paiement->num_transaction)){ $havePaiement = true; }
 
+        // récupération des clés pour les apis
+        if(env('KKIAPAY_SANDBOX') == 1){
+            $code_kkiapay = env('KKIAPAY_SANDBOX_PUBLIC_KEY');
+            $code_fedapay = env('FEDAPAY_CLE_PUBLIQUE');
+            $code_pawapay = env('PAWAPAY_SANDBOX_TOKEN_ID');
+            $code_cinetpay = env('CINETPAY_APIKEY');
+            $env_fedapay = env('FEDAPAY_ENVIRONNEMENT');
+            $env_kkiapay = env('KKIAPAY_SANDBOX');
+        }else{
+            $code_kkiapay = env('KKIAPAY_LIVE_PUBLIC_KEY');
+            $code_fedapay = env('FEDAPAY_CLE_PUBLIQUE');
+            $code_pawapay = env('PAWAPAY_SANDBOX_TOKEN_ID');
+            $code_cinetpay = env('CINETPAY_APIKEY');
+            $env_fedapay = env('FEDAPAY_ENVIRONNEMENT');
+            $env_kkiapay = env('KKIAPAY_SANDBOX');
+        }
+
         $dataResponse = [
             'liste_modepaiements' => $liste_modepaiements,
             'detail_paiement' => $detailPaiement,
             'auditeur' => $auditeur,
             'paiement' => $paiement,
-            'havePaiement' => $havePaiement
+            'havePaiement' => $havePaiement,
+            'code_kkiapay' => $code_kkiapay,
+            'code_fedapay' => $code_fedapay,
+            'code_pawapay' => $code_pawapay,
+            'code_cinetpay' => $code_cinetpay,
+            'env_kkiapay' => $env_kkiapay,
+            'env_fedapay' => $env_fedapay
         ];
 
         return  ResponseHandler::success("ok",$dataResponse);
