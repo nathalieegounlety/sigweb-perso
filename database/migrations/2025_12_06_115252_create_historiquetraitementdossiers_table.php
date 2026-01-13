@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('traiter_par');
             $table->string('statut_dossier',20);
             $table->text('message')->nullable();
-            $table->foreign('inscrits_id')->references('id')->on('inscrits')->onDelete(('cascade'));
+            $table->foreign('inscrits_id')->references('id')->on('inscriptions')->onDelete(('cascade'));
             $table->foreign('traiter_par')->references('id')->on('users')->onDelete(('cascade'));
             $table->timestamps();
         });

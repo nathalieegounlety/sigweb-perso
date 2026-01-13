@@ -29,7 +29,7 @@ return new class extends Migration
             $table->unsignedBigInteger('modepaiement_id')->nullable();
             $table->string('reference_paiement_partiel',100)->nullable();
             $table->string('commentaire',200)->nullable();
-            $table->foreign('reference_paiement')->references('id')->on('paiements')->onDelete(('cascade'));
+            $table->foreign('reference_paiement')->references('reference')->on('paiements')->onDelete(('cascade'));
             $table->foreign('id_tarification_formation')->references('id')->on('tarificationsformations')->onDelete(('cascade'));
             $table->foreign('id_reduction')->references('id')->on('reductions')->onDelete(('cascade'));
             $table->timestamps();
