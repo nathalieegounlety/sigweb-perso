@@ -47,7 +47,6 @@ class FormationsService implements FormationsInterface
         }else{
 
             // enregistrement des données de la formation
-
             $formation = new Formations();
             $formation->setAttribute('code_formation',$request->get('code_formation')) ;
             $formation->setAttribute('theme',$request->get('theme')) ;
@@ -56,6 +55,7 @@ class FormationsService implements FormationsInterface
             $formation->setAttribute('date_debut',$request->get('date_debut')) ;
             $formation->setAttribute('date_fin',$request->get('date_fin')) ;
             $formation->setAttribute('date_limite',$request->get('date_limite')) ;
+            $formation->setAttribute('statut','ACTIF');
             $formation->setAttribute('visuel',$name_visuel) ;
             if($request->get('fm_visio')){
                 $formation->setAttribute('fm_visio',1) ;
@@ -289,7 +289,9 @@ class FormationsService implements FormationsInterface
         $queryFormations = Formations::select('formations.*')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
-            ->where('formations.enable', true)
+            ->where('formations.is_formation_dsc',false)
+            ->where('formations.statut','ACTIF')
+            ->where('formations.enable',true)
             ->orderBy("formations.date_debut","DESC")
             ->limit(6) ;
         return $queryFormations->get();
