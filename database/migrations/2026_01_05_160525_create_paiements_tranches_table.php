@@ -32,7 +32,6 @@ return new class extends Migration
             $table->foreign('modepaiement_id')->references('id')->on('modepaiements')->onDelete(('cascade'));
             $table->foreign('tranche_id')->references('id')->on('tranches')->onDelete(('cascade'));
             $table->foreign('created_by')->references('id')->on('users')->onDelete(('cascade'));
-            $table->foreign('tranche_id')->references('id')->on('users')->onDelete(('cascade'));
             $table->foreign('updated_by')->references('id')->on('users')->onDelete(('cascade'));
             $table->timestamps();
         });
