@@ -6,33 +6,39 @@
     <title>Attestation de participation - ERSUMA</title>
     <style type="text/css">
         body {
-            font-family: Tahoma, sans-serif; 
-            font-size: ;12pt;
-            background: url('img/logo/logo-ohada-new500.png');
+            font-family: Tahoma, sans-serif;
+            font-size: 12pt;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+    
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('img/logo/logo-ohada-new500.png') no-repeat fixed center 100px / contain;
             opacity: 0.1;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            background-position: center; 100px bottom 10px;
             z-index: -1;
         }
-
+    
         header {
             position: fixed;
-            top: 0cm;
-            left: 0cm;
-            right: 0cm;
-            height: 3.0cm;3.5cm;
-            border-bottom:6px solid #0d043d;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3.5cm;
+            border-bottom: 6px solid #0d043d;
         }
-
+    
         @page {
             size: 29.7cm 21cm;
-            margin-left: 1.27cm;
-            margin-right: 1.27cm;
-            margin-top: 0.73cm;
-            margin-bottom: 0.97cm;
+            margin: 0.73cm 1.27cm 0.97cm;
         }
-
+    
         p {
             margin-bottom: 0.25cm;
             direction: ltr;
@@ -43,18 +49,46 @@
             background: transparent;
             font-size: 12pt;
         }
-
-        /** Define the footer rules **/
+    
         footer {
             position: fixed;
-            bottom: 0cm;
-            left: 0cm;
-            right: 0cm;
+            bottom: 0;
+            left: 0;
+            right: 0;
             height: 5.2cm;
-            margin:0;
+            margin: 0;
         }
-
+    
+        .attestation-content {
+            margin-top: 115px;
+            position: relative;
+            z-index: 1;
+        }
+    
+        .logo-section {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    
+        .logo-section img {
+            height: 95px;
+        }
+    
+        .footer-content {
+            font-size: 10pt;
+            text-align: center;
+            padding: 5px 0;
+        }
+    
+        .signature-section {
+            margin-top: 20px;
+        }
+    
+        .signature-section img {
+            height: 145px;
+        }
     </style>
+    
 </head>
 
 <body>
