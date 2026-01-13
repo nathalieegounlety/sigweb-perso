@@ -13,7 +13,7 @@ class DashboardController extends Controller
     public function __construct(DashboardInterface $dashboardService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['adminIndicateurs']]);
+        $this->middleware('auth:api',['except' => ['test']]);
         $this->dashboardService= $dashboardService;
     }
 

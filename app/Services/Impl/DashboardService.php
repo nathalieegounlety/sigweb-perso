@@ -172,14 +172,14 @@ ORDER BY dates
             ->whereNotNull('paiements_tranches.num_transaction')
             ->select(
                 DB::raw("SUM(paiements_tranches.montant_paye) as montant_paye"),
-                DB::raw("ANY_VALUE(auditeurs.nom) as nom"),
-                DB::raw("ANY_VALUE(auditeurs.prenoms) as prenoms"),
-                DB::raw("ANY_VALUE(auditeurs.telephone) as telephone"),
-                DB::raw("ANY_VALUE(auditeurs.email) as email"),
+                DB::raw("MAX(auditeurs.nom) as nom"),
+                DB::raw("MAX(auditeurs.prenoms) as prenoms"),
+                DB::raw("MAX(auditeurs.telephone) as telephone"),
+                DB::raw("MAX(auditeurs.email) as email"),
                 'paiements_tranches.reference',
-                DB::raw("ANY_VALUE(paiements_tranches.num_transaction) as num_transaction"),
-                DB::raw("ANY_VALUE(paiements_tranches.updated_at) as updated_at"),
-                DB::raw("ANY_VALUE(modepaiements.libelle) as mode_paiement"),
+                DB::raw("MAX(paiements_tranches.num_transaction) as num_transaction"),
+                DB::raw("MAX(paiements_tranches.updated_at) as updated_at"),
+                DB::raw("MAX(modepaiements.libelle) as mode_paiement"),
                 DB::raw("MAX(paiements_tranches.id) as max_id")
             )
             ->groupBy('paiements_tranches.reference')
