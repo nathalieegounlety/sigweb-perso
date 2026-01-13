@@ -226,6 +226,10 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
     Route::get('paiements/valide','listePaiementsValide');
 });
 
+// gestion des dashboard
+Route::prefix('v1/dashboard')->controller(\App\Http\Controllers\DashboardController::class)->group(function(){
+    Route::get('admin/indicateurs','adminIndicateurs');
+});
 
 
 
