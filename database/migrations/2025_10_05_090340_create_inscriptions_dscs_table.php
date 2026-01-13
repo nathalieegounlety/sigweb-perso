@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('code_inscription',100);
             $table->unsignedBigInteger('traiter_par');
             $table->unsignedBigInteger('updated_by')->nullable();
-            $table->foreign('inscrits_id')->references('id')->on('inscrits')->onDelete(('cascade'));
+            $table->foreign('inscrits_id')->references('id')->on('inscriptions')->onDelete(('cascade'));
             $table->foreign('traiter_par')->references('id')->on('users')->onDelete(('cascade'));
             $table->foreign('updated_by')->references('id')->on('users')->onDelete(('cascade'));
             $table->timestamps();
