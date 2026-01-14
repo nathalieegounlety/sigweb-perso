@@ -294,9 +294,9 @@ class FormationsService implements FormationsInterface
         $queryFormations = Formations::select('formations.*')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
-            //->whereDate('formations.date_fin','>=',$date_now)
+            ->whereDate('formations.date_fin','>=',$date_now)
             ->where('formations.is_formation_dsc',false)
-            //->where('formations.statut','ACTIF')
+            ->where('formations.statut','ACTIF')
             ->where('formations.enable',true)
             ->orderBy("formations.date_debut","DESC")
             ->limit(6) ;
