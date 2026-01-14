@@ -32,19 +32,16 @@ class HomeController extends Controller
         $date_actuelle = date('m/d/Y');
         $get_date = date('Y-m-d',strtotime($date_actuelle . "+60 days"));
 
-        $formations = Formations::
-            //where('date_limite', '>=', now())
-            whereDate('formations.date_fin','>=',$date_now)
-            ->where('statut', 'ACTIF')
-            ->where('enable', 1)
-            ->where('afficher', 1)
-            ->where('is_formation_dsc',false)
-           ->orderBy('date_debut', 'DESC')
-            ->paginate(9, [
-                'id', 'code_formation', 'theme as titre', 'date_debut', 'date_fin',
-                'date_limite', 'lieu', 'visuel', 'fm_presentielle', 'fm_visio', 'cout_formation'
-            ]);
-        return response()->json($formations);
+        $queryFormations = Formations::select('formations.*')
+            ->with('getTypeformation:id,libelle')
+            ->with('tarifications')
+            //->whereDate('formations.date_fin','>=',$date_now)
+            ->where('formations.is_formation_dsc',false)
+            //->where('formations.statut','ACTIF')
+            ->where('formations.enable',true)
+            ->orderBy("formations.date_debut","DESC")
+            ->paginate(9) ;
+        return response()->json($queryFormations);
     }
 
     public function detailsformations($id)
