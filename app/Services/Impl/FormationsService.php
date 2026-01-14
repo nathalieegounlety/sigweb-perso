@@ -298,7 +298,7 @@ class FormationsService implements FormationsInterface
             ->where('formations.is_formation_dsc',false)
             ->where('formations.statut','ACTIF')
             ->where('formations.enable',true)
-            ->orderBy("formations.date_debut","DESC")
+            ->orderBy("formations.date_debut","ASC")
             ->limit(6) ;
         return $queryFormations->get();
     }
