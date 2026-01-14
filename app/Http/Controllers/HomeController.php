@@ -27,9 +27,15 @@ class HomeController extends Controller
     // Récupérer toutes les formations (catalogue, avec pagination)
     public function catalogue(Request $request)
     {
+        $date_now = date('Y-m-d');
+        // $date_now = date('Y-m-d',strtotime($date_now . "-45 days"));
+        $date_actuelle = date('m/d/Y');
+        $get_date = date('Y-m-d',strtotime($date_actuelle . "+60 days"));
+
         $formations = Formations::
             //where('date_limite', '>=', now())
-            where('statut', 'ACTIF')
+            whereDate('formations.date_fin','>=',$date_now)
+            ->where('statut', 'ACTIF')
             ->where('enable', 1)
             ->where('afficher', 1)
             ->where('is_formation_dsc',false)

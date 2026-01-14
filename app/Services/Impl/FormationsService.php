@@ -286,9 +286,15 @@ class FormationsService implements FormationsInterface
         // TODO: Implement getRecentFormations() method.
         $perPage = min($request->input('per_page', 6),6);
 
+        $date_now = date('Y-m-d');
+        // $date_now = date('Y-m-d',strtotime($date_now . "-45 days"));
+        $date_actuelle = date('m/d/Y');
+        $get_date = date('Y-m-d',strtotime($date_actuelle . "+60 days"));
+
         $queryFormations = Formations::select('formations.*')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
+            ->whereDate('formations.date_fin','>=',$date_now)
             ->where('formations.is_formation_dsc',false)
             ->where('formations.statut','ACTIF')
             ->where('formations.enable',true)
