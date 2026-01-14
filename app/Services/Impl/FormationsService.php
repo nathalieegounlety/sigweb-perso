@@ -57,18 +57,18 @@ class FormationsService implements FormationsInterface
             $formation->setAttribute('date_limite',$request->get('date_limite')) ;
             $formation->setAttribute('statut','ACTIF');
             $formation->setAttribute('visuel',$name_visuel) ;
-            if($request->get('fm_visio')){
+            if($request->get('fm_visio') === true){
                 $formation->setAttribute('fm_visio',1) ;
             }else{
                 $formation->setAttribute('fm_visio',0) ;
             }
 
-            if($request->get('fm_presentielle')){
+            if($request->get('fm_presentielle') === true){
                 $formation->setAttribute('fm_presentielle',1) ;
             }else{
                 $formation->setAttribute('fm_presentielle',0) ;
             }
-            if ($request->get('is_formation_dsc')) {
+            if ($request->get('is_formation_dsc') === true) {
                 # code...
                 $formation->setAttribute('is_formation_dsc',1) ;
             }else{
