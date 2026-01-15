@@ -47,7 +47,6 @@ class FormationsService implements FormationsInterface
         }else{
 
             // enregistrement des données de la formation
-
             $formation = new Formations();
             $formation->setAttribute('code_formation',$request->get('code_formation')) ;
             $formation->setAttribute('theme',$request->get('theme')) ;
@@ -56,19 +55,20 @@ class FormationsService implements FormationsInterface
             $formation->setAttribute('date_debut',$request->get('date_debut')) ;
             $formation->setAttribute('date_fin',$request->get('date_fin')) ;
             $formation->setAttribute('date_limite',$request->get('date_limite')) ;
+            $formation->setAttribute('statut','ACTIF');
             $formation->setAttribute('visuel',$name_visuel) ;
-            if($request->get('fm_visio')){
+            if($request->get('fm_visio') === true){
                 $formation->setAttribute('fm_visio',1) ;
             }else{
                 $formation->setAttribute('fm_visio',0) ;
             }
 
-            if($request->get('fm_presentielle')){
+            if($request->get('fm_presentielle') === true){
                 $formation->setAttribute('fm_presentielle',1) ;
             }else{
                 $formation->setAttribute('fm_presentielle',0) ;
             }
-            if ($request->get('is_formation_dsc')) {
+            if ($request->get('is_formation_dsc') === true) {
                 # code...
                 $formation->setAttribute('is_formation_dsc',1) ;
             }else{
@@ -286,11 +286,19 @@ class FormationsService implements FormationsInterface
         // TODO: Implement getRecentFormations() method.
         $perPage = min($request->input('per_page', 6),6);
 
+        $date_now = date('Y-m-d');
+        // $date_now = date('Y-m-d',strtotime($date_now . "-45 days"));
+        $date_actuelle = date('m/d/Y');
+        $get_date = date('Y-m-d',strtotime($date_actuelle . "+60 days"));
+
         $queryFormations = Formations::select('formations.*')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
-            ->where('formations.enable', true)
-            ->orderBy("formations.date_debut","DESC")
+            ->whereDate('formations.date_fin','>=',$date_now)
+            ->where('formations.is_formation_dsc',false)
+            ->where('formations.statut','ACTIF')
+            ->where('formations.enable',true)
+            ->orderBy("formations.date_debut","ASC")
             ->limit(6) ;
         return $queryFormations->get();
     }
