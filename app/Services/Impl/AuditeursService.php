@@ -662,6 +662,7 @@ class AuditeursService implements AuditeursInterface
         $data = Formations::select('formations.id','formations.code_formation','formations.theme','formations.date_debut')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
+            ->whereDate('formations.date_fin','>=',$date_now)
             ->where('formations.is_formation_dsc',false)
             ->where('formations.statut','ACTIF')
             ->where('formations.enable',true)
@@ -669,7 +670,6 @@ class AuditeursService implements AuditeursInterface
             ->limit(3)->get() ;
 
         return  ResponseHandler::success("ok",$data);
-
     }
 
     public function getListeInscriptions(Request $request): \Illuminate\Http\JsonResponse

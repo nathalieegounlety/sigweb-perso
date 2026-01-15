@@ -337,7 +337,7 @@
                         $masse_horaire = 8 * $nbre_jour;
                     @endphp
 
-                    <div style="z-index: 300; opacity: 0; margin: 0; font-size: 12pt;">
+                    <div style="z-index: 300; opacity: 1; margin: 0; font-size: 12pt;">
                         <div
                             style="z-index: 3; display: block; text-align: center; margin: 8px 0; font-size: 20pt; font-weight: bold; color: #1a0642;">
                             3ème édition du Forum International des Professionnels du Droit et du Chiffre
