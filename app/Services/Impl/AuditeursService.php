@@ -709,7 +709,7 @@ class AuditeursService implements AuditeursInterface
                   END as checkDsc2024')
             ])
             ->where('inscriptions.email', $request->email)
-            ->orderBy("inscriptions.created_at","ASC")
+            ->orderBy("inscriptions.created_at","DESC")
             ->get();
 
         return  ResponseHandler::success("ok",$data);
