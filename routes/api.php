@@ -231,6 +231,19 @@ Route::prefix('v1/dashboard')->controller(\App\Http\Controllers\DashboardControl
     Route::get('admin/indicateurs','adminIndicateurs');
 });
 
+// gestion api zoom
+//
+Route::get('/zoom/reunion/auth/callback', [\App\Http\Controllers\ZoomController::class, 'indexReunion'])->name('zoom.reunion-auth');
+//
+Route::get('/zoom/auth/callback', [\App\Http\Controllers\ZoomController::class, 'index'])->name('zoom.auth');
+// refreshToken
+Route::get('/zoom/refresh/token', [\App\Http\Controllers\ZoomController::class, 'refreshToken'])->name('zoom.refresh_token');
+// AUTHORISATION
+Route::get('/zoom/authorisation', [\App\Http\Controllers\ZoomController::class, 'authorisation'])->name('zoom.authorisation');
+// zoom inscription
+Route::get('/zoom/inscription', [\App\Http\Controllers\ZoomController::class, 'inscription'])->name('zoom.inscription')->middleware('auth');
+//
+Route::post('/zoom/inscription/store', [\App\Http\Controllers\ZoomController::class, 'inscriptionStore'])->name('zoom.sync-inscrit');
 
 
 

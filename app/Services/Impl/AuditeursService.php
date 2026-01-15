@@ -658,10 +658,13 @@ class AuditeursService implements AuditeursInterface
     public function getLastThreeFormation(): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getListePays() method.
+        $date_now = date('Y-m-d');
         $data = Formations::select('formations.id','formations.code_formation','formations.theme','formations.date_debut')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
-            ->where('formations.enable', true)
+            ->where('formations.is_formation_dsc',false)
+            ->where('formations.statut','ACTIF')
+            ->where('formations.enable',true)
             ->orderBy("formations.date_debut","ASC")
             ->limit(3)->get() ;
 
@@ -706,6 +709,7 @@ class AuditeursService implements AuditeursInterface
                   END as checkDsc2024')
             ])
             ->where('inscriptions.email', $request->email)
+            ->orderBy("inscriptions.created_at","ASC")
             ->get();
 
         return  ResponseHandler::success("ok",$data);
