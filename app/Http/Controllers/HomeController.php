@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Formations;
+use App\Models\points_de_paiements;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -58,5 +59,19 @@ class HomeController extends Controller
 
         // Retourner les détails de la formation
         return response()->json($formation);
+    }
+
+    public function getPointsPaiements()
+    {
+        $liste_pointsdepaiements = points_de_paiements::select('points_de_paiements.*')
+            ->orderBy("pays", "ASC")
+            ->get();
+    
+        // Retourne une réponse JSON avec les données
+        return response()->json([
+            'success' => true,
+            'message' => 'Liste des moyens de paiement récupérée avec succès',
+            'data' => $liste_pointsdepaiements
+        ]);
     }
 }

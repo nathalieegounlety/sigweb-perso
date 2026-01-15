@@ -149,6 +149,10 @@ Route::get('v1/formations/catalogue', [HomeController::class, 'catalogue']);
 // Récupérer toutes les details des formations
 Route::get('v1/detailsformations/{id}', [HomeController::class, 'detailsformations']);
 
+// Récupérer les moyens de paiements
+Route::get('v1/pointsdepaiements',[HomeController::class, 'getPointsPaiements']);
+
+
 // Inscription d'un auditeur
 //Route::post('/auditeurs', [AuditeurController::class, 'store'])->name('auditeurs.store');
 
@@ -194,6 +198,7 @@ Route::prefix('v1/paiements')->controller(\App\Http\Controllers\PaiementsControl
     Route::post('infos','infosPaiement');
     Route::post('info/partiel','infoPaiementPartiel');
     Route::post('partiel/store','savePaiementPartiel');
+
 });
 
 // gestion des paiements via fedapay
