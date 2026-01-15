@@ -121,7 +121,7 @@ body::before {
 
           <div >
               <!-- div opacity -->
-              <div style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
+              <div style="z-index: 300; opacity:1; margin:0;font-size:12pt;">
                     
                 <div style="z-index: 3; display:block; text-align:center; font-size: 27pt; font-weight:bold; font-family:'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:#1a0642;">Journées africaines de l'arbitrage et de la médiation</div>
 

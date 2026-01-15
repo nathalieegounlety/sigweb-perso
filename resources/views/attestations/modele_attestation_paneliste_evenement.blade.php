@@ -278,7 +278,7 @@ body::before {
 
           <div >
               <!-- div opacity -->
-              <div style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
+              <div style="z-index: 300; opacity:1; margin:0;font-size:12pt;">
                     @if ($formateur->getFormation->titre_evenement)
                         <div style="z-index: 3; display:block; text-align:center; font-size: 20px; font-weight:bold; font-family:'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:#1a0642;">{{$formateur->getFormation->titre_evenement}}</div>
 

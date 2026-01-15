@@ -149,7 +149,7 @@
 
             <div>
                 <!-- div opacity -->
-                <div style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
+                <div style="z-index: 300; opacity:1; margin:0;font-size:12pt;">
                     @php
                         $nbre_jour = 0;
                         $get_nbre_jour = round(

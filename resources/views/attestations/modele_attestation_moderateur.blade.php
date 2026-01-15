@@ -121,7 +121,7 @@ if ($duree_enregistrement > 0) {
   background-position: center;
   z-index: -1;">
   <!-- div opacity -->
-            <div style="z-index: 300; opacity:0; margin:0;">
+            <div style="z-index: 300; opacity:1; margin:0;">
 
             <div style="z-index: 100;clear:both; display:block; margin: 20px 0 0px 0;text-align: center;line-height: 115%;font-size: 28pt; color:#006fc0; font-weight:bold;">
             <div style="margin: 20px 0 10px 0;">

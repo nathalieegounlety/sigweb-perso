@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 
@@ -5,63 +8,43 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>Attestation de formation - ERSUMA</title>
     <style type="text/css">
-        body {
-    font-family: Tahoma, sans-serif;
-    font-size: 12pt;
-    margin: 0;
-    padding: 0;
-}
+     body {
+        font-family: Tahoma, sans-serif;
+        font-size: 12pt;
+        margin: 0;
+        padding: 0;
+        position: relative;
+    }
 
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('img/logo/logo-ohada-new500.png') no-repeat fixed center 100px / contain;
-    opacity: 0.1;
-    z-index: -1;
-}
+    @page {
+        size: 29.7cm 21cm;
+        margin: 2cm; /* Marges augmentées */
+    }
 
-        header {
-            position: fixed;
-            top: 0cm;
-            left: 0cm;
-            right: 0cm;
-            height: 3.0cm;3.5cm;
-            border-bottom:6px solid #0d043d;
-        }
+    header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3cm;
+        border-bottom: 6px solid #0d043d;
+    }
 
-        @page {
-            size: 29.7cm 21cm;
-            margin-left: 1.27cm;
-            margin-right: 1.27cm;
-            margin-top: 0.73cm;
-            margin-bottom: 0.97cm;
-        }
+    footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 5cm;
+        margin: 0;
+    }
 
-        p {
-            margin-bottom: 0.25cm;
-            direction: ltr;
-            line-height: 115%;
-            text-align: justify;
-            orphans: 2;
-            widows: 2;
-            background: transparent;
-            font-size: 12pt;
-        }
-
-        /** Define the footer rules **/
-        footer {
-            position: fixed;
-            bottom: 0cm;
-            left: 0cm;
-            right: 0cm;
-            height: 5.2cm;
-            margin:0;
-        }
-
+    .content {
+        margin-top: 4cm; /* Espace pour l'en-tête */
+        margin-bottom: 6cm; /* Espace pour le pied de page */
+        position: relative;
+        z-index: 1;
+    }
     </style>
 </head>
 
@@ -122,7 +105,7 @@ body::before {
 
             <div >
                 <!-- div opacity -->
-                <div style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
+                <div class="content" style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
                     
                     <div style="z-index: 3; display:block; text-align:center; font-size: 27pt; font-weight:bold; font-family:'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:#1a0642;">Journées africaines de l'arbitrage et de la médiation</div>
                     <div
@@ -377,7 +360,7 @@ body::before {
 
                 <div >
                     <!-- div opacity -->
-                    <div style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
+                    <div style="z-index: 300; opacity:1; margin:0;font-size:12pt;">
                     
                         <div style="z-index: 3; display:block; text-align:center; font-size: 27pt; font-weight:bold; font-family:'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:#1a0642;">Journées africaines de l'arbitrage et de la médiation</div>
 

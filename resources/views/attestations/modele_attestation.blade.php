@@ -381,7 +381,7 @@
 
                     <div>
                         <!-- div opacity -->
-                        <div style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
+                        <div style="z-index: 300; opacity:1; margin:0;font-size:12pt;">
 
                             <div
                                 style="z-index: 100;clear:both; display:block; margin: 20px 0 0px 0;text-align: center;line-height: 1.2;font-size: 30pt; color:#006fc0; font-weight:bold;">
