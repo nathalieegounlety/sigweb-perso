@@ -10,4 +10,5 @@ interface PaiementsInterface
     public function getInfoPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse;
     public function enregistrerPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse;
 
+
 }
