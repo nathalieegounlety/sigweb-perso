@@ -53,7 +53,7 @@
         <div style="width: 86%; float: left;">
             <div style="border-bottom: 5px double #2681ca; max-width: 75%; padding: 0 0 10px 0;">
                 <div style="float: left; width: 90px; margin: 0; height: 90px;">
-                    <img src="/img/logo/logo-ohada.png" alt="Logo OHADA" style="height: 75px;">
+                    <img src="img/logo/logo-ohada.png" alt="Logo OHADA" style="height: 75px;">
                 </div>
                 <div style="font-size: 65%; line-height: 1.5; margin: -25px 0 0 95px; padding: 0; font-weight: bold; text-align: justify;">
                     Organisation pour l’Harmonisation en Afrique du Droit des Affaires<br>
@@ -64,7 +64,7 @@
             </div>
         </div>
         <div style="width: 14%; float: right; text-align: right;">
-            <img src="/img/logo/attestation_flyers2.png" alt="Attestation" style="height: 80px;">
+            <img src="img/logo/attestation_flyers2.png" alt="Attestation" style="height: 80px;">
         </div>
     </header>
 

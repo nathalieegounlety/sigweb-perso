@@ -15,7 +15,7 @@ class DocumentsController extends Controller
     public function __construct(DocumentsInterface $documentService){
         $this->documentService = $documentService;
         $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
-            'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel',
+            'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc',
             'exportAllAttestationParticipant']]);
     }
 

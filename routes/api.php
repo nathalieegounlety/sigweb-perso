@@ -68,7 +68,7 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     // reçu de paiement
     Route::get('paiements/recu/{reference}', 'recuPaiement')->name('paiements.recu')->middleware('signed');
     Route::get('proforma/{reference}', 'proforma')->name('pro-forma')->middleware('signed');
-    Route::get('formationsdiplomantes/proforma/{reference}/', 'proformaDSc')->name('pro-forma-dsc')->middleware('signed');
+    Route::get('formationsdiplomantes/proforma/{reference}/', 'proformaDsc')->name('pro-forma-dsc')->middleware('signed');
     Route::get('proforma/pm/{reference}', 'proformaPm')->name('proforma-pm')->middleware('signed');
     Route::get('facture/normalisee/{reference}', 'genereFactureNormalise')->name('emcef.proforma-pm')->middleware('signed');
     Route::get('paiements/recu/ouvrage/{reference}', 'recuPaiementOuvrage')->name('paiements.recu-ouvrage')->middleware('signed');
@@ -229,6 +229,7 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
     Route::post('traitement/paiement/dsc','traitementPaiementDsc');
     Route::post('traitement/paiement','traitementPaiement');
     Route::get('paiements/valide','listePaiementsValide');
+    Route::get('liste/paiements','listeDesPaiements');
 });
 
 // gestion des dashboard

@@ -22,4 +22,5 @@ interface ComptabilitesInterface
     public function validerPaiement(Request $request): \Illuminate\Http\JsonResponse;
     public function validerPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse;
     public function validerPaiementDsc(Request $request): \Illuminate\Http\JsonResponse;
+    public function getListePaiements(Request $request); //: LengthAwarePaginator;
 }

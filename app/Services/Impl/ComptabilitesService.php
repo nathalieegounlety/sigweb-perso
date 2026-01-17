@@ -8,6 +8,7 @@ use App\Mail\Paiementvalider;
 use App\Models\Auditeurs;
 use App\Models\Detailpaiementouvrages;
 use App\Models\Detailspaiements;
+use App\Models\Inscriptions;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
 use App\Models\PaiementsTranche;
@@ -1483,5 +1484,108 @@ class ComptabilitesService implements ComptabilitesInterface
             ->get();
 
         return  ResponseHandler::success("ok",$details_paiement);
+    }
+
+    public function getListePaiements(Request $request)
+    {
+        // TODO: Implement getListePaiements() method.
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        // Filtres spécifiques
+        $filterActif = $request->input('filter_actif');
+        $filterUpdatedAt = $request->input('filter_updated_at');
+
+        $queryData = Inscriptions::leftJoin('auditeurs', 'auditeurs.email', '=', 'inscriptions.email')
+            ->leftJoin('detailspaiements as dp', function ($join) {
+                $join->on('dp.id_tarification_formation', '=', 'inscriptions.tarif_formation_id')
+                    ->where('dp.email', '=', DB::raw('inscriptions.email'))
+                    ->whereNotNull('dp.email');
+            })
+            ->leftJoin('paiements as p', function ($join) {
+                $join->on('p.reference', '=', 'dp.reference_paiement');
+            })
+            ->leftJoin('modepaiements as mp', function ($join) {
+                $join->on('mp.id', '=', 'p.id_modepaiement');
+            })
+            ->leftJoin('reductions', function ($join) {
+                $join->on('reductions.id', '=', 'dp.id_reduction');
+            })
+            ->leftJoin('formations', function ($join) {
+                $join->on('inscriptions.code_formation', '=', 'formations.theme');
+            })
+            ->selectRaw("
+                auditeurs.email,
+                inscriptions.tarif_formation_id,
+                inscriptions.code_formation,
+                CONCAT(auditeurs.prenoms, ' ', auditeurs.nom) as auditeur,
+                CASE
+                    WHEN p.type = 'DSC' THEN (
+                        SELECT
+                            SUM(
+                                COALESCE(dp2.montant_paye, 0) + COALESCE(dp2.montant_restant, 0)
+                            )
+                        FROM detailspaiements dp2
+                        WHERE dp2.reference_paiement = dp.reference_paiement
+                    )
+                    ELSE (
+                        COALESCE(dp.montant_paye, 0) + COALESCE(dp.montant_restant, 0)
+                    )
+                END as montant,
+                inscriptions.updated_at,
+                inscriptions.id,
+                inscriptions.code_inscription,
+                dp.id as detailpaiement_id,
+                dp.reference_paiement,
+                dp.id_tarification_formation,
+                mp.libelle as modepaiement,
+                mp.id as modepaiement_id,
+                dp.statut_paiement,
+                dp.id_reduction,
+                p.type,
+                p.id as paiement_id,
+                reductions.id as id_reduction,
+                reductions.pourcentage,
+                dp.have_reduction_dsc,
+                dp.reference_paiement_partiel,
+                p.num_transaction,
+                dp.montant_restant
+            ")
+            ->selectRaw(
+                '(
+                    SELECT pt.statut_traitement
+                    FROM paiements_tranches pt
+                    WHERE pt.details_paiements_id = dp.id
+                    ORDER BY pt.id DESC
+                    LIMIT 1
+                ) as check_statut_ptranche'
+            )
+        ;
+
+
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $queryData->where(function ($q) use ($search) {
+                $q->where('auditeurs.nom', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.email', 'like', "%{$search}%")
+                    ->orWhere('dp.reference_paiement', 'like', "%{$search}%")
+                    ->orWhere('dp.statut_paiement', 'like', "%{$search}%")
+                    ->orWhere('inscriptions.code_formation', 'like', "%{$search}%")
+                    ->orWhere('mp.libelle', 'like', "%{$search}%")
+                ;
+            });
+        }
+
+        // Filtres par colonne
+        if ($filterUpdatedAt) {
+            $queryData->whereDate('inscriptions.updated_at', $filterUpdatedAt);
+        }
+        // Tri
+        $queryData->orderBy("inscriptions.{$sortField}", $sortOrder);
+
+        return $queryData->paginate($perPage);
     }
 }

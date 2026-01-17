@@ -223,8 +223,6 @@ class DocumentsService implements DocumentsInterface
         $auditeur = Auditeurs::where("email", $inscrit->email)->first();
         $liste_formation = Inscriptions::where("code_inscription", $reference)->orderBy("id", "DESC")->get();
         $details = Detailspaiements::where("code_inscription", $reference)->orderBy("id", "DESC")->get();
-        $liste_modepaiements = Modepaiements::where('statut', 'ACTIF')->get();
-        $liste_reduction = Reductions::all();
 
         $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
         $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
