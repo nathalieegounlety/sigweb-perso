@@ -223,8 +223,6 @@ class DocumentsService implements DocumentsInterface
         $auditeur = Auditeurs::where("email", $inscrit->email)->first();
         $liste_formation = Inscriptions::where("code_inscription", $reference)->orderBy("id", "DESC")->get();
         $details = Detailspaiements::where("code_inscription", $reference)->orderBy("id", "DESC")->get();
-        $liste_modepaiements = Modepaiements::where('statut', 'ACTIF')->get();
-        $liste_reduction = Reductions::all();
 
         $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
         $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
@@ -823,5 +821,44 @@ class DocumentsService implements DocumentsInterface
             }
         }
         return  ResponseHandler::success('E-mail envoyé avec succès',['success'=> true, 'code_formation'=>$request->code_formation]);
+    }
+
+    public function getListeAttestationFormateur(Request $request, string $code_formation)
+    {
+        // TODO: Implement getListeAttestationFormateur() method.
+
+
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'nom');
+        $sortOrder = $request->input('sort_order', 'asc');
+
+        // récupérer la liste des panélistes
+        $query =  DB::table('formationsformateurs')
+            ->join('formations', 'formations.id', '=', 'formationsformateurs.formation_id')
+            ->join('formateurs', 'formateurs.id', '=', 'formationsformateurs.formateur_id')
+            ->leftjoin('pays', 'pays.id', '=', 'formateurs.nationalite')
+            ->leftjoin('roleformateurs', 'formationsformateurs.roleformateur_id', '=', 'roleformateurs.id')
+            ->select('formationsformateurs.id as id_formateur', 'formateurs.nom', 'formateurs.prenoms', 'formateurs.telephone', 'formateurs.email', 'formationsformateurs.role',  'pays.nationalite','roleformateurs.libelle as role_formateur')
+            ->where('formations.code_formation', $code_formation);
+
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('formateurs.nom', 'like', "%{$search}%")
+                    ->orWhere('formateurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('formateurs.telephone', 'like', "%{$search}%")
+                    ->orWhere('formationsformateurs.role', 'like', "%{$search}%")
+                    ->orWhere('roleformateurs.libelle', 'like', "%{$search}%")
+                    ->orWhere('pays.nationalite', 'like', "%{$search}%"); // Recherche sur auteur
+            });
+        }
+        $query->orderBy("formateurs.{$sortField}", $sortOrder);
+
+        $data = $query->paginate($perPage);
+
+        return [
+            'pagination' => $data,
+        ];
     }
 }

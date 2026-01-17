@@ -13,7 +13,7 @@ class ComptabilitesController extends Controller
     public function __construct(ComptabilitesInterface $comptabiliteService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['listePaiementsEnAttente']]);
+        $this->middleware('auth:api',['except' => ['listeDesPaiements']]);
         $this->comptabiliteService = $comptabiliteService;
     }
 
@@ -241,6 +241,27 @@ class ComptabilitesController extends Controller
                 'per_page'       => $data->perPage(),
                 'total'          => $data->total(),
                 'montant_total'   => $montant_total
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    public function listeDesPaiements(Request $request){
+
+        try {
+            $data = $this->comptabiliteService->getListePaiements($request);
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
             ];
             return ResponseHandler::success('ok',$response);
 

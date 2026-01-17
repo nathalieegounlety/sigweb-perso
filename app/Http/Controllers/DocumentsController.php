@@ -15,7 +15,7 @@ class DocumentsController extends Controller
     public function __construct(DocumentsInterface $documentService){
         $this->documentService = $documentService;
         $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
-            'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel',
+            'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc',
             'exportAllAttestationParticipant']]);
     }
 
@@ -316,6 +316,30 @@ class DocumentsController extends Controller
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function listeAttestationFormateurs(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $resp = $this->documentService->getListeAttestationFormateur($request, $request->code_formation);
+            $data = $resp['pagination'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total()
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
 
