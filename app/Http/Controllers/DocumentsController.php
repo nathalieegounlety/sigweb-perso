@@ -319,4 +319,28 @@ class DocumentsController extends Controller
         }
     }
 
+    public function listeAttestationFormateurs(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $resp = $this->documentService->getListeAttestationFormateur($request, $request->code_formation);
+            $data = $resp['pagination'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total()
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+
 }

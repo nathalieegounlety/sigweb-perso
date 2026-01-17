@@ -260,7 +260,7 @@
                                         <tr>
                                             <td style="width:15%; vertical-align: bottom;">
                                                 <div style="margin-bottom: 1px; margin-left: 10px;">
-                                                    <img width="95" height="95" src="data:image/png;base64, {!! base64_encode(QrCode::encoding('UTF-8')->format('svg')->size(100)->generate('Code Formation : ' . $participant->code_formation . ' / Thème : ' . $participant->theme . ' / Auditeur : ' . trim($participant->prenoms) . ' ' . trim($participant->nom))), !!}" />
+                                                    <img width="95" height="95" src="data:image/png;base64, {!! base64_encode(QrCode::encoding('UTF-8')->format('svg')->size(100)->generate('Code Formation : ' . $participant->code_formation . ' / Thème : ' . $participant->theme . ' / Auditeur : ' . trim($participant->prenoms) . ' ' . trim($participant->nom))) !!}" />
                                                 </div>
                                             </td>
                                             <td style="width:45%; text-align:center; vertical-align: bottom;">&nbsp;</td>
@@ -423,7 +423,7 @@
                                         <tr>
                                             <td style="width:15%; vertical-align: bottom;">
                                                 <div style="margin-bottom: 1px; margin-left: 10px;">
-                                                    <img width="95" height="95" src="data:image/png;base64, {!! base64_encode(QrCode::encoding('UTF-8')->format('svg')->size(100)->generate('Code Formation : ' . $participant->code_formation . ' / Thème : ' . $participant->theme . ' / Auditeur : ' . trim($participant->prenoms) . ' ' . trim($participant->nom))), !!}" />
+                                                    <img width="95" height="95" src="data:image/png;base64, {!! base64_encode(QrCode::encoding('UTF-8')->format('svg')->size(100)->generate('Code Formation : ' . $participant->code_formation . ' / Thème : ' . $participant->theme . ' / Auditeur : ' . trim($participant->prenoms) . ' ' . trim($participant->nom))) !!}" />
                                                 </div>
                                             </td>
                                             <td style="width:45%; text-align:center; vertical-align: bottom;">&nbsp;</td>

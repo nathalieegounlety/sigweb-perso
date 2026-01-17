@@ -29,4 +29,5 @@ interface DocumentsInterface
     public function getUrlAllAttestationParticipant($code_formation);
     public function downloadAllAttestationParticipant($code_formation);
     public function sendAllMailAttestationParticipant(Request $request): \Illuminate\Http\JsonResponse;
+    public function getListeAttestationFormateur(Request $request, string $code_formation);
 }

@@ -89,6 +89,7 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::get('export/all/attestation/participant/{code_formation}','exportAllAttestationParticipant')->name('export.all.attestattion.participant')->middleware('signed');
     Route::post('get/url/all/attestation/participant','urlAllAttestationParticipant');
     Route::post('send/all/attestation/participant','sendAllAttestationParticipant');
+    Route::get('attestations/formateurs','listeAttestationFormateurs');
 });
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function(){
