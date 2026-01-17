@@ -45,8 +45,8 @@
         }
 
         th {
-            background-color: #1571c6;
-            color: white;
+            background-color: #abd;
+            color: rgb(0, 0, 0);
             font-weight: bold;
             text-align: center;
             padding: 6px;
@@ -98,13 +98,13 @@
 
         .signature-section {
             margin-top: 40px;
-            text-align: center;
+            text-align: right;
             margin-bottom: 20px;
             height: 100px;
         }
 
         .signature-section img {
-            height: 50px;
+            height: 60px;
             width: auto;
             max-width: 150px;
             margin-bottom: 5px;
@@ -121,6 +121,8 @@
             font-size: 10pt;
             margin: 0;
             line-height: 1.2;
+            text-align: right;
+
         }
 
         footer {
@@ -186,7 +188,7 @@
         <div class="main-content" style="position: relative; z-index: 1;">
             <div class="background-image"></div>
 
-            <div class="title">Reçu de paiement</div>
+            <div class="title">REÇU DE PAIEMENT</div>
 
             <table class="info-table">
                 <tbody>
@@ -196,11 +198,11 @@
                         <td class="header-cell" style="width: 35%;">Date</td>
                     </tr>
                     <tr>
-                        <td style="text-align:center; font-size: 14px;">
+                        <td style="text-align:center;">
                             <b>{{ $paiement->reference }}</b>
                         </td>
                         <td style="">&nbsp;</td>
-                        <td style="text-align:center; font-size: 14px;">
+                        <td style="text-align:center;">
                             <b>{{ \Carbon\Carbon::parse($paiement->updated_at)->format('d/m/Y') }}</b>
                         </td>
                     </tr>
@@ -208,7 +210,7 @@
                         <td colspan="3" class="header-cell">Délivré à</td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="line-height: 1.3; padding: 10px; font-size: 12pt; text-align:center;">
+                        <td colspan="3" style="line-height: 1.3; padding: 10px; font-size: 11pt; text-align:center;">
                             <b>{{ $auditeur->prenoms }} <span style="text-transform:uppercase;">{{ $auditeur->nom }}</span></b><br>
                             @if ($auditeur->telephone)
                                 Tél : {{ $auditeur->telephone }} -
@@ -223,7 +225,7 @@
                 </tbody>
             </table>
 
-            <div class="subtitle">Détails du paiement</div>
+            <div class="subtitle p-4" style="background-color: #1571c6; color:white;  padding:8px; ">Détails du paiement</div>
 
             <table>
                 <thead>
@@ -336,7 +338,7 @@
                     <span>L'OHADA est également exempte de toute obligation relative au recouvrement ou au paiement d'impôts, de taxes ou de droits de douane.</span>
                 </div>
             </div>
-            <div style="margin-top: 20px; font-size: 12px; padding: 10px 0; border-top: 4px solid #9cc2e5; border-bottom: 4px solid #1571c6;">
+            <div style="margin-top: 20px; font-size: 12px; padding: 10px 0; border-top: 8px solid #9cc2e5; border-bottom: 8px solid #1571c6;">
                 ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
                 Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
                 Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org" style="color: #0563c1; text-decoration: underline; font-size: 14px;">https://ersuma.ohada.org</a></u></font>

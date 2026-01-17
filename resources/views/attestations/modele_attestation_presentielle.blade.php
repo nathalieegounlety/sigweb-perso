@@ -30,7 +30,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3.5cm;
+            height: 4.5cm;
             border-bottom: 6px solid #0d043d;
         }
     
