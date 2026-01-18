@@ -129,31 +129,50 @@ class ComptabilitesService implements ComptabilitesInterface
         $classiques = DB::table('paiements')
             ->leftJoin('auditeurs', 'auditeurs.email', '=', 'paiements.email')
             ->leftJoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
-            ->where('statut_traitement', 'ATTENTE')
+            ->where('paiements.statut_traitement', 'ATTENTE')
             ->where('paiements.montant_restant', '!=', 0)
             ->where('paiements.type', '!=', 'dsc')
-            ->where('is_paiement_partiel', false)
-            ->whereNotNull('num_transaction')
+            ->where('paiements.is_paiement_partiel', false)
+            ->whereNotNull('paiements.num_transaction')
             ->selectRaw("
             paiements.id,
             auditeurs.nom,
             auditeurs.prenoms,
             auditeurs.email,
             paiements.reference,
-            paiements.montant_restant as montant,
+            paiements.montant_restant AS montant,
             paiements.num_transaction,
             paiements.type,
-            paiements.updated_at as date,
-            paiements.reference as action_ref,
-            'classique' as route_type,
-            modepaiements.id as id_modepaiement,
-            modepaiements.libelle as libelle_modepaiement,
-            0 as id_reduction,
-            0 as pourcentage,
-            0 as have_reduction,
-            '' as code_formation,
-            '' as theme
-        ");
+            paiements.updated_at AS date,
+            paiements.reference AS action_ref,
+            'classique' AS route_type,
+            modepaiements.id AS id_modepaiement,
+            modepaiements.libelle AS libelle_modepaiement,
+            0 AS id_reduction,
+            0 AS pourcentage,
+            0 AS have_reduction
+            ")
+            ->selectRaw("
+                (
+                    SELECT i.code_formation
+                    FROM inscriptions i
+                    WHERE i.code_inscription = paiements.code_inscription
+                    LIMIT 1
+                ) AS code_formation
+            ")
+            ->selectRaw("
+                (
+                    SELECT f.theme
+                    FROM formations f
+                    WHERE f.code_formation = (
+                        SELECT i2.code_formation
+                        FROM inscriptions i2
+                        WHERE i2.code_inscription = paiements.code_inscription
+                        LIMIT 1
+                    )
+                    LIMIT 1
+                ) AS theme
+            ");
 
         /** PAIEMENTS PARTIELS */
         $partiels = DB::table('detailspaiements')
@@ -1281,6 +1300,14 @@ class ComptabilitesService implements ComptabilitesInterface
                 $getDetailPaiement->setAttribute("montant_paye",$getDetailPaiement->montant_restant);
                 $getDetailPaiement->setAttribute("montant_restant",0);
                 $getDetailPaiement->setAttribute("commentaire",$request->commentaire);
+                // si preuve de paiement on sauvegarde
+                if (!empty($request->preuve)) {
+                    $preuve_paiement = $request->preuve;
+                    $extension = $preuve_paiement->getClientOriginalExtension();
+                    $preuve_name = date('Ymd-His') . '.' . $extension;
+                    $preuve_paiement->move(public_path('preuve'), $preuve_name);
+                    $getDetailPaiement->setAttribute('preuve_path', $preuve_name);
+                }
                 $getDetailPaiement->update();
 
                 // si facture soldée update paiements
@@ -1310,6 +1337,14 @@ class ComptabilitesService implements ComptabilitesInterface
             $getDetailPaiement->setAttribute("montant_paye",$getDetailPaiement->montant_restant);
             $getDetailPaiement->setAttribute("montant_restant",0);
             $getDetailPaiement->setAttribute("commentaire",$request->commentaire);
+            // si preuve de paiement on sauvegarde
+            if (!empty($request->preuve)) {
+                $preuve_paiement = $request->preuve;
+                $extension = $preuve_paiement->getClientOriginalExtension();
+                $preuve_name = date('Ymd-His') . '.' . $extension;
+                $preuve_paiement->move(public_path('preuve'), $preuve_name);
+                $getDetailPaiement->setAttribute('preuve_path', $preuve_name);
+            }
             $getDetailPaiement->update();
 
             // si facture soldée update paiements
@@ -1365,9 +1400,20 @@ class ComptabilitesService implements ComptabilitesInterface
         // TODO: Implement validerPaiementDsc() method.
         $user = auth('api')->user();
         // récupérer la référence de la table paiement
-        $getOneTranchePaiement = PaiementsTranche::where('reference',$request->reference)->first();
-        $getOneDtPaiement = Detailspaiements::find($getOneTranchePaiement->details_paiements_id);
-        $getPaiement = Paiements::where('reference',$getOneDtPaiement->reference_paiement)->first();
+        $nbrePaiementAttente = PaiementsTranche::where('reference','like','%'.$request->reference.'%')
+            ->where('statut_traitement','ATTENTE')
+            ->count();
+        $getPaiement = Paiements::where('reference',$request->reference)->first();
+
+        // update table paiement tranche pour le choix des paiements concernés
+        $listePTranches = collect($request->listeTranches)->map(fn($item) => (object) $item);
+        $choixNbrePaiement = count($listePTranches);
+
+        if($nbrePaiementAttente > $choixNbrePaiement){
+            $paiementTotal = false;
+        }else{
+            $paiementTotal = true;
+        }
 
         $paiement = Paiements::find($getPaiement->id);
 
@@ -1375,7 +1421,7 @@ class ComptabilitesService implements ComptabilitesInterface
         //
         if ($request->statut_traitement == "VALIDER") {
             // update statut paiement si montant restant = 0
-            if ($paiement->montant_restant == 0) {
+            if ($paiement->montant_restant == 0 && $paiementTotal) {
                 # code...
                 $paiement->setAttribute("num_transaction",trim($request->num_transaction));
                 $paiement->setAttribute("statut_transaction",trim($request->num_transaction));
@@ -1387,12 +1433,10 @@ class ComptabilitesService implements ComptabilitesInterface
                 $paiement->update();
             }
             # code...
-            // update table paiement tranche
-            $getAllPaiementTranche = PaiementsTranche::where('reference',$request->reference)->get();
 
-            foreach ($getAllPaiementTranche as $key => $data) {
+            foreach ($listePTranches as $key => $data) {
                 # code...
-                $paiementTranche = PaiementsTranche::find($data->id);
+                $paiementTranche = PaiementsTranche::find($data->tranche_id);
                 $detailPaiementTranche = Detailspaiements::find($paiementTranche->details_paiements_id);
                 $paiementTranche->setAttribute("num_transaction",trim($request->num_transaction));
                 $paiementTranche->setAttribute("statut_transaction",trim($request->num_transaction));
@@ -1403,6 +1447,16 @@ class ComptabilitesService implements ComptabilitesInterface
                 // update details paiements
                 $detailPaiementTranche->setAttribute('statut_traitement',trim($request->statut_traitement));
                 $detailPaiementTranche->setAttribute('statut_paiement', "PAYE");
+                // si preuve de paiement on sauvegarde
+                if (!empty($request->preuve)) {
+                    $preuve_paiement = $request->preuve;
+                    $extension = $preuve_paiement->getClientOriginalExtension();
+                    $preuve_name = date('Ymd-His') . '.' . $extension;
+                    $preuve_paiement->move(public_path('preuve'), $preuve_name);
+                    $paiementTranche->setAttribute('preuve_path', $preuve_name);
+                    $detailPaiementTranche->setAttribute('preuve_path', $preuve_name);
+                    $paiementTranche->update();
+                }
                 $detailPaiementTranche->update();
             }
 
@@ -1419,7 +1473,7 @@ class ComptabilitesService implements ComptabilitesInterface
                 'commentaire' => "Paiement validé",
                 'email'=>$paiement->email,
                 'mode_paiement'=>$modepaiement->libelle,
-                'montant'=>$request->montant_paye,
+                'montant'=>$request->montant_total,
                 'montant_restant'=>$paiement->montant_restant,
                 'type'=>$paiement->type,
                 'url_recu'=>$this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$request->reference])
@@ -1434,7 +1488,7 @@ class ComptabilitesService implements ComptabilitesInterface
 
         } else {
             # code...
-            if ($paiement->montant_restant == 0) {
+            if ($paiement->montant_restant == 0 && $paiementTotal) {
                 # code...
                 $paiement->setAttribute("num_transaction",$request->num_transaction);
                 $paiement->setAttribute("statut_transaction",$request->num_transaction);
@@ -1444,10 +1498,9 @@ class ComptabilitesService implements ComptabilitesInterface
             $paiement->setAttribute("statut_traitement","ATTENTE");
             $paiement->update();
             // update table paiement tranche
-            $getAllPaiementTranche = PaiementsTranche::where('reference',$request->reference)->get();
-            foreach ($getAllPaiementTranche as $key => $data) {
+            foreach ($listePTranches as $key => $data) {
                 # code...
-                $paiementTranche = PaiementsTranche::find($data->id);
+                $paiementTranche = PaiementsTranche::find($data->tranche_id);
                 // update each table
                 $paiementTranche->setAttribute("modepaiement_id",$request->modepaiement_id);
                 $paiementTranche->setAttribute("statut_traitement","ATTENTE");
@@ -1474,10 +1527,10 @@ class ComptabilitesService implements ComptabilitesInterface
         // TODO: Implement getDetailsPaiementDsc() method.
         $details_paiement = DB::table('paiements_tranches')
             ->join('detailspaiements', 'paiements_tranches.details_paiements_id', '=', 'detailspaiements.id')
-            ->join('tarificationsformation', 'tarificationsformation.id', '=', 'detailspaiements.id_tarification_formation')
-            ->join('grilletarifaires', 'tarificationsformation.id_grilletarifaire', '=', 'grilletarifaires.id')
-            ->join('formations', 'formations.code_formation', '=', 'tarificationsformation.code_formation')
-            ->select('formations.code_formation', 'formations.theme', 'formations.date_debut','paiements_tranches.montant_paye','detailspaiements.have_reduction_dsc','detailspaiements.preuve_path','grilletarifaires.type_tarif')
+            ->join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
+            ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+            ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
+            ->select('paiements_tranches.id','formations.code_formation', 'formations.theme', 'formations.date_debut','paiements_tranches.num_transaction','paiements_tranches.montant_paye','detailspaiements.have_reduction_dsc','detailspaiements.preuve_path','grilletarifaires.type_tarif','grilletarifaires.montant')
             ->where('paiements_tranches.reference','like','%'.$request->reference_paiement.'%')
             ->where('paiements_tranches.statut_traitement','ATTENTE')
             ->orderBy('paiements_tranches.id', 'DESC')
@@ -1514,7 +1567,7 @@ class ComptabilitesService implements ComptabilitesInterface
                 $join->on('reductions.id', '=', 'dp.id_reduction');
             })
             ->leftJoin('formations', function ($join) {
-                $join->on('inscriptions.code_formation', '=', 'formations.theme');
+                $join->on('inscriptions.code_formation', '=', 'formations.code_formation');
             })
             ->selectRaw("
                 auditeurs.email,
@@ -1551,15 +1604,16 @@ class ComptabilitesService implements ComptabilitesInterface
                 dp.have_reduction_dsc,
                 dp.reference_paiement_partiel,
                 p.num_transaction,
-                dp.montant_restant
+                dp.montant_restant,
+                formations.is_formation_dsc,
+                formations.theme
             ")
             ->selectRaw(
-                '(
-                    SELECT pt.statut_traitement
+                'EXISTS (
+                    SELECT 1
                     FROM paiements_tranches pt
                     WHERE pt.details_paiements_id = dp.id
-                    ORDER BY pt.id DESC
-                    LIMIT 1
+                    AND pt.statut_traitement = "ATTENTE"
                 ) as check_statut_ptranche'
             )
         ;

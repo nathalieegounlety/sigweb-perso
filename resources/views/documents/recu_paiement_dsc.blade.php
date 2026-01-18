@@ -233,12 +233,16 @@
                         </td>
                     </tr>
                     <tr>
+<<<<<<< HEAD
                         <td colspan="3" style="padding:4px; margin-top:5px;background:#1571c6; color:#fff; text-align:center;">
                             <b>ADRESSEE A</b>
                         </td>
                     </tr>
                     <tr>
                         <td colspan="3" style="line-height: 1.5;">
+=======
+                        <td colspan="3" style="line-height: 1.3; padding: 10px; font-size: 11pt; text-align:left;">
+>>>>>>> origin/sigweb-api-v0.2
                             <b>{{ $auditeur->prenoms }} <span style="text-transform:uppercase;">{{ $auditeur->nom }}</span></b><br>
                             @if ($auditeur->telephone)
                                 Tél : {{ $auditeur->telephone }} -
@@ -274,6 +278,7 @@
                 </thead>
                 <tbody>
                     @php
+<<<<<<< HEAD
                         $i = 0;
                         $montant_total = 0;
                     @endphp
@@ -316,12 +321,77 @@
                     <tr style="background-color: #abd;">
                         <th colspan="4" style="padding:5px; border: 1px solid black;">Montant total hors taxe</th>
                         <th style="padding:5px; border: 1px solid black; text-align:right;"><b>{{ number_format($montant_total, 0, ',', '.') }}</b></th>
+=======
+                        $i = 1;
+                        $have_reduction = false;
+                        $montant_total_paye = 0;
+                        $montant_paye = 0;
+                        $montant_restant = 0;
+                    @endphp
+                    @foreach ($details_paiement as $item)
+                        @php
+                            if ($item->have_reduction_dsc) {
+                                $have_reduction = true;
+                            }
+                            if($item->statut_tranche == 'VALIDER'){
+                                $montant_total_paye = $montant_total_paye + $item->montant_paye;
+                            }
+                        @endphp
+                        @if ($item->montant_paye > 0 && $item->statut_tranche == 'VALIDER')
+                            <tr style="font-size: 9pt;">
+                                <td style="text-align:center;">
+                                    <b>{{ $i++ }}</b>
+                                </td>
+                                <td>
+                                    <b>{{ $item->code_formation }}</b><br><small>{{ $item->theme }}</small>
+                                </td>
+                                <td style="text-align:center;">
+                                    {{ $item->type_tarif }}
+                                </td>
+                                <td>
+                                    {{ $item->num_transaction }}
+                                </td>
+                                <td style="text-align:center;">
+                                    @if ($item->have_reduction_dsc)
+                                        5%
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td style="text-align:center;">
+                                    PAYE
+                                </td>
+                                <td style="text-align:right;">
+                                    {{ number_format($item->montant_paye, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        @endif
+                    @endforeach
+                    <tr style="background-color: #abd; font-weight: bold;">
+                        <th colspan="6" style="padding:6px; font-size: 10pt;">Montant total hors taxe</th>
+                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total, 0, ',', '.') }}</th>
+                    </tr>
+                    <tr style="background-color: #abd; font-weight: bold;">
+                        <th colspan="6" style="padding:6px; font-size: 10pt;">Montant payé</th>
+                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($montant_total_paye, 0, ',', '.') }}</th>
+                    </tr>
+                    <tr style="background-color: #abd; font-weight: bold;">
+                        <th colspan="6" style="padding:6px; font-size: 10pt;">Montant restant</th>
+                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total - $montant_total_paye, 0, ',', '.') }}</th>
+>>>>>>> origin/sigweb-api-v0.2
                     </tr>
                 </tbody>
             </table>
         </div>
 
+<<<<<<< HEAD
         <p><span style="text-decoration: underline;">Montant en lettres</span> : <b>{{ $formatter->format($montant_total) }} francs CFA</b> (XOF).</p>
+=======
+            <p style="text-align: left; margin: 20px 0; font-size: 9pt;">
+                <span style="text-decoration: underline; font-weight: bold;">Montant en lettres</span> :
+                <b>{{ $formatter->format($montant_total_paye) }} francs CFA</b> (XOF).
+            </p>
+>>>>>>> origin/sigweb-api-v0.2
 
         <div class="signature-section">
             @php $signataire = getSignataireByDate(\Carbon\Carbon::parse(date('Y-m-d'))->format('Y-m-d')); @endphp
@@ -336,6 +406,7 @@
     </div>
 
     <footer>
+<<<<<<< HEAD
         <div style="clear:both; margin-top:10px;">
             <table style="width: 100%; padding: 5px 0 0 0; margin: 0;">
                 <tbody>
@@ -357,6 +428,35 @@
             ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
             Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
             Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org">https://ersuma.ohada.org</a></u></font>
+=======
+        <div class="footer-content">
+            <div style="overflow: hidden;">
+                <div class="qr-code">
+                    <img width="90" height="90" src="data:image/png;base64, {!! base64_encode(
+                        QrCode::encoding('UTF-8')->format('svg')->size(95)->generate(
+                                'REFERENCE : ' .
+                                    $paiement->reference .
+                                    ' Prénoms & nom : ' .
+                                    $auditeur->prenoms .
+                                    ' ' .
+                                    $auditeur->nom,
+                            ),
+                    ) !!}">
+                </div>
+                <div class="footer-text">
+                    <b>NB :</b> Traité relatif à l'Harmonisation du Droit des Affaires en Afrique <br>
+                    <span><b>Article 51: </b></span><br>
+                    <span>L'OHADA, ses avoirs, ses biens et ses revenus ainsi que les opérations autorisées par le présent Traité sont exonérés de tous impôts, taxes et droits de douane.</span> <br>
+                    <span>L'OHADA est également exempte de toute obligation relative au recouvrement ou au paiement d'impôts, de taxes ou de droits de douane.</span>
+                </div>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; padding: 10px 0; border-top: 8px solid #9cc2e5; border-bottom: 8px solid #1571c6;">
+                ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
+                Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
+                Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org" style="color: #0563c1; text-decoration: underline; font-size: 14px;">https://ersuma.ohada.org</a></u></font>
+            </div>
+
+>>>>>>> origin/sigweb-api-v0.2
         </div>
     </footer>
 </body>

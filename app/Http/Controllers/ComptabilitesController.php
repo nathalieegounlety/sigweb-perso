@@ -213,7 +213,8 @@ class ComptabilitesController extends Controller
                 'montant_total' => 'required',
                 'modepaiement_id' => 'required',
                 'reference' => 'required',
-                'num_transaction' => 'required'
+                'num_transaction' => 'required',
+                'listeTranches' => 'required'
             ]);
 
             return $data = $this->comptabiliteService->validerPaiementDsc($request);

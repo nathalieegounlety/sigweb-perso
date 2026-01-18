@@ -890,7 +890,7 @@ class AuditeursService implements AuditeursInterface
             ->where('statut_traitement', 'VALIDER')
             ->where('is_paiement_partiel', false)
             ->where('paiements.type', '!=', 'dsc')
-            ->get(['paiements.reference','paiements.montant_paye','paiements.updated_at','modepaiements.libelle as mode_paiement']);
+            ->get(['paiements.reference','paiements.montant_paye','paiements.updated_at','modepaiements.libelle as mode_paiement','paiements.type']);
 
         $paiements_partiel = DB::table('detailspaiements')
             ->join('modepaiements', 'modepaiements.id', '=', 'detailspaiements.modepaiement_id')

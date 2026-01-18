@@ -145,4 +145,58 @@ class GenarateurCodeService {
 
         return $pdf;
     }
+
+    // get blade attestation formateur
+    public function getBladeAttestationFormateur($is_event, $typeformation_id)
+    {
+        $pdf = null;
+
+        if ($is_event && ($typeformation_id == 3 || $typeformation_id == 5)) {
+            # code...
+            $pdf = PDF::loadView('attestations.modele_attestation_paneliste_evenement');
+
+        } else {
+            # code...
+            switch ($typeformation_id) {
+                case 1: // formation
+                    # code...
+                    $pdf = PDF::loadView('attestations.pdf_attestation_by_formateur');
+                    break;
+                case 2: // conférence
+                    # code...
+                    $pdf = PDF::loadView('attestations.pdf_attestation_by_formateur');
+                    break;
+                case 3: // colloque
+                    # code...
+                    # $pdf = PDF::loadView('attestations.modele_attestation_paneliste_colloque');
+                    $pdf = PDF::loadView('attestations.modele_attestation_paneliste_colloque_ERS2024-M4');
+                    break;
+                case 4: // forum
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation_paneliste_forum');
+                    break;
+                case 5: // atelier
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation_paneliste_atelier');
+                    break;
+                case 6: // université
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation_paneliste_universite');
+                    break;
+                case 7: // salon
+                    # code...
+                    $pdf = PDF::loadView('attestations.modele_attestation_paneliste_salon');
+                    break;
+
+                default:
+                    # code...
+                    $pdf = PDF::loadView('attestations.pdf_attestation_by_formateur');
+                    break;
+
+
+            }
+        }
+
+        return $pdf;
+    }
 }

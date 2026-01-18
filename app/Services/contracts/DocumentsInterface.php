@@ -30,4 +30,14 @@ interface DocumentsInterface
     public function downloadAllAttestationParticipant($code_formation);
     public function sendAllMailAttestationParticipant(Request $request): \Illuminate\Http\JsonResponse;
     public function getListeAttestationFormateur(Request $request, string $code_formation);
+    public function downloadAttestationFormateur($id);
+    public function getUrlAttestationFormateur($id);
+    public function downloadConsultationAttestationFormateur($id);
+    public function getUrlConsultationAttestationFormateur($id);
+    public function sendMailAttestationFormateur($id): \Illuminate\Http\JsonResponse;
+    public function sendAllMailAttestationFormateur(Request $request): \Illuminate\Http\JsonResponse;
+    public function downloadAllAttestationFormateur($code_formation);
+    public function getUrlAllAttestationFormateur($code_formation);
+    public function downloadListeFormateur($code_formation);
+    public function getUrlListeFormateur($code_formation);
 }
