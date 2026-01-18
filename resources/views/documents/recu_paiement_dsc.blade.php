@@ -181,258 +181,209 @@
 
 <body lang="fr-BJ" link="#0563c1" vlink="#800000" dir="ltr" style="font-family: Tahoma, sans-serif;">
 
-    <header>
-        <div style="z-index:30;">
-            <div style="float:left;width:86%;">
-                <div style="border-bottom:5px double #2681ca; max-width:75%; padding: 0 0 10px 0;">
-                    <div style="float:left; width: 90px; margin:0px; height:90px;">
-                        <img src="img/logo/logo-ohada.png" alt="Logo OHADA" height="75px" style="height: 75px;">
-                    </div>
-                    <div style="font-size:65%; line-height:1.5; margin: -25px 0 0 95px; padding:0px; top:0; font-family: Tahoma, serif; font-weight:bold; text-align:justify;">
-                        Organisation &nbsp;pour &nbsp;l’Harmonisation &nbsp;en &nbsp;Afrique &nbsp;du &nbsp;Droit &nbsp;des &nbsp;Affaires <br>
-                        Organization &nbsp;&nbsp; for&nbsp; &nbsp;the&nbsp; &nbsp;Harmonization &nbsp;&nbsp; of &nbsp;&nbsp;Business &nbsp;&nbsp; Law &nbsp;in &nbsp;&nbsp; Africa <br>
-                        Organización para la Armonización en África del Derecho de los Negocios <br>
-                        Organização &nbsp;para &nbsp;a &nbsp;Harmonização &nbsp;em &nbsp;África &nbsp;do &nbsp;Direito dos Negócios
-                    </div>
+<header>
+    <div style="z-index:30;">
+        <div style="float:left;width:86%;">
+            <div style="border-bottom:5px double #2681ca; max-width:75%; padding: 0 0 10px 0;">
+                <div style="float:left; width: 90px; margin:0px; height:90px;">
+                    <img src="img/logo/logo-ohada.png" alt="Logo OHADA" height="75px" style="height: 75px;">
+                </div>
+                <div style="font-size:65%; line-height:1.5; margin: -25px 0 0 95px; padding:0px; top:0; font-family: Tahoma, serif; font-weight:bold; text-align:justify;">
+                    Organisation &nbsp;pour &nbsp;l’Harmonisation &nbsp;en &nbsp;Afrique &nbsp;du &nbsp;Droit &nbsp;des &nbsp;Affaires <br>
+                    Organization &nbsp;&nbsp; for&nbsp; &nbsp;the&nbsp; &nbsp;Harmonization &nbsp;&nbsp; of &nbsp;&nbsp;Business &nbsp;&nbsp; Law &nbsp;in &nbsp;&nbsp; Africa <br>
+                    Organización para la Armonización en África del Derecho de los Negocios <br>
+                    Organização &nbsp;para &nbsp;a &nbsp;Harmonização &nbsp;em &nbsp;África &nbsp;do &nbsp;Direito dos Negócios
                 </div>
             </div>
-            <div style="float:right;width:14%;position:relative; text-align:right;">
-                <img src="img/logo/attestation_flyers2.png" alt="Logo Attestation" height="80px">
-            </div>
         </div>
-    </header>
-
-    <div class="main-content">
-        <div class="background-image"></div>
-
-        <div class="title">FACTURE PROFORMA</div>
-
-        <div style="clear:both;">
-            <table style="width: 100%; padding: 5px 0 0 0; margin: 0;">
-                <tbody>
-                    <tr>
-                        <td style="width: 45%;padding:4px;background:#1571c6; color:#fff; text-align:center;">
-                            N° PROFORMA
-                        </td>
-                        <td style="width: 20%;">
-                            &nbsp;
-                        </td>
-                        <td style="width: 35%;padding:4px;background:#1571c6; color:#fff; text-align:center;">
-                            DATE
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align:center;">
-                            <b>ERS-{{ date('Y') }}-PF-{{ \Carbon\Carbon::parse($inscrit->created_at)->format('mdhs') }}</b>
-                        </td>
-                        <td style="">
-                            &nbsp;
-                        </td>
-                        <td style="text-align:center;">
-                            <b>{{ \Carbon\Carbon::parse($inscrit->created_at)->format('d/m/Y') }}</b>
-                        </td>
-                    </tr>
-                    <tr>
-<<<<<<< HEAD
-                        <td colspan="3" style="padding:4px; margin-top:5px;background:#1571c6; color:#fff; text-align:center;">
-                            <b>ADRESSEE A</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" style="line-height: 1.5;">
-=======
-                        <td colspan="3" style="line-height: 1.3; padding: 10px; font-size: 11pt; text-align:left;">
->>>>>>> origin/sigweb-api-v0.2
-                            <b>{{ $auditeur->prenoms }} <span style="text-transform:uppercase;">{{ $auditeur->nom }}</span></b><br>
-                            @if ($auditeur->telephone)
-                                Tél : {{ $auditeur->telephone }} -
-                            @endif
-                            E-mail : {{ $auditeur->email }}
-                            @if ($auditeur->ville)
-                                <br>
-                                {{ $auditeur->ville }},
-                            @endif
-                            @if ($auditeur->pays)
-                                {{ $auditeur->pays }}
-                            @endif
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div style="line-height: 1.3; margin:5px 0; padding:4px; text-align:center; text-transform:uppercase; background:#1571c6; color:#fff;">
-            <b>Détails du paiement</b>
-        </div>
-
-        <div style="clear:both;">
-            <table cellspacing="0" cellpadding="0" style="spacing: 0; cellpadding:0; border:0; width: 100%; padding: 5px 0 0 0; margin: 0; font-size:10.5pt;">
-                <thead>
-                    <tr style="background-color: #abd;">
-                        <th style="padding:5px; border: 1px solid black;">#</th>
-                        <th style="padding:5px; border: 1px solid black; text-align:left;">Thème(s) de formation</th>
-                        <th style="padding:5px; border: 1px solid black;">Type de frais</th>
-                        <th style="padding:5px; border: 1px solid black;">Réduction</th>
-                        <th style="padding:5px; border: 1px solid black;">Montant</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php
-<<<<<<< HEAD
-                        $i = 0;
-                        $montant_total = 0;
-                    @endphp
-                    @foreach ($liste_formation as $formations)
-                        @foreach (getTarifFormationCustom($formations->code_formation, $formations->tarif_formation_id, $formations->email) as $formation)
-                            @php $i = $i + 1; @endphp
-                            @empty($formations->tarif_formation_id)
-                                <tr>
-                                    <td style="padding:5px; text-align:center;"><b>{{ $i }}</b></td>
-                                    <td style="padding:5px;"><b>{{ $formation->code_formation }}</b> - {{ $formation->theme }}</td>
-                                    <td style="padding:5px; text-align:center;">{{ $formation->libelle }}</td>
-                                    <td style="padding:5px; text-align:center;">0</td>
-                                    <td style="padding:5px; text-align:right;">{{ number_format($formation->montant, 0, ',', '.') }}</td>
-                                </tr>
-                                @php $montant_total = $montant_total + $formation->montant; @endphp
-                            @else
-                                @php $pourcentage = 0; @endphp
-                                @if ($formation->pourcentage != '')
-                                    @php $pourcentage = $formation->pourcentage / 100; @endphp
-                                @endif
-                                <tr>
-                                    <td style="padding:5px; text-align:center;"><b>{{ $i }}</b></td>
-                                    <td style="padding:5px;"><b>{{ $formation->code_formation }}</b> - {{ $formation->theme }}</td>
-                                    <td style="padding:5px; text-align:center;">{{ $formation->libelle }}</td>
-                                    <td style="padding:5px; text-align:center;">
-                                        @if ($formation->pourcentage != '')
-                                            {{ $formation->pourcentage }}
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td style="padding:5px; text-align:right;">
-                                        {{ number_format($formation->montant - $formation->montant * $pourcentage, 0, ',', '.') }}
-                                    </td>
-                                </tr>
-                                @php $montant_total = $montant_total + ($formation->montant - $formation->montant * $pourcentage); @endphp
-                            @endempty
-                        @endforeach
-                    @endforeach
-                    <tr style="background-color: #abd;">
-                        <th colspan="4" style="padding:5px; border: 1px solid black;">Montant total hors taxe</th>
-                        <th style="padding:5px; border: 1px solid black; text-align:right;"><b>{{ number_format($montant_total, 0, ',', '.') }}</b></th>
-=======
-                        $i = 1;
-                        $have_reduction = false;
-                        $montant_total_paye = 0;
-                        $montant_paye = 0;
-                        $montant_restant = 0;
-                    @endphp
-                    @foreach ($details_paiement as $item)
-                        @php
-                            if ($item->have_reduction_dsc) {
-                                $have_reduction = true;
-                            }
-                            if($item->statut_tranche == 'VALIDER'){
-                                $montant_total_paye = $montant_total_paye + $item->montant_paye;
-                            }
-                        @endphp
-                        @if ($item->montant_paye > 0 && $item->statut_tranche == 'VALIDER')
-                            <tr style="font-size: 9pt;">
-                                <td style="text-align:center;">
-                                    <b>{{ $i++ }}</b>
-                                </td>
-                                <td>
-                                    <b>{{ $item->code_formation }}</b><br><small>{{ $item->theme }}</small>
-                                </td>
-                                <td style="text-align:center;">
-                                    {{ $item->type_tarif }}
-                                </td>
-                                <td>
-                                    {{ $item->num_transaction }}
-                                </td>
-                                <td style="text-align:center;">
-                                    @if ($item->have_reduction_dsc)
-                                        5%
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td style="text-align:center;">
-                                    PAYE
-                                </td>
-                                <td style="text-align:right;">
-                                    {{ number_format($item->montant_paye, 0, ',', '.') }}
-                                </td>
-                            </tr>
-                        @endif
-                    @endforeach
-                    <tr style="background-color: #abd; font-weight: bold;">
-                        <th colspan="6" style="padding:6px; font-size: 10pt;">Montant total hors taxe</th>
-                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total, 0, ',', '.') }}</th>
-                    </tr>
-                    <tr style="background-color: #abd; font-weight: bold;">
-                        <th colspan="6" style="padding:6px; font-size: 10pt;">Montant payé</th>
-                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($montant_total_paye, 0, ',', '.') }}</th>
-                    </tr>
-                    <tr style="background-color: #abd; font-weight: bold;">
-                        <th colspan="6" style="padding:6px; font-size: 10pt;">Montant restant</th>
-                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total - $montant_total_paye, 0, ',', '.') }}</th>
->>>>>>> origin/sigweb-api-v0.2
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-<<<<<<< HEAD
-        <p><span style="text-decoration: underline;">Montant en lettres</span> : <b>{{ $formatter->format($montant_total) }} francs CFA</b> (XOF).</p>
-=======
-            <p style="text-align: left; margin: 20px 0; font-size: 9pt;">
-                <span style="text-decoration: underline; font-weight: bold;">Montant en lettres</span> :
-                <b>{{ $formatter->format($montant_total_paye) }} francs CFA</b> (XOF).
-            </p>
->>>>>>> origin/sigweb-api-v0.2
-
-        <div class="signature-section">
-            @php $signataire = getSignataireByDate(\Carbon\Carbon::parse(date('Y-m-d'))->format('Y-m-d')); @endphp
-            <div style="text-align:left; margin:0; padding:0; z-index: 10;">
-                <img src="storage/signature/{{ $signataire->signature }}" alt="Signature" style="margin: -15px; padding:0; height: 80px; text-align:left;">
-            </div>
-            <div style="padding:0; margin:-20px 0 0; text-align:center; z-index: 100;">
-                <b><u>{{ $signataire->titre }} {{ $signataire->nom }} {{ $signataire->prenoms }}</u></b><br>
-                <small>{{ $signataire->fonction }}</small>
-            </div>
+        <div style="float:right;width:14%;position:relative; text-align:right;">
+            <img src="img/logo/attestation_flyers2.png" alt="Logo Attestation" height="80px">
         </div>
     </div>
+</header>
 
-    <footer>
-<<<<<<< HEAD
-        <div style="clear:both; margin-top:10px;">
-            <table style="width: 100%; padding: 5px 0 0 0; margin: 0;">
-                <tbody>
-                    <tr>
-                        <td style="width: 105px; margin:0; border: 0px solid black;">
-                            <img width="90" height="90" src="data:image/png;base64, {!! base64_encode(QrCode::encoding('UTF-8')->format('svg')->size(95)->generate('REFERENCE : '.$inscrit->code_inscription.' Prénoms & nom : '.$auditeur->prenoms.' '.$auditeur->nom)) !!}">
+<div class="main-content">
+    <div class="background-image"></div>
+
+    <div class="title">REÇU DE PAIEMENT</div>
+
+    <div style="clear:both;">
+        <table style="width: 100%; padding: 5px 0 0 0; margin: 0;">
+            <tbody>
+            <tr>
+                <td style="width: 45%;padding:4px;background:#1571c6; color:#fff; text-align:center;">
+                    N° RECU
+                </td>
+                <td style="width: 20%;">
+                    &nbsp;
+                </td>
+                <td style="width: 35%;padding:4px;background:#1571c6; color:#fff; text-align:center;">
+                    DATE
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align:center;">
+                    <b>{{ $paiement->reference }}</b>
+                </td>
+                <td style="">
+                    &nbsp;
+                </td>
+                <td style="text-align:center;">
+                    <b>{{ \Carbon\Carbon::parse($paiement->updated_at)->format('d/m/Y') }}</b>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="3" style="padding:4px; margin-top:10px;background:#1571c6; color:#fff; text-align:center; ">
+                    <b>DELIVRE A</b>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="3" style="line-height: 1.3; padding: 10px; font-size: 11pt; text-align:left;">
+
+                    <b>{{ $auditeur->prenoms }} <span style="text-transform:uppercase;">{{ $auditeur->nom }}</span></b><br>
+                    @if ($auditeur->telephone)
+                        Tél : {{ $auditeur->telephone }} -
+                    @endif
+                    E-mail : {{ $auditeur->email }}
+                    @if ($auditeur->ville)
+                        <br>
+                        {{ $auditeur->ville }},
+                    @endif
+                    @if ($auditeur->pays)
+                        {{ $auditeur->pays }}
+                    @endif
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="line-height: 1.3; margin:5px 0; padding:4px; text-align:center; text-transform:uppercase; background:#1571c6; color:#fff;">
+        <b>Détails du paiement</b>
+    </div>
+
+    <div style="clear:both;">
+        <table cellspacing="0" cellpadding="0" style="spacing: 0; cellpadding:0; border:0; width: 100%; padding: 5px 0 0 0; margin: 0; font-size:10.5pt;">
+            <thead>
+            <tr style="margin:0;background-color: #abd">
+                <th style="padding:5px; margin:0; border: 1px solid black;">#</th>
+                <th style="padding:5px; margin:0; border: 1px solid black; text-align:left;">Formation
+                </th>
+                <th style="padding:5px; margin:0; border: 1px solid black;">Frais</th>
+                <th style="padding:5px; margin:0; border: 1px solid black;">Ref. transaction</th>
+                <th style="padding:5px; margin:0; border: 1px solid black;">Etat</th>
+                <th style="padding:5px; margin:0; border: 1px solid black;">Réduction</th>
+                <th style="padding:5px; margin:0; border: 1px solid black;">Montant</th>
+            </tr>
+            </thead>
+            <tbody>
+            @php
+                $i = 1;
+                $have_reduction = false;
+                $montant_total_paye = 0;
+                $montant_paye = 0;
+                $montant_restant = 0;
+            @endphp
+            @foreach ($details_paiement as $item)
+                @php
+                    if ($item->have_reduction_dsc) {
+                        $have_reduction = true;
+                    }
+                    if($item->statut_tranche == 'VALIDER'){
+                        $montant_total_paye = $montant_total_paye + $item->montant_paye;
+                    }
+                @endphp
+                @if ($item->montant_paye > 0 && $item->statut_tranche == 'VALIDER')
+                    <tr style="margin:0; font-size:10.5pt;">
+                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+                            <b>{{ $i++ }}</b>
                         </td>
-                        <td style="margin:0; font-size:9pt; border: 0px solid black;">
-                            <b>NB :</b> Traité relatif à l'Harmonisation du Droit des Affaires en Afrique <br>
-                            <span><b>Article 51: </b></span><br>
-                            <span>L'OHADA, ses avoirs, ses biens et ses revenus ainsi que les opérations autorisées par le présent Traité sont exonérés de tous impôts, taxes et droits de douane.</span> <br>
-                            <span>L'OHADA est également exempte de toute obligation relative au recouvrement ou au paiement d'impôts, de taxes ou de droits de douane.</span>
+                        <td style="margin:0; padding:5px; border: 1px solid black;">
+                            <b>{{ $item->code_formation }}</b><br><small>{{ $item->theme }}</small>
+                        </td>
+                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+                            {{ $item->type_tarif }}
+                        </td>
+                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+                            {{ $item->num_transaction }}
+                        </td>
+                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+                            @if ($item->have_reduction_dsc)
+                                5%
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+                            PAYE
+                        </td>
+                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">
+                            {{ number_format($item->montant_paye, 0, ',', '.') }}
                         </td>
                     </tr>
-                </tbody>
-            </table>
-        </div>
-        <div style="display:block; clear:both; width:100%; background: #fff; border: 0; border-top: 8px solid #9cc2e5; border-bottom: 8px solid #1571c6; margin: 0; color:#000000; text-align:center; font-size:9pt; padding:5px 0 5px 0">
-            ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
-            Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
-            Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org">https://ersuma.ohada.org</a></u></font>
-=======
-        <div class="footer-content">
-            <div style="overflow: hidden;">
-                <div class="qr-code">
-                    <img width="90" height="90" src="data:image/png;base64, {!! base64_encode(
+                @endif
+            @endforeach
+            <tr style="background-color: #abd; font-weight: bold;">
+                <th colspan="6" style="padding:6px; font-size: 10pt;">Montant total hors taxe</th>
+                <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total, 0, ',', '.') }}</th>
+            </tr>
+            <tr style="background-color: #abd; font-weight: bold;">
+                <th colspan="6" style="padding:6px; font-size: 10pt;">Montant payé</th>
+                <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($montant_total_paye, 0, ',', '.') }}</th>
+            </tr>
+            <tr style="background-color: #abd; font-weight: bold;">
+                <th colspan="6" style="padding:6px; font-size: 10pt;">Montant restant</th>
+                <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total - $montant_total_paye, 0, ',', '.') }}</th>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p>
+        <pr style="text-decoration: underline;">Montant en lettres</pr> :
+        <b>{{ $formatter->format($montant_total_paye) }} francs CFA</b> (XOF).
+    </p>
+    @php
+        $date = date('d M Y');
+    @endphp
+
+    <table style="width: 100%;  padding: 0; margin: 0 ;">
+        <tbody>
+
+        <tr>
+            <td style="width:40%;vertical-align: bottom;">
+                &nbsp;
+            </td>
+
+            <td style="vertical-align: bottom;">
+                &nbsp;
+            </td>
+
+            <td style="width:45%;vertical-align: bottom;padding:0; ">
+                @php
+                    $signataire = getSignataireByDate(\Carbon\Carbon::parse(date('Y-m-d'))->format('Y-m-d'));
+                @endphp
+
+                <div style=" text-align:left;margin:0; -15px; auto; 0px;;padding:0; z-index: 10;">
+                    <img src="storage/signature/{{$signataire->signature}}" alt="Signature"
+                         style="margin: 0 0 -20px -45px; padding:0;height: 105px; opacity:;0.9;text-align:left;center; ">
+                </div>
+                <div style="padding:0; margin:-10px 0 0; text-align:center; z-index: 100;">
+                    <b><u>{{$signataire->titre}} {{$signataire->nom}} {{$signataire->prenoms}}</u></b><br>
+                    <small>{{$signataire->fonction}}</small>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <div style="overflow: hidden;">
+            <div class="qr-code">
+                <img width="90" height="90" src="data:image/png;base64, {!! base64_encode(
                         QrCode::encoding('UTF-8')->format('svg')->size(95)->generate(
                                 'REFERENCE : ' .
                                     $paiement->reference .
@@ -442,22 +393,21 @@
                                     $auditeur->nom,
                             ),
                     ) !!}">
-                </div>
-                <div class="footer-text">
-                    <b>NB :</b> Traité relatif à l'Harmonisation du Droit des Affaires en Afrique <br>
-                    <span><b>Article 51: </b></span><br>
-                    <span>L'OHADA, ses avoirs, ses biens et ses revenus ainsi que les opérations autorisées par le présent Traité sont exonérés de tous impôts, taxes et droits de douane.</span> <br>
-                    <span>L'OHADA est également exempte de toute obligation relative au recouvrement ou au paiement d'impôts, de taxes ou de droits de douane.</span>
-                </div>
             </div>
-            <div style="margin-top: 20px; font-size: 12px; padding: 10px 0; border-top: 8px solid #9cc2e5; border-bottom: 8px solid #1571c6;">
-                ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
-                Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
-                Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org" style="color: #0563c1; text-decoration: underline; font-size: 14px;">https://ersuma.ohada.org</a></u></font>
+            <div class="footer-text">
+                <b>NB :</b> Traité relatif à l'Harmonisation du Droit des Affaires en Afrique <br>
+                <span><b>Article 51: </b></span><br>
+                <span>L'OHADA, ses avoirs, ses biens et ses revenus ainsi que les opérations autorisées par le présent Traité sont exonérés de tous impôts, taxes et droits de douane.</span> <br>
+                <span>L'OHADA est également exempte de toute obligation relative au recouvrement ou au paiement d'impôts, de taxes ou de droits de douane.</span>
             </div>
-
->>>>>>> origin/sigweb-api-v0.2
         </div>
-    </footer>
+        <div style="margin-top: 20px; font-size: 12px; padding: 10px 0; border-top: 8px solid #9cc2e5; border-bottom: 8px solid #1571c6;">
+            ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
+            Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
+            Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org" style="color: #0563c1; text-decoration: underline; font-size: 14px;">https://ersuma.ohada.org</a></u></font>
+        </div>
+
+    </div>
+</footer>
 </body>
 </html>
