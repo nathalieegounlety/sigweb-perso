@@ -5,10 +5,12 @@ namespace App\Services\Impl;
 use App\Helpers\ResponseHandler;
 use App\Mail\Paiementattente;
 use App\Mail\SendAttestation;
+use App\Mail\SendAttestationFormateur;
 use App\Models\Auditeurs;
 use App\Models\Detailspaiements;
 use App\Models\Dureeformations;
 use App\Models\Formations;
+use App\Models\Formationsformateurs;
 use App\Models\Inscriptions;
 use App\Models\Logopartenaires;
 use App\Models\Modepaiements;
@@ -94,7 +96,7 @@ class DocumentsService implements DocumentsInterface
                 ->select('formations.code_formation', 'formations.theme', 'formations.date_debut','paiements_tranches.montant_paye',
                     'detailspaiements.montant_restant','paiements.montant_total','paiements.montant_restant as recap_montant_restant',
                     'detailspaiements.have_reduction_dsc','detailspaiements.statut_paiement','detailspaiements.preuve_path',
-                    'grilletarifaires.type_tarif','paiements_tranches.num_transaction')
+                    'grilletarifaires.type_tarif','paiements_tranches.num_transaction','paiements_tranches.statut_traitement as statut_tranche')
                 ->where('detailspaiements.reference_paiement',$paiement->reference)
                 ->orderBy('detailspaiements.id', 'DESC')
                 ->get();
@@ -416,8 +418,6 @@ class DocumentsService implements DocumentsInterface
     public function sendMailAttestationParticipant($rapport_id): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement sendMailAttestationParticipant() method.
-        set_time_limit(0);
-
         $rapport = DB::table('rapports')
             ->select('rapports.*')
             ->where('rapports.id', $rapport_id)
@@ -749,7 +749,7 @@ class DocumentsService implements DocumentsInterface
         // TODO: Implement sendAllMailAttestationParticipant() method.
 
         $listeAuditeurs = json_decode($request->listeAuditeurs, true);
-        Log::info($listeAuditeurs);
+        //Log::info($listeAuditeurs);
         if (!empty($listeAuditeurs)) {
             foreach ($listeAuditeurs as $key => $id) {
                 $rapport = Rapports::find($id);
@@ -839,7 +839,9 @@ class DocumentsService implements DocumentsInterface
             ->join('formateurs', 'formateurs.id', '=', 'formationsformateurs.formateur_id')
             ->leftjoin('pays', 'pays.id', '=', 'formateurs.nationalite')
             ->leftjoin('roleformateurs', 'formationsformateurs.roleformateur_id', '=', 'roleformateurs.id')
-            ->select('formationsformateurs.id as id_formateur', 'formateurs.nom', 'formateurs.prenoms', 'formateurs.telephone', 'formateurs.email', 'formationsformateurs.role',  'pays.nationalite','roleformateurs.libelle as role_formateur')
+            ->select('formationsformateurs.id', 'formateurs.nom', 'formateurs.prenoms',
+                'formateurs.telephone', 'formateurs.email',
+                'formationsformateurs.role',  'pays.nationalite','roleformateurs.libelle as role_formateur')
             ->where('formations.code_formation', $code_formation);
 
         // Recherche globale sur plusieurs champs
@@ -860,5 +862,246 @@ class DocumentsService implements DocumentsInterface
         return [
             'pagination' => $data,
         ];
+    }
+
+    public function downloadAttestationFormateur($id)
+    {
+        // TODO: Implement downloadAttestationFormateur() method.
+
+        $formateur = Formationsformateurs::where('id',$id)->get();
+
+        $getFormateur = Formationsformateurs::find($id);
+        //
+        $date = date('d-m-YH:i:s');
+        $date_jour = date('d-m-Y');
+        $date_jour = Carbon::now()->locale('fr_FR');
+        $date_jour = $date_jour->isoFormat('DD MMM YYYY');
+        $formation = Formations::find($getFormateur->formation_id);
+        $logo_partenaires = Logopartenaires::where('code_formation',$formation->code_formation)->get();
+        // share data to view
+        view()->share(['formateur'=>$formateur,'date'=>$date_jour,'logo_partenaires' => $logo_partenaires]);
+
+        // service permettant de retourner la vue sur condition
+        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event,$formation->typeformation_id);
+
+        $password = substr(md5($getFormateur->getFormation->code_formation.''.$getFormateur->getFormateur->email), 0, 8);
+        $pdf->setPaper('A4', 'landscape');
+        $pdf->setEncryption($password);
+        $date = date('d_m_Y_His');
+        $formateur_name = $getFormateur->getFormateur->nom.' '.$getFormateur->getFormateur->prenoms;
+        $fichier_name = Str::slug($formateur_name);
+        $file_name = $formation->code_formation.'_'. $fichier_name.'_'.$date;
+        //$file_name = md5($file);
+        // download PDF file with download method
+        return $pdf->download($file_name.'.pdf');
+
+    }
+
+    public function getUrlAttestationFormateur($id)
+    {
+        // TODO: Implement getUrlAttestationFormateur() method.
+        $url = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur',['id' => $id]);
+        $data = ['url'=>$url];
+        return  ResponseHandler::success("ok",$data,200);
+    }
+
+    public function downloadConsultationAttestationFormateur($id)
+    {
+        // TODO: Implement downloadConsultationAttestationFormateur() method.
+
+        $formateur = Formationsformateurs::where('id',$id)->get();
+        $getOneformateur = Formationsformateurs::find($id);
+        $nom_formateur = Str::slug($getOneformateur->getFormateur->nom. '_' .$getOneformateur->getFormateur->prenoms) ;
+
+        $date_pdf = date('Y-m-d');
+        $date_jour = Carbon::now()->locale('fr_FR');
+        $date_jour = $date_jour->isoFormat('DD MMM YYYY');
+        $formation = Formations::find($getOneformateur->formation_id);
+        $logo_partenaires = Logopartenaires::where('code_formation',$formation->code_formation)->get();
+        // share data to view
+        view()->share(['formateur'=>$formateur,'date'=>$date_jour,'logo_partenaires' => $logo_partenaires]);
+
+        // service permettant de retourner la vue sur condition
+        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event,$formation->typeformation_id);
+        $pdf->setPaper('A4', 'landscape');
+
+        // download PDF file with download method
+        return $pdf->download($formation->code_formation.'_ATTESTATION_FORMATEUR_' .$nom_formateur. '_' .$date_pdf.'.pdf');
+
+    }
+
+    public function getUrlConsultationAttestationFormateur($id)
+    {
+        // TODO: Implement getUrlConsultationAttestationFormateur() method.
+        $url = $this->genarateurCodeService->generateUrlSigned('consultation.attestation_formateur',['id' => $id]);
+        $data = ['url'=>$url];
+        return  ResponseHandler::success("ok",$data,200);
+    }
+
+    public function sendMailAttestationFormateur($id): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement sendMailAttestationFormateur() method.
+
+        $formateur = Formationsformateurs::find($id);
+
+        // récupérer les information du participant
+        $date_jour = Carbon::now()->locale('fr_FR');
+        $date_jour = $date_jour->isoFormat('DD MMM YYYY');
+
+        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur',['id' => $id]);
+
+        // enregistrer les infos dans une table pour passer la views
+        $contenu = [
+            'nom_prenoms' => $formateur->getFormateur->prenoms.' '.$formateur->getFormateur->nom,
+            'email' => $formateur->getFormateur->email ,
+            'signedUrl' => $signedUrl,
+            'code_formation' => $formateur->getFormation->code_formation,
+            'theme' => $formateur->getFormation->theme,
+            'password' => substr(md5($formateur->getFormation->code_formation.''.$formateur->getFormateur->email), 0, 8),
+            'subject'=>'ATTESTATION '.$formateur->getFormation->code_formation.' '.$formateur->getFormateur->nom
+        ];
+        // send mail
+        try {
+            # code...
+            Mail::to(trim($formateur->getFormateur->email))->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new SendAttestationFormateur($contenu));
+
+            return ResponseHandler::success('Mail envoyé avec succès',['success' => true,'code_formation'=>$formateur->getFormation->code_formation]);
+        } catch (\Exception $e) {
+            // Get error here
+            Log::info('echec de l\'envoi du mail');
+            return ResponseHandler::success('Mail non envoyé ',['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    public function sendAllMailAttestationFormateur(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement sendAllMailAttestationFormateur() method.
+        $listeFormateurs = json_decode($request->listeFormateurs, true);
+        //Log::info($listeFormateurs);
+        if (!empty($listeFormateurs)) {
+            foreach ($listeFormateurs as $key => $id) {
+                $formateurs = Formationsformateurs::join("formations","formationsformateurs.formation_id","=","formations.id")
+                    ->join("formateurs","formationsformateurs.formateur_id","=","formateurs.id")
+                    ->where("formationsformateurs.id",$id)
+                    ->get(["formateurs.email","formateurs.nom","formateurs.prenoms","formations.code_formation","formations.theme","formationsformateurs.id"])
+                    ->first();
+                // récupérer les information du participant
+                if ($formateurs) {
+                    # code...
+                    $date = date('d-m-YH:i:s');
+                    $date_jour = date('d-m-Y');
+                    $date_jour = Carbon::now()->locale('fr_FR');
+                    $date_jour = $date_jour->isoFormat('DD MMM YYYY');
+
+                    $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur',['id' => $formateurs->id]);
+
+                    // enregistrer les infos dans une table pour passer la views
+                    $contenu = [
+                        'nom_prenoms' => $formateurs->prenoms.' '.$formateurs->nom,
+                        'email' => $formateurs->email ,
+                        //'fichier_name' => $fichier_name,
+                        'signedUrl' => $signedUrl,
+                        'code_formation' => $formateurs->code_formation,
+                        'theme' => $formateurs->theme,
+                        'password' => substr(md5($formateurs->code_formation.''.$formateurs->email), 0, 8),
+                        'subject'=>'ATTESTATION '.$formateurs->code_formation.' '.$formateurs->nom
+                    ];
+                    // send mail
+                    try {
+                        # code...
+                        Mail::to(trim($formateurs->email))->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new SendAttestationFormateur($contenu));
+
+                    } catch (\Exception $e) {
+                        // Get error here
+                        Log::info('echec de l\'envoi du mail');
+                        return ResponseHandler::success('Mail non envoyé ',['success' => false, 'error' => $e->getMessage()]);
+                    }
+
+                }
+
+            }
+            return ResponseHandler::success('Mail envoyé avec succès',['success' => true,'code_formation'=>$request->code_formation]);
+        }
+    }
+
+    public function downloadAllAttestationFormateur($code_formation)
+    {
+        // TODO: Implement downloadAllAttestationFormateur() method.
+
+        set_time_limit(0);
+        $fichier="";
+        // ******************************************* //
+        $formation = Formations::where('code_formation',$code_formation)->first();
+        $formateurs = Formationsformateurs::where('formation_id',$formation->id)->get();
+        $logo_partenaires = Logopartenaires::where('code_formation',$formation->code_formation)->get();
+
+        $date = date('d-m-YH:i:s');
+        $date_jour = date('d-m-Y');
+        $date_pdf = date('Y-m-d');
+        $date_jour = Carbon::now()->locale('fr_FR');
+        $date_jour = $date_jour->isoFormat('DD MMM YYYY');
+        // share data to view
+        view()->share(['formateur'=>$formateurs,'date'=>$date_jour,'logo_partenaires'=>$logo_partenaires]);
+
+        // service permettant de retourner la vue sur condition
+        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event,$formation->typeformation_id);
+        // $pdf = PDF::loadView('attestations.pdf_attestation_by_formateur');
+        $pdf->setPaper('A4', 'landscape');
+        // download PDF file with download method
+        return $pdf->download($formation->code_formation.'_ATTESTATION_FORMATEURS_'.$date_pdf.'.pdf');
+    }
+
+    public function getUrlAllAttestationFormateur($code_formation)
+    {
+        // TODO: Implement getUrlAllAttestationFormateur() method.
+        $url = $this->genarateurCodeService->generateUrlSigned('export.all.attestattion.formateur',['code_formation' => $code_formation]);
+        $data = ['url'=>$url];
+        return  ResponseHandler::success("ok",$data,200);
+    }
+
+    public function downloadListeFormateur($code_formation)
+    {
+        // TODO: Implement downloadListeFormateur() method.
+        set_time_limit(0);
+        // récupérer la liste des formateurs
+        $liste_formateurs =  DB::table('formationsformateurs')
+            ->join('formations', 'formations.id', '=', 'formationsformateurs.formation_id')
+            ->join('formateurs', 'formateurs.id', '=', 'formationsformateurs.formateur_id')
+            ->leftjoin('pays', 'pays.id', '=', 'formateurs.nationalite')
+            ->select('formateurs.id as id_formateur', 'formateurs.nom', 'formateurs.prenoms','formateurs.telephone','formateurs.email','pays.nationalite')
+            ->where('formations.code_formation',$code_formation)
+            //->where('inscrits.code_formation',$code_formation)
+            ->orderBy('formateurs.nom', 'ASC')
+            ->get();
+        $nbre_formateur = count($liste_formateurs);
+        // récupérer l'objet de la formation
+        $formation =  Formations::where('code_formation',$code_formation)->get()->first();
+
+        $date = date('d-m-YH:i:s');
+        // share data to view
+        view()->share(['liste_formateurs'=>$liste_formateurs,'code_formation'=>$code_formation,'formation'=>$formation,'nbre_formateur'=>$nbre_formateur]);
+
+        $pdf = PDF::loadView('attestations.liste_formateur_pdf');
+        $pdf->output();
+        $pdf->setPaper('A4', 'landscape');
+        // ##### a considerer pour pagination ###############
+        // $pdf->output();
+        $dom_pdf = $pdf->getDomPDF();
+        $canvas = $dom_pdf->get_canvas();
+        $footer = $canvas->open_object();
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+        $canvas->close_object();
+        $canvas->add_object($footer,"all");
+
+        return $pdf->download($code_formation.'_LISTE_FORMATEUR_'.$date.'.pdf');
+    }
+
+    public function getUrlListeFormateur($code_formation)
+    {
+        // TODO: Implement getUrlListeFormateur() method.
+        $url = $this->genarateurCodeService->generateUrlSigned('liste.formateurs',['code_formation' => $code_formation]);
+        $data = ['url'=>$url];
+        return  ResponseHandler::success("ok",$data,200);
     }
 }

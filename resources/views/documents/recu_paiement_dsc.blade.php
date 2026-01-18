@@ -23,7 +23,7 @@
 
         .content {
             margin-top: 0.3cm;
-            margin-bottom: 3cm; 
+            margin-bottom: 3cm;
             position: relative;
         }
 
@@ -210,7 +210,7 @@
                         <td colspan="3" class="header-cell">Délivré à</td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="line-height: 1.3; padding: 10px; font-size: 11pt; text-align:center;">
+                        <td colspan="3" style="line-height: 1.3; padding: 10px; font-size: 11pt; text-align:left;">
                             <b>{{ $auditeur->prenoms }} <span style="text-transform:uppercase;">{{ $auditeur->nom }}</span></b><br>
                             @if ($auditeur->telephone)
                                 Tél : {{ $auditeur->telephone }} -
@@ -243,7 +243,7 @@
                     @php
                         $i = 1;
                         $have_reduction = false;
-                        $montant_total = 0;
+                        $montant_total_paye = 0;
                         $montant_paye = 0;
                         $montant_restant = 0;
                     @endphp
@@ -252,10 +252,11 @@
                             if ($item->have_reduction_dsc) {
                                 $have_reduction = true;
                             }
-                            $montant_total = $montant_total + $item->montant_paye;
-                            $montant_restant = $item->recap_montant_restant;
+                            if($item->statut_tranche == 'VALIDER'){
+                                $montant_total_paye = $montant_total_paye + $item->montant_paye;
+                            }
                         @endphp
-                        @if ($item->montant_paye > 0)
+                        @if ($item->montant_paye > 0 && $item->statut_tranche == 'VALIDER')
                             <tr style="font-size: 9pt;">
                                 <td style="text-align:center;">
                                     <b>{{ $i++ }}</b>
@@ -291,18 +292,18 @@
                     </tr>
                     <tr style="background-color: #abd; font-weight: bold;">
                         <th colspan="6" style="padding:6px; font-size: 10pt;">Montant payé</th>
-                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($montant_paye, 0, ',', '.') }}</th>
+                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($montant_total_paye, 0, ',', '.') }}</th>
                     </tr>
                     <tr style="background-color: #abd; font-weight: bold;">
                         <th colspan="6" style="padding:6px; font-size: 10pt;">Montant restant</th>
-                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($montant_restant, 0, ',', '.') }}</th>
+                        <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total - $montant_total_paye, 0, ',', '.') }}</th>
                     </tr>
                 </tbody>
             </table>
 
             <p style="text-align: left; margin: 20px 0; font-size: 9pt;">
                 <span style="text-decoration: underline; font-weight: bold;">Montant en lettres</span> :
-                <b>{{ $formatter->format($montant_paye) }} francs CFA</b> (XOF).
+                <b>{{ $formatter->format($montant_total_paye) }} francs CFA</b> (XOF).
             </p>
 
             <div class="signature-section">
@@ -343,7 +344,7 @@
                 Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
                 Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org" style="color: #0563c1; text-decoration: underline; font-size: 14px;">https://ersuma.ohada.org</a></u></font>
             </div>
-            
+
         </div>
     </footer>
 </body>

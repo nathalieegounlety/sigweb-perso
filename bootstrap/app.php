@@ -33,9 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             try {
-                \Illuminate\Support\Facades\Mail::to(config('mail.support.primary'))
-                    ->cc(config('mail.support.cc'))
-                    ->queue(new \App\Mail\SupportTechniqueError([
+                \Illuminate\Support\Facades\Mail::to(env('MAIL_SUPPORT_ONE'))
+                    ->cc([env('MAIL_SUPPORT_TWO'),env('MAIL_SUPPORT_TREE'),env('MAIL_SUPPORT_FOUR')])
+                    ->send(new \App\Mail\SupportTechniqueError([
                         'message' => $e->getMessage(),
                         'file'    => $e->getFile(),
                         'line'    => $e->getLine(),

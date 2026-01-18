@@ -77,6 +77,7 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('url/signed/recu/paiement/ouvrage','urlRecuPaiementOuvrage');
     Route::post('generer/url/proforma/signed','genererUrlProformaSigned');
     Route::post('generer/url/proforma/dsc/signed','genererUrlProformaDscSigned');
+    // ####### ATTESTATION POUR LES PARTICIPANTS #####################
     Route::get('attestations','listeAttestationParticipant');
     Route::get('consultation/attestation/participant/{rapport_id}','consultationAttestationParticipant')->name('consultation.attestation.participant')->middleware('signed');
     Route::post('get/url/consultation/attestation','urlConsultationAttestation');
@@ -89,7 +90,19 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::get('export/all/attestation/participant/{code_formation}','exportAllAttestationParticipant')->name('export.all.attestattion.participant')->middleware('signed');
     Route::post('get/url/all/attestation/participant','urlAllAttestationParticipant');
     Route::post('send/all/attestation/participant','sendAllAttestationParticipant');
+    // ####### ATTESTATION POUR LES FORMATEURS #####################
     Route::get('attestations/formateurs','listeAttestationFormateurs');
+    Route::get('consultation/attestation/formateur/{id}', 'consulterAttestationFormateur')->name('consultation.attestation_formateur')->middleware('signed');
+    Route::get('telecharger/attestation/formateur/{id}', 'telechargerAttestationFormateur')->name('telecharger.attestation_formateur')->middleware('signed');
+    Route::post('get/url/attestation/formateur','urlAttestationFormateur');
+    Route::post('get/url/consultation/attestation/formateur','urlConsultationAttestationFormateur');
+    Route::post('send/attestation/formateur','sendAttestationFormateur');
+    Route::post('send/all/attestation/formateur','sendAllAttestationFormateur');
+    Route::get('export/all/attestation/formateur/{code_formation}','exportAllAttestationFormateur')->name('export.all.attestattion.formateur')->middleware('signed');
+    Route::post('get/url/all/attestation/formateur','urlAllAttestationFormateur');
+    Route::get('export/liste/formateurs/{code_formation}','listeFormateurs')->name('liste.formateurs')->middleware('signed');
+    Route::post('get/url/liste/formateur','urlListeFormateur');
+
 });
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function(){
@@ -240,19 +253,23 @@ Route::prefix('v1/dashboard')->controller(\App\Http\Controllers\DashboardControl
 
 // gestion api zoom
 //
-Route::get('/zoom/reunion/auth/callback', [\App\Http\Controllers\ZoomController::class, 'indexReunion'])->name('zoom.reunion-auth');
+Route::prefix('v1/zoom')->controller(\App\Http\Controllers\ZoomController::class)->group(function(){
+    Route::get('reunion/auth/callback', 'indexReunion')->name('zoom.reunion-auth');
 //
-Route::get('/zoom/auth/callback', [\App\Http\Controllers\ZoomController::class, 'index'])->name('zoom.auth');
+    Route::get('auth/callback', 'index')->name('zoom.auth');
 // refreshToken
-Route::get('/zoom/refresh/token', [\App\Http\Controllers\ZoomController::class, 'refreshToken'])->name('zoom.refresh_token');
+    Route::get('refresh/token', 'refreshToken')->name('zoom.refresh_token');
 // AUTHORISATION
-Route::get('/zoom/authorisation', [\App\Http\Controllers\ZoomController::class, 'authorisation'])->name('zoom.authorisation');
+    Route::get('authorisation', 'authorisation')->name('zoom.authorisation');
 // zoom inscription
-Route::get('/zoom/inscription', [\App\Http\Controllers\ZoomController::class, 'inscription'])->name('zoom.inscription')->middleware('auth');
+    Route::get('inscription', 'inscription')->name('zoom.inscription')->middleware('auth');
 //
-Route::post('/zoom/inscription/store', [\App\Http\Controllers\ZoomController::class, 'inscriptionStore'])->name('zoom.sync-inscrit');
+    Route::post('inscription/store', 'inscriptionStore')->name('zoom.sync-inscrit');
 
+});
 
-
+Route::get('v1/test-error-mail', function () {
+    throw new Exception('🔥 Test envoi mail erreur Laravel 12');
+});
 
 
