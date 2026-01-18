@@ -63,10 +63,11 @@ class HomeController extends Controller
 
     public function getPointsPaiements()
     {
-        $liste_pointsdepaiements = points_de_paiements::select('points_de_paiements.*')
+        $liste_pointsdepaiements = points_de_paiements::select('point_de_paiements.*')
+            ->whereEnable(true)
             ->orderBy("pays", "ASC")
             ->get();
-    
+
         // Retourne une réponse JSON avec les données
         return response()->json([
             'success' => true,
