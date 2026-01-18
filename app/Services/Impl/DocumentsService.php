@@ -74,7 +74,7 @@ class DocumentsService implements DocumentsInterface
         // TODO: Implement downloadRecuPaiement() method.
         // vérifier si la référence existe dans la table paiement tranche
         // récupérer la référence de la table paiement
-        $getOneTranchePaiement = PaiementsTranche::where('reference',$reference)->first();
+        $getOneTranchePaiement = PaiementsTranche::where('reference','like','%'.$reference.'%')->first();
 
         if ($getOneTranchePaiement) {
             # code... it is dsc
