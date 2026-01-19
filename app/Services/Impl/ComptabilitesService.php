@@ -10,6 +10,7 @@ use App\Mail\Paiementvalider;
 use App\Models\Auditeurs;
 use App\Models\Detailpaiementouvrages;
 use App\Models\Detailspaiements;
+use App\Models\FormationsTranches;
 use App\Models\Inscriptions;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
@@ -1661,11 +1662,11 @@ class ComptabilitesService implements ComptabilitesInterface
         if($paiement){
             $details_paiement = Detailspaiements::join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
                 ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+                ->leftJoin('formations', 'formations.code_formation', '=', 'detailspaiements.code_formation')
                 ->where("detailspaiements.code_inscription", $paiement->code_inscription)
-                ->orderBy("id", "DESC")
                 ->get(['detailspaiements.id as detailsPaiementId','detailspaiements.reference_paiement','detailspaiements.code_formation','detailspaiements.code_inscription',
-                    'detailspaiements.montant_paye','detailspaiements.montant_restant','detailspaiements.id_tarification_formation',
-                    'detailspaiements.have_reduction_dsc','grilletarifaires.type_tarif','grilletarifaires.id as grilleId','grilletarifaires.montant as grille_montan']);
+                    'detailspaiements.montant_paye','detailspaiements.montant_restant','detailspaiements.id_tarification_formation','formations.theme',
+                    'detailspaiements.have_reduction_dsc','grilletarifaires.type_tarif','grilletarifaires.id as grilleId','grilletarifaires.montant as grille_montant']);
 
             $have_tranche = Tranches::where('code_inscription',$paiement->code_inscription)->exists();
             $uniqueTranche = true; // default
@@ -1722,6 +1723,34 @@ class ComptabilitesService implements ComptabilitesInterface
             // montant invalide
             return ResponseHandler::error('Montant invalide');
         }else{
+            $checkInscription = false;
+            // vérifier si le montant payé >= frais inscription
+            foreach ($listePTranches as $key => $data) {
+                # code...
+                if($data->montant_restant > 0 && $data->type_tarif == 'INSCRIPTION'){
+                    $checkInscription = true;
+                    if($montant_total_recu < $data->montant_restant){
+                        return  ResponseHandler::error("Le montant reçu est inférieur au frais d'inscription");
+                    }
+                }
+            }
+            // vérifier si le montant payé >= frais scolarité
+            if(!$checkInscription){
+                foreach ($listePTranches as $key => $data) {
+                    # code...
+                    if($data->montant_restant > 0 && $data->type_tarif != 'INSCRIPTION'){
+                        if($data->have_reduction_dsc == '1' || $data->have_reduction_dsc == 1){
+                            // 100%
+                            if($montant_total_recu < $data->montant_restant){
+                                return  ResponseHandler::error("Le montant reçu est inférieur au frais de scolarité restant");
+                            }
+                        }
+                        if($montant_total_recu < ($data->grille_montant/2)){
+                            return  ResponseHandler::error("Le montant reçu est inférieur au frais de scolarité restant");
+                        }
+                    }
+                }
+            }
             // begin process
             // MAJ table paiements
             $paiement->setAttribute('montant_paye',$paiement->montant_paye + $montant_total_recu);
@@ -1800,7 +1829,7 @@ class ComptabilitesService implements ComptabilitesInterface
                         $detailPaiement->setAttribute("montant_paye",$detailPaiement->montant_paye + $montantScolariteRecu);
                         $detailPaiement->setAttribute("montant_restant",$montantRestantScolarite);
                         $detailPaiement->setAttribute("modepaiement_id",$request->modepaiement_id);
-                        if(($detailPaiement->montant_restant - $montantScolariteRecu) == 0){ // scolarité soldée
+                        if(($data->montant_restant - $montantScolariteRecu) == 0){ // scolarité soldée
                             $detailPaiement->setAttribute("statut_traitement",'VALIDER');
                             $detailPaiement->setAttribute('statut_paiement', 'PAYE');
                         }
@@ -1828,7 +1857,7 @@ class ComptabilitesService implements ComptabilitesInterface
                         }else{
                             // pas de tranche
                             // sauvegarde de la tranche
-                            $formationTranche = FormationsTranche::where('tranche','tranche 1')->where('grilletarifaire_id',$data->grilleId)->first();
+                            $formationTranche = FormationsTranches::where('tranche','tranche 1')->where('grilletarifaire_id',$data->grilleId)->first();
 
                             $tranche = new Tranches();
                             $tranche->setAttribute('code_inscription',$paiement->code_inscription);
@@ -1888,8 +1917,7 @@ class ComptabilitesService implements ComptabilitesInterface
 
         try {
             # code...
-            Mail::to('jpkounasso@gmail.com')->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new DscPaiementAttente($contenu));
-            // Mail::to($paiement->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new DscPaiementAttente($contenu));
+            Mail::to($paiement->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new DscPaiementAttente($contenu));
 
         } catch(\Exception $e){
             // Get error here
@@ -1944,8 +1972,7 @@ class ComptabilitesService implements ComptabilitesInterface
 
         try {
             # code...
-            Mail::to('jpkounasso@gmail.com')->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new PaiementValideDsc($contenu));
-            // Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new PaiementValideDsc($contenu));
+             Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new PaiementValideDsc($contenu));
 
         } catch (\Exception $e) {
             //throw $th;

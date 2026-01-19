@@ -12,13 +12,18 @@ use Illuminate\Queue\SerializesModels;
 class DscPaiementAttente extends Mailable
 {
     use Queueable, SerializesModels;
+    public $contenu;
+    public $mailSubject;
+    public $email;
 
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct($contenu)
     {
-        //
+        $this->contenu = $contenu;
+        $this->mailSubject = $contenu['subject'];
+        $this->email = $contenu['email'];
     }
 
     /**
@@ -27,7 +32,7 @@ class DscPaiementAttente extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Dsc Paiement Attente',
+            subject: 'ERSUMA : '.$this->mailSubject,
         );
     }
 
@@ -37,10 +42,13 @@ class DscPaiementAttente extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'emails.email_dsc_paiement_attente',
+            with: [
+                'contenu' => $this->contenu,
+                'email' => $this->email,
+            ]
         );
     }
-
     /**
      * Get the attachments for the message.
      *
