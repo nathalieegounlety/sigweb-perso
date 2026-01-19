@@ -270,4 +270,35 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+    public function traitementProcessPaiementDsc(Request $request){
+        try {
+            $validated = $request->validate([
+                'code_paiement' => 'required',
+                'montant_total' => 'required',
+                'modepaiement_id' => 'required',
+                'reference' => 'required',
+                'montant_total_recu' => 'required',
+                'listeTranches' => 'required',
+                'haveTranche' => 'required'
+            ]);
+
+            return $data = $this->comptabiliteService->validerProcessPaiementDsc($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    public function detailProcessPaiementDsc(Request $request){
+        try {
+            //
+            return $data = $this->comptabiliteService->getDetailsProcessPaiementDsc($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 }

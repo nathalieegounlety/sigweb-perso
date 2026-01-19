@@ -244,6 +244,8 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
     Route::post('traitement/paiement','traitementPaiement');
     Route::get('paiements/valide','listePaiementsValide');
     Route::get('liste/paiements','listeDesPaiements');
+    Route::get('details/process/paiements/dsc','detailProcessPaiementDsc');
+    Route::post('traitement/process/paiement/dsc','traitementProcessPaiementDsc');
 });
 
 // gestion des dashboard
