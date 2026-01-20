@@ -84,7 +84,7 @@
             <div style=" border-bottom:5px double #2681ca; max-width:75%; padding: 0 0 10px 0; ">
 
                 <div style="float:left; width: 90px; margin:0px; height:90px; ">
-                    <img src="img/logo/logo-ohada.png" alt="" height="75px" style="height: 75px;">
+                    <img src="{{ public_path('img/logo/logo-ohada.png') }}" alt="" height="75px" style="height: 75px;">
                 </div>
                 <div
                     style=" font-size:65%; line-height:1.5; margin: -25px 0 0 95px; padding:0px; top:0; font-family: Tahoma, serif; font-weight:bold; text-align:justify;">
@@ -97,22 +97,22 @@
             </div>
         </div>
         <div style="float:right;width:15%;position:relative; text-align:right;">
-            <img src="img/logo/attestation_flyers2.png" alt="" height="80px">
+            <img src="{{ public_path('img/logo/attestation_flyers2.png') }}" alt="" height="80px">
         </div>
     </div>
 
     <div
         style="background: url('img/logo/logo-ohada-new500.png');
-    opacity: 0.1;
+
     background-repeat: no-repeat;
     background-attachment: fixed;
-    background-position: center 70px bottom 20px;
-    z-index: -1;
+    background-position: center;
+    z-index: -10;
     bottom:0;
     display:block;
     ">
         <!-- div opacity -->
-        <div style="z-index: 300; opacity:0; margin:0;">
+        <div style="margin:0;">
 
             <div
                 style="z-index: 100;clear:both; display:block; margin: 10px 0 0px 0;text-align: center;line-height: 115%;font-size: 22pt; color:#006fc0; font-weight:bold;">
