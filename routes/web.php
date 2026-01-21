@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Container\Attributes\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -7,3 +8,4 @@ Route::get('/', function () {
 });
 
 Route::get('/page-new-refonte',[\App\Http\Controllers\RolesController::class,'index']);
+
