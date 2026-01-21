@@ -285,13 +285,14 @@
                                 @if ($data->getTarification->getGrilletarifaire->type_tarif != 'INSCRIPTION')
                                     @php
                                         $frais_scolarite = $data->montant_restant;
+                                        $frais_scolarite_solde = $data->montant_paye;
                                         $libelle_scolarite = $data->getTarification->getGrilletarifaire->type_tarif;
                                     @endphp
-                                    @if ($frais_scolarite == 0)
+                                    {{--@if ($frais_scolarite == 0)
                                         @php
                                             $frais_scolarite = $data->getTarification->getGrilletarifaire->montant;
                                         @endphp
-                                    @endif
+                                    @endif--}}
                                     @if ($data->have_reduction_dsc)
                                         @php
                                             $have_reduction = true;
@@ -300,13 +301,14 @@
                                 @else
                                     @php
                                         $frais_inscription = $data->montant_restant;
+                                        $frais_inscription_solde = $data->montant_paye;
                                         $libelle_inscription = $data->getTarification->getGrilletarifaire->type_tarif;
                                     @endphp
-                                    @if ($frais_inscription == 0)
+                                    {{--@if ($frais_inscription == 0)
                                         @php
                                             $frais_inscription = $data->getTarification->getGrilletarifaire->montant;
                                         @endphp
-                                    @endif
+                                    @endif--}}
                                 @endif
                             @endforeach
 
