@@ -184,12 +184,12 @@
                        style=" cellspacing : 0; cellpadding:0; border:0; width: 100%; z-index:1000;  padding: 10px 0 0 0; margin: 0 ;font-size:10.5pt;">
                     <thead>
                     <tr style="margin:0;background-color: #abd">
-                        <th style="padding:5px; margin:0; border: 1px solid black;">#</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black; text-align:left;">Thème(s) de
+                        <th style="padding:5px; margin:0; border: 1px solid black; width:3%;">#</th>
+                        <th style="padding:5px; margin:0; border: 1px solid black; text-align:left; width:40%;">Thème(s) de
                             formation</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black;">Type de frais</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black;">Réduction</th>
-                        <th style="padding:5px; margin:0; border: 1px solid black;">Montant</th>
+                        <th style="padding:5px; margin:0; border: 1px solid black; width:15%;" >Type de frais</th>
+                        <th style="padding:5px; margin:0; border: 1px solid black; width:5%;">Réduction</th>
+                        <th style="padding:5px; margin:0; border: 1px solid black; width:27%;">Montant</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -205,6 +205,8 @@
                                 $pourcentage = 0;
                                 $frais_inscription = 0;
                                 $frais_scolarite = 0;
+                                $frais_inscription_solde = 0;
+                                $frais_scolarite_solde = 0;
                                 $libelle_inscription = ''; $libelle_scolarite = '';
                                 $have_reduction = false;
                             @endphp
@@ -212,13 +214,14 @@
                                 @if ($data->getTarification->getGrilletarifaire->type_tarif != 'INSCRIPTION')
                                     @php
                                         $frais_scolarite = $data->montant_restant;
+                                        $frais_scolarite_solde = $data->montant_paye;
                                         $libelle_scolarite = $data->getTarification->getGrilletarifaire->type_tarif;
                                     @endphp
-                                    @if ($frais_scolarite == 0)
+                                    {{--@if ($frais_scolarite == 0)
                                         @php
                                             $frais_scolarite = $data->getTarification->getGrilletarifaire->montant;
                                         @endphp
-                                    @endif
+                                    @endif--}}
                                     @if ($data->have_reduction_dsc)
                                         @php
                                             $have_reduction = true;
@@ -227,13 +230,14 @@
                                 @else
                                     @php
                                         $frais_inscription = $data->montant_restant;
+                                        $frais_inscription_solde = $data->montant_paye;
                                         $libelle_inscription = $data->getTarification->getGrilletarifaire->type_tarif;
                                     @endphp
-                                    @if ($frais_inscription == 0)
+                                    {{--@if ($frais_inscription == 0)
                                         @php
                                             $frais_inscription = $data->getTarification->getGrilletarifaire->montant;
                                         @endphp
-                                    @endif
+                                    @endif--}}
                                 @endif
                             @endforeach
 
@@ -254,7 +258,11 @@
                                     -
                                 </td>
                                 <td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">
-                                    {{ number_format($frais_inscription, 0, ',', '.') }}
+                                    @if($frais_inscription == 0)
+                                        {{ number_format($frais_inscription_solde, 0, ',', '.') }} (soldé)
+                                    @else
+                                        {{ number_format($frais_inscription, 0, ',', '.') }} (impayé)
+                                    @endif
                                 </td>
                             </tr>
                             <tr>
@@ -269,7 +277,14 @@
                                     @endif
                                 </td>
                                 <td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">
-                                    {{ number_format($frais_scolarite, 0, ',', '.') }}
+                                    @if($frais_scolarite == 0)
+                                        {{ number_format($frais_scolarite_solde, 0, ',', '.') }} (soldé)
+                                    @else
+                                        @if($frais_scolarite_solde > 0)
+                                            {{ number_format($frais_scolarite_solde, 0, ',', '.') }} (soldé) <br>
+                                        @endif
+                                        {{ number_format($frais_scolarite, 0, ',', '.') }} (impayé)
+                                    @endif
                                 </td>
                             </tr>
 
@@ -321,8 +336,6 @@
 
                     <td style="width:40%;vertical-align: top;padding:0; text-align:center;">
                         <div style="padding:0; margin:-20px 0 0;-5px auto 0; text-align:center; z-index: 100;">
-
-                            &nbsp;
 
                         </div>
                     </td>

@@ -1623,6 +1623,14 @@ class ComptabilitesService implements ComptabilitesInterface
                     AND pt.statut_traitement = "ATTENTE"
                 ) as check_statut_ptranche'
             )
+            ->selectRaw(
+                'EXISTS (
+                    SELECT 1
+                    FROM paiements_tranches pt
+                    WHERE pt.details_paiements_id = dp.id
+                    AND pt.statut_traitement = "VALIDER"
+                ) as check_recu_ptranche'
+            )
         ;
 
 
