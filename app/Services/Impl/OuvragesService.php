@@ -24,6 +24,15 @@ class OuvragesService implements OuvragesInterface
         $dataCreate = new Ouvrages();
         $dataCreate->setAttribute('libelle', $data->libelle);
         $dataCreate->setAttribute('montant', $data->montant);
+        $dataCreate->setAttribute('nbre_page',$data->nbre_page);
+        // sauvegarde visuel si disponible
+        if ($data->visuel) {
+            $visuel = $data->visuel;
+            $extension = $visuel->getClientOriginalExtension();
+            $name_visuel = 'visuel_'.date('Ymd-His'). '.'.$visuel->extension();
+            $visuel->storeAs('visuel_ouvrage', $name_visuel, 'public');
+            $dataCreate->setAttribute('visuel_path', $name_visuel);
+        }
 
         if (auth('api')->user()) {
             $user = auth('api')->user();
@@ -61,7 +70,8 @@ class OuvragesService implements OuvragesInterface
         $filterMontant = $request->input('montant');
 
         $query = Ouvrages::with('getUserUpdated:id,name,email,code_user')
-            ->select('ouvrages.id', 'ouvrages.libelle','ouvrages.enable','ouvrages.montant', 'ouvrages.updated_at','ouvrages.updated_by');
+            ->select('ouvrages.id', 'ouvrages.libelle','ouvrages.enable','ouvrages.montant', 'ouvrages.updated_at',
+                'ouvrages.updated_by','ouvrages.nbre_page','ouvrages.visuel_path');
 
         // On fait la jointure
         $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';
@@ -128,6 +138,15 @@ class OuvragesService implements OuvragesInterface
             $dataUpdate->setAttribute('libelle', $data->libelle);
             $dataUpdate->setAttribute('montant', $data->montant);
             $dataUpdate->setAttribute('updated_by', auth('api')->id());
+            $dataUpdate->setAttribute('nbre_page',$data->nbre_page);
+            // sauvegarde visuel si disponible
+            if ($data->visuel) {
+                $visuel = $data->visuel;
+                $extension = $visuel->getClientOriginalExtension();
+                $name_visuel = 'visuel_'.date('Ymd-His'). '.'.$visuel->extension();
+                $visuel->storeAs('visuel_ouvrage', $name_visuel, 'public');
+                $dataUpdate->setAttribute('visuel_path', $name_visuel);
+            }
             $dataUpdate->update();
             return ResponseHandler::success("Modification effectuée avec succès");
         }

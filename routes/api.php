@@ -11,12 +11,12 @@ Route::prefix('v1')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('logout', [AuthController::class, 'logout']);
 
- // Demande de réinitialisation 
+ // Demande de réinitialisation
  Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+ Route::post('/reset-password/info', [ResetPasswordController::class, 'infoResetPassword']);
  // Réinitialisation effective du mot de passe
  Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
-   
 });
 
 Route::middleware('auth:api')->prefix('v1')->group(function () {

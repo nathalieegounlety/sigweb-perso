@@ -75,6 +75,11 @@ return [
             'root' => storage_path('app/public/photo'),
             'visibility' => 'private',
         ],
+        'visuel_ouvrage' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/visuel_ouvrage'),
+            'visibility' => 'private',
+        ],
 
         'pieces_auditeur' => [
             'driver' => 'local',

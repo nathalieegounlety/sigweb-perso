@@ -763,15 +763,14 @@ class AuditeursService implements AuditeursInterface
             $user->setAttribute('name',$request->get('nom').' '.$request->get('prenoms'));
             // sauvegarde photo si disponible
             $name_photo = null;
-            //if ($request->photo) {
+            if ($request->photo) {
                 $photo = $request->photo;
                 $extension = $photo->getClientOriginalExtension();
                 $name_photo = 'photo_'.date('Ymd-His'). '.'.$photo->extension();
                 //$photo->move(public_path('img/visuel/'), $name_photo);
                 $photo->storeAs('photo', $name_photo, 'public');
                 $user->setAttribute('logo_path', $name_photo);
-            //}
-            Log::info($request->photo);
+            }
             $user->update();
 
         } catch (\Exception $e) {

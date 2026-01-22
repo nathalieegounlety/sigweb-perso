@@ -29,6 +29,8 @@ class Ouvrages extends Model
     protected $fillable = [
         'libelle',
         'montant',
+        'visuel_path',
+        'nbre_page',
         'created_by',
         'updated_by',
         'created_at',

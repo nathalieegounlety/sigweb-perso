@@ -27,7 +27,7 @@
             <p>Si vous n'avez pas fait cette demande, ignorez simplement cet email.</p>
             <p>Vous souhaitez procéder: </p>
 
-            <a href="{{ route('reset.password.get', $token) }}">Cliquez ici pour réinitialiser votre mot de passe</a>
+            <a href="{{env('FRONTEND_URL')}}/reset-password/{{$token}}">Cliquez ici pour réinitialiser votre mot de passe</a>
             </p>
             <p><b>PS : Code de réinitialisation valable pour 15 minutes</b> </p>
             <br />
@@ -35,7 +35,7 @@
             <p>Nous vous remercions de votre confiance et de votre fidélité à l'ERSUMA. <br>
                 <center>« L’ERSUMA, pour une règle de droit effective, efficace et efficiente »</center>
             </p>
-    
+
           <!-- source notification -->
             @include('emails.source_notification')
             <!-- end source notification -->
