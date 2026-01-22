@@ -308,7 +308,7 @@ class FormationsService implements FormationsInterface
         $queryFormations = Formations::select('formations.*')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
-            ->where('formations.id', $request->id)
+            ->where('formations.code_formation', $request->code_formation)
             ->get()->first();
         return ResponseHandler::success('ok', $queryFormations);
     }

@@ -93,7 +93,7 @@ class FormationsController extends Controller
         // récupérer la liste des rôles
         try {
             $request->validate([
-                'id'=>'required',
+                'code_formation'=>'required',
             ]);
             $data = $this->formationsService->getDetailsFormation($request);
             return ResponseHandler::success('ok',$data);
