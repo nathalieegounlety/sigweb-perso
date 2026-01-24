@@ -77,6 +77,41 @@ class FormationsController extends Controller
         }
 
     }
+
+
+    public function update(Request $request)
+    {
+
+        try {
+
+            // validation des données du formulaire
+            $request->validate([
+                'id' => 'required',
+                'code_formation'=>'required',
+                'theme'=>'required',
+                'description'=>'required',
+                'cout_formation'=>'required',
+                'date_debut'=>'required',
+                'date_fin'=>'required',
+                'typeformation_id' => 'required',
+                'is_event' => 'required',
+                'is_coorganisation' => 'required',
+                'visuel' => 'mimes:jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP|nullable'
+                // 'date_limite'=>'required',
+                // 'file'=>'required|mimes:jpg,jpeg,png,JPG,JPEG,PNG'
+            ]);
+
+            // procéder à l'enregistrement
+            return $processSave = $this->formationsService->update($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
     public function recenteFormation(Request $request)
     {
         // récupérer la liste des rôles

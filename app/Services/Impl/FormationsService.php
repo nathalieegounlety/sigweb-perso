@@ -3,6 +3,7 @@
 namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
+use App\Models\Dureeformations;
 use App\Models\Formations;
 use App\Models\FormationsTranches;
 use App\Models\Grilletarifaires;
@@ -57,18 +58,18 @@ class FormationsService implements FormationsInterface
             $formation->setAttribute('date_limite',$request->get('date_limite')) ;
             $formation->setAttribute('statut','ACTIF');
             $formation->setAttribute('visuel',$name_visuel) ;
-            if($request->get('fm_visio') === true){
+            if($request->get('fm_visio') === true || $request->get('fm_visio') === 'true'){
                 $formation->setAttribute('fm_visio',1) ;
             }else{
                 $formation->setAttribute('fm_visio',0) ;
             }
 
-            if($request->get('fm_presentielle') === true){
+            if($request->get('fm_presentielle') === true || $request->get('fm_presentielle') === 'true'){
                 $formation->setAttribute('fm_presentielle',1) ;
             }else{
                 $formation->setAttribute('fm_presentielle',0) ;
             }
-            if ($request->get('is_formation_dsc') === true) {
+            if ($request->get('is_formation_dsc') === true || $request->get('is_formation_dsc') === 'true') {
                 # code...
                 $formation->setAttribute('is_formation_dsc',1) ;
             }else{
@@ -87,6 +88,27 @@ class FormationsService implements FormationsInterface
                 $formation->setAttribute('titre_evenement', $request->titre_evenement);
             }
             $formation->save();
+
+            // update duree enregistrement
+            if ($request->filled('id_webinaire') && $request->filled('duree_enregistrement') && $request->duree_enregistrement >= 0) {
+                # code...
+                $update_duree_formation = Dureeformations::where("code_formation",$formation->code_formation)->first();
+                if ($update_duree_formation) {
+                    $update_duree_formation->setAttribute("duree_enregistrement",$_POST["duree_enregistrement"]);
+                    $update_duree_formation->update();
+                } else {
+                    # code... create durée
+                    $update_duree_formation = new Dureeformations();
+                    $update_duree_formation->setAttribute("code_formation",$formation->code_formation);
+                    $update_duree_formation->setAttribute("duree_enregistrement",$_POST["duree_enregistrement"]);
+                    $update_duree_formation->setAttribute("id_webinaire",$_POST["id_webinaire"]);
+                    $update_duree_formation->setAttribute("duree",0);
+                    $update_duree_formation->save();
+                }
+
+
+            }
+
             // vérifier si la formation est gratuite pour insérer le montant attestation dynamiquement
             for($i = 0; $i<$nbr_cout;$i++){
                 $get_cout = $cout_formation[$i];
@@ -271,9 +293,188 @@ class FormationsService implements FormationsInterface
         return $queryFormations->paginate($perPage);
     }
 
-    public function update(Request $data): \Illuminate\Http\JsonResponse
+    public function update(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement update() method.
+        $have_logo = false;
+
+        // sauvegarde du visuel
+        $name_visuel = null;
+        $haveVisuel = false;
+        if ($request->file) {
+            $visuel = $request->file;
+            $extension = $visuel->getClientOriginalExtension();
+            $name_visuel = 'visuel_'.$request->code_formation. '_' .date('Ymd-His'). '.'.$visuel->extension();
+            //$visuel->move(public_path('img/visuel/'), $name_visuel);
+            $visuel->storeAs('visuel_formation', $name_visuel, 'public');
+            $haveVisuel = true;
+
+        }
+        // procéder à l'enregistrement des données
+        // traitement des données liées à la tarification
+        //1- extration des données liés au cout de la formation
+        $cout_formation = $request->cout_formation;
+        // vérifier le nom d'élément dans la table cout_formation (maximum 4)
+        $nbr_cout = count($cout_formation);
+        $check_attestation = false;
+
+        if($nbr_cout > 10){
+            // erreur les coût associés à une formation ne peut pas dépassé trois rubriques
+            return ResponseHandler::error("les coûts associés à la formation ne peut pas dépassé trois rubriques.", 401);
+        }else{
+            // enregistrement des données de la formation
+            $formation = Formations::find($request->id);
+            // $formation->setAttribute('code_formation',$request->get('code_formation')) ;
+            $formation->setAttribute('theme',$request->get('theme')) ;
+            $formation->setAttribute('id_webinaire',$request->get('id_webinaire')) ;
+            $formation->setAttribute('description',$request->get('description')) ;
+            $formation->setAttribute('date_debut',$request->get('date_debut')) ;
+            $formation->setAttribute('date_fin',$request->get('date_fin')) ;
+            $formation->setAttribute('date_limite',$request->get('date_limite')) ;
+            //$formation->setAttribute('statut','ACTIF');
+            if($haveVisuel){
+                $formation->setAttribute('visuel',$name_visuel) ;
+            }
+            if($request->get('fm_visio') === true || $request->get('fm_visio') === 'true'){
+                $formation->setAttribute('fm_visio',1) ;
+            }else{
+                $formation->setAttribute('fm_visio',0) ;
+            }
+
+            if($request->get('fm_presentielle') === true || $request->get('fm_presentielle') === 'true'){
+                $formation->setAttribute('fm_presentielle',1) ;
+            }else{
+                $formation->setAttribute('fm_presentielle',0) ;
+            }
+            if ($request->get('is_formation_dsc') === true || $request->get('is_formation_dsc') === 'true') {
+                # code...
+                $formation->setAttribute('is_formation_dsc',1) ;
+            }else{
+                $formation->setAttribute('is_formation_dsc',0) ;
+            }
+            $formation->setAttribute('lieu',$request->get('lieu')) ;
+            //$formation->setAttribute('is_formation',$request->is_formation) ;
+            $formation->setAttribute('updated_by', auth('api')->id());
+            $formation->setAttribute('typeformation_id',$request->get('typeformation_id')) ;
+            //$formation->setAttribute('created_at', new \DateTime());
+            $formation->setAttribute('is_event', $request->is_event);
+            $formation->setAttribute('is_coorganisation', $request->is_coorganisation);
+            if ($request->titre_evenement) {
+                # code...
+                $formation->setAttribute('titre_evenement', $request->titre_evenement);
+            }
+            $formation->save();
+
+            // update duree enregistrement
+            if ($request->filled('id_webinaire') && $request->filled('duree_enregistrement') && $request->duree_enregistrement >= 0) {
+                # code...
+                $update_duree_formation = Dureeformations::where("code_formation",$formation->code_formation)->first();
+                if ($update_duree_formation) {
+                    $update_duree_formation->setAttribute("duree_enregistrement",$_POST["duree_enregistrement"]);
+                    $update_duree_formation->update();
+                } else {
+                    # code... create durée
+                    $update_duree_formation = new Dureeformations();
+                    $update_duree_formation->setAttribute("code_formation",$formation->code_formation);
+                    $update_duree_formation->setAttribute("duree_enregistrement",$_POST["duree_enregistrement"]);
+                    $update_duree_formation->setAttribute("id_webinaire",$_POST["id_webinaire"]);
+                    $update_duree_formation->setAttribute("duree",0);
+                    $update_duree_formation->save();
+                }
+
+
+            }
+            // vérifier si la formation est gratuite pour insérer le montant attestation dynamiquement
+            $check_details_paiement = DB::table('detailspaiements')
+                ->join('paiements', 'paiements.reference', '=', 'detailspaiements.reference_paiement')
+                ->leftjoin('reductions', 'reductions.id', '=', 'detailspaiements.id_reduction')
+                ->join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
+                ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+                ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
+                ->select('formations.code_formation', 'formations.theme', 'formations.date_debut','grilletarifaires.montant','reductions.pourcentage','detailspaiements.preuve_path')
+                ->where('tarificationsformations.code_formation',$request->get('code_formation'))
+                ->get();
+
+            if(count($check_details_paiement) != 0){
+
+                return ResponseHandler::success("Modification effectuée mais le coût de cette formation ne pourra pas être mise à jour car un paiement est déjà enregistré");
+
+            }else{
+
+                for($i = 0; $i<$nbr_cout;$i++){
+                    $get_cout = $cout_formation[$i];
+                    if (!empty($get_cout)) {
+                        # code...
+                        $id_grille = $get_cout ;
+
+                        $grilleTarifaire = Grilletarifaires::find($id_grille) ;
+
+                        // enregistrement dans la table tarification
+                        // vérifier si la données existe dans le cas contraire enregistrer
+                        $check_existe = Tarificationsformation::where('code_formation',$request->code_formation)
+                            ->where('id_grilletarifaire',$id_grille)->get();
+
+                        if (count($check_existe) == 0) { // je fais l'enregistrement
+                            # code...
+                            $tarification_formation = new Tarificationsformation();
+                            $tarification_formation->setAttribute('code_formation',$request->get('code_formation')) ;
+                            $tarification_formation->setAttribute('id_grilletarifaire',$id_grille) ;
+                            $tarification_formation->setAttribute('created_by', auth('api')->id());
+                            $tarification_formation->setAttribute('created_at', new \DateTime());
+                            $tarification_formation->save();
+                            if ($formation->is_formation_dsc) {
+
+                                $type_tarif = Grilletarifaires::where('type_tarif', 'INSCRIPTION')
+                                    ->orWhere('type_tarif', 'ETUDIANTS')
+                                    ->orWhere('type_tarif', 'PROFESSIONNELS')
+                                    ->distinct()->get();
+
+                                //dd( $type_tarif);
+
+                                if ($type_tarif != "INSCRIPTION")  {
+
+                                    $formation_tranche = new FormationsTranches();
+                                    $formation_tranche->setAttribute('formation_id',$formation->id) ;
+                                    $formation_tranche->setAttribute('grilletarifaire_id', $id_grille) ;
+                                    $formation_tranche->setAttribute('tranche', 'tranche 1') ;
+                                    $formation_tranche->setAttribute('taux_1', 100) ;
+                                    $formation_tranche->setAttribute('taux_2', 0) ;
+                                    $formation_tranche->setAttribute('echeance_1', '2024-06-30') ;
+                                    $formation_tranche->setAttribute('echeance_2', null) ;
+                                    $formation_tranche->setAttribute('categorie_auditeur',$grilleTarifaire->libelle) ;
+                                    $formation_tranche->setAttribute('reduction',5);
+                                    $formation_tranche->setAttribute('created_at', new \DateTime());
+                                    $formation_tranche->save();
+
+
+                                    $formation_tranche = new FormationsTranches();
+                                    $formation_tranche->setAttribute('formation_id',$formation->id) ;
+                                    $formation_tranche->setAttribute('grilletarifaire_id', $id_grille) ;
+                                    $formation_tranche->setAttribute('tranche', 'tranche 2') ;
+                                    $formation_tranche->setAttribute('taux_1', 50) ;
+                                    $formation_tranche->setAttribute('taux_2', 50) ;
+                                    $formation_tranche->setAttribute('echeance_1', '2024-06-30') ;
+                                    $formation_tranche->setAttribute('echeance_2', '2024-10-30') ;
+                                    $formation_tranche->setAttribute('categorie_auditeur', $grilleTarifaire->libelle) ;
+                                    $formation_tranche->setAttribute('reduction',0) ;
+                                    $formation_tranche->setAttribute('created_at', new \DateTime());
+                                    $formation_tranche->save();
+
+                                    # code...
+
+                                }
+
+                            }
+
+                            # code...
+                        }
+                    }
+
+                }
+            }
+        }
+        // return
+        return ResponseHandler::success("Modification effectuée.");
     }
 
     public function remove(int $idRole): \Illuminate\Http\JsonResponse
@@ -330,4 +531,5 @@ class FormationsService implements FormationsInterface
             ->get();
         return ResponseHandler::success('ok', $liste_formations);
     }
+
 }
