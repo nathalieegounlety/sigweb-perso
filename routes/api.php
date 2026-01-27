@@ -86,6 +86,7 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('url/signed/recu/paiement/ouvrage', 'urlRecuPaiementOuvrage');
     Route::post('generer/url/proforma/signed', 'genererUrlProformaSigned');
     Route::post('generer/url/proforma/dsc/signed', 'genererUrlProformaDscSigned');
+    Route::post('generer/get/url/proforma/ouvrage/signed', 'genererUrlProformaOuvrageSigned');
     // ####### ATTESTATION POUR LES PARTICIPANTS #####################
     Route::get('attestations', 'listeAttestationParticipant');
     Route::get('consultation/attestation/participant/{rapport_id}', 'consultationAttestationParticipant')->name('consultation.attestation.participant')->middleware('signed');
@@ -184,6 +185,8 @@ Route::prefix('v1/ouvrages')->controller(\App\Http\Controllers\OuvragesControlle
     Route::post('unique', 'getOuvrage');
     Route::post('update', 'update');
     Route::post('remove', 'remove');
+    Route::get('obj', 'getObjOuvrage');
+    Route::post('store/achat', 'storeAchat');
 });
 
 // gestion des signataires
@@ -219,6 +222,7 @@ Route::prefix('v1/paiements')->controller(\App\Http\Controllers\PaiementsControl
     Route::post('infos', 'infosPaiement');
     Route::post('info/partiel', 'infoPaiementPartiel');
     Route::post('partiel/store', 'savePaiementPartiel');
+    Route::post('infos/ouvrage', 'infosPaiementOuvrage');
 });
 
 // gestion des paiements via fedapay

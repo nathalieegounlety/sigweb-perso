@@ -7,6 +7,7 @@ use App\Mail\Paiementattente;
 use App\Mail\SendAttestation;
 use App\Mail\SendAttestationFormateur;
 use App\Models\Auditeurs;
+use App\Models\Detailpaiementouvrages;
 use App\Models\Detailspaiements;
 use App\Models\Dureeformations;
 use App\Models\Formations;
@@ -1101,6 +1102,37 @@ class DocumentsService implements DocumentsInterface
     {
         // TODO: Implement getUrlListeFormateur() method.
         $url = $this->genarateurCodeService->generateUrlSigned('liste.formateurs',['code_formation' => $code_formation]);
+        $data = ['url'=>$url];
+        return  ResponseHandler::success("ok",$data,200);
+    }
+
+    public function downloadProformaOuvrage(string $reference)
+    {
+        // TODO: Implement downloadProformaOuvrage() method.
+
+        $paiement = Paiements::where('reference',$reference)->get()->first();
+        $auditeur = Auditeurs::where('email',$paiement->email)->first();
+        $details_paiement = Detailpaiementouvrages::where("paiementouvrage_id",$paiement->id)->get();
+        // Detailspaiement::where('reference_paiement','ERS-2021-FACT-000001');
+        // return view('public.recu',compact("paiement","details_paiement"));
+        $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
+        $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
+
+        // share data to view
+        view()->share(['formatter'=>$formatter,'paiement'=>$paiement,'auditeur' => $auditeur, 'details_paiement'=>$details_paiement]);
+        $pdf = PDF::loadView('documents.proforma_ouvrage');
+        $customPaper = array(0,0,720,1440);
+        $pdf->setPaper($customPaper, 'landscape');
+
+        $date = date('d_m_Y_His');
+        // download PDF file with download method
+        return $pdf->download('proforma_'.$reference.'_'.$date.'.pdf');
+    }
+
+    public function getUrlProformaOuvrageSigned(string $reference): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement
+        $url = $this->genarateurCodeService->generateUrlSigned('proforma-ouvrage',['reference' => $reference]);
         $data = ['url'=>$url];
         return  ResponseHandler::success("ok",$data,200);
     }

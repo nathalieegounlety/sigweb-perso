@@ -18,5 +18,7 @@ interface OuvragesInterface
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 
     public function remove(int $id): \Illuminate\Http\JsonResponse;
+    public function objOuvrage(): \Illuminate\Http\JsonResponse;
+    public function saveChoixOuvrages(Request $request): \Illuminate\Http\JsonResponse;
 
 }

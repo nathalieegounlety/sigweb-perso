@@ -15,7 +15,7 @@ class OuvragesController extends Controller
     public function __construct(OuvragesInterface $ouvragesService)
     {
         // restriction des accès
-        // $this->middleware('auth:api', ['except' => ['store','index','update','remove']]);
+         $this->middleware('auth:api', ['except' => ['getObjOuvrage']]);
 
         $this->ouvragesService = $ouvragesService;
         //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);
@@ -118,6 +118,38 @@ class OuvragesController extends Controller
             ]);
 
             return $response = $this->ouvragesService->remove($request->id);
+
+            // call update service
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function getObjOuvrage(Request $request){
+        try {
+            // procéder à l'enregistrement
+            return $data = $this->ouvragesService->objOuvrage();
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    public function storeAchat(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'liste_ouvrages' => ['required', 'array', 'min:1'],
+                'liste_ouvrages.*.ouvrage_id' => ['required'],
+                'liste_ouvrages.*.montant' => ['required'],
+                'liste_ouvrages.*.reference' => ['required'],
+                'montant_total' => 'required'
+            ]);
+
+            return $response = $this->ouvragesService->saveChoixOuvrages($request);
 
             // call update service
         } catch (\Illuminate\Validation\ValidationException $e) {

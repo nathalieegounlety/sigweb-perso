@@ -16,7 +16,7 @@ class DocumentsController extends Controller
         $this->documentService = $documentService;
         $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
             'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc','listeFormateurs',
-            'exportAllAttestationParticipant','telechargerAttestationFormateur','consulterAttestationFormateur',
+            'exportAllAttestationParticipant','telechargerAttestationFormateur','consulterAttestationFormateur','proformaOuvrage',
             'exportAllAttestationFormateur']]);
     }
 
@@ -97,6 +97,20 @@ class DocumentsController extends Controller
 
     }
 
+    public function proformaOuvrage(Request $request, $reference)
+    {
+        try {
+
+            return $data = $this->documentService->downloadProformaOuvrage($reference);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
     public function proformaDsc(Request $request, $reference)
     {
         try {
@@ -131,6 +145,21 @@ class DocumentsController extends Controller
                 'reference' => 'required|string',
             ]);
             return $this->documentService->getUrlProformaDscSigned($request->reference);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+
+    public function genererUrlProformaOuvrageSigned(Request $request)
+    {
+        try{
+            $validated = $request->validate([
+                'reference' => 'required|string',
+            ]);
+            return $this->documentService->getUrlProformaOuvrage($request->reference);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

@@ -3,14 +3,28 @@
 namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
+use App\Mail\MailPaiementOuvrage;
+use App\Mail\NotificationOuvrageDRD;
+use App\Models\Auditeurs;
+use App\Models\Detailpaiementouvrages;
+use App\Models\Paiements;
+use App\Models\User;
 use App\Services\contracts\OuvragesInterface;
+use App\Services\util\GenarateurCodeService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use \App\Models\Ouvrages;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class OuvragesService implements OuvragesInterface
 {
+    private GenarateurCodeService $genarateurCodeService;
 
+    public function __construct(GenarateurCodeService $genarateurCodeService)
+    {
+        $this->genarateurCodeService = $genarateurCodeService;
+    }
     public function saveOuvrage(Request $data): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement saveOuvrage() method.
@@ -167,5 +181,121 @@ class OuvragesService implements OuvragesInterface
         } else {
             return ResponseHandler::error("Echec lors de la suppression, vous ne pouvez pas surpprimer cette données : $dataDelete->libelle.",401);
         }
+    }
+
+    public function objOuvrage(): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement objOuvrage() method.
+        $data = Ouvrages::where('enable', true)->get(['id', 'libelle', 'montant']);
+        return ResponseHandler::success("ok",$data);
+    }
+
+    public function saveChoixOuvrages(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement saveChoixOuvrages() method.
+        // récupérer les données du formulaire
+        $ouvrages = collect($request->input('liste_ouvrages'))->map(fn ($ouvrage) => (object) $ouvrage);
+        $montantTotal = $request->input('montant_total');
+        $user = Auth('api')->user();
+        $auditeur = Auditeurs::where("email",$user->email)->first();
+
+        // récupération des variables
+        $nom = $auditeur->nom;
+        $prenoms = $auditeur->prenoms;
+        $email = $auditeur->email;
+        $telephone = $auditeur->telephone;
+
+        // enregistrement paiement ouvrage
+
+        // générer le numero de reference facture : ERS-2025-FAC-000001
+        $reference_paiement =$this->genarateurCodeService->genererNumeroPaiement();
+
+        // enregistrement du paiement
+        $paiement = new Paiements();
+        $paiement->setAttribute('reference',$reference_paiement);
+        $paiement->setAttribute('email',$email);
+        $paiement->setAttribute('telephone',$telephone);
+        $paiement->setAttribute('montant_total',$montantTotal);
+        $paiement->setAttribute('montant_restant',$montantTotal);
+        $paiement->setAttribute('statut_traitement',"ATTENTE");
+        $paiement->setAttribute('statut_paiement',"EN ATTENTE");
+        $paiement->setAttribute('type',"OUVRAGE");
+
+        // enregistrement des détails paiement ouvrage
+
+        try {
+            //code...
+            $paiement->save();
+            foreach ($ouvrages as $key => $data) {
+                # code...
+                    $details_paiement = new Detailpaiementouvrages();
+                    $details_paiement->setAttribute('paiementouvrage_id',$paiement->id);
+                    $details_paiement->setAttribute('ouvrage_id',$data->ouvrage_id);
+                    $details_paiement->setAttribute('reference',$data->reference);
+                    $details_paiement->setAttribute('montant',$data->montant);
+                    $details_paiement->setAttribute('email',$auditeur->email);
+                    $details_paiement->save();
+            }
+
+            // envoie de mail pour la refence de la facture
+
+            $contenu = [
+                'nom' => $nom,
+                'prenoms' => $prenoms,
+                'reference_paiement' => $paiement->reference,
+                'subject' => 'INFORMATION SUR VOTRE DEMANDE DE PAIEMENT',
+                'email'=>$email,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('proforma-ouvrage',['reference' =>$paiement->reference])
+            ];
+
+            try {
+                # code...
+                Mail::to($email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new MailPaiementOuvrage($contenu));
+            } catch(\Exception $e){
+                // Get error here
+                Log::info($e->getMessage());
+            }
+
+            //Notifier DRD des commandes
+
+            if (env('PAIEMENT_NOTIFIER_DRD')) {
+                # code...
+                // send mail drd
+
+                $liste_DRD = User::whereHas('roles', function ($q) {
+                    $q->where('libelle', 'DOCUMENTATION');
+                })->pluck('email');
+
+                // dd($liste_DRD);
+                    $contenu = [
+                        'name' => 'DOCUMENTATION',
+                        'nom' => $nom,
+                        'prenoms' => $prenoms,
+                        'reference_paiement' => $paiement->reference,
+                        'subject' => 'NOUVELLE COMMANDE D\'OUVRAGE'.date('d-m-Y H:i:s'),
+                        'email'=>$email
+                    ];
+                    try {
+                        //  Log::info('Envoi d\'email de commandes à : ' . $drd->email);
+                        Mail::to(env('MAIL_CC'))->cc($liste_DRD)->bcc(env('MAIL_BCC'))->queue(new NotificationOuvrageDRD($contenu));
+                        // Log::info('Email envoyé avec succès à : ' . $drd->email);
+                    } catch (\Exception $e) {
+                        Log::error('Erreur d\'envoi de l\'email au DRD : ' . $e->getMessage());
+                    }
+
+            }
+
+            $reference_paiement = $paiement->reference;
+
+            // redirection sur la page de paiement facture avec les références de la factures
+            return ResponseHandler::success('Enregistrement effectué avec succès. Le lien de paiement vous a été envoyé par mail',['reference'=>$reference_paiement,'success'=>true]);
+
+
+        } catch (\Exception $e) {
+            //throw $th;
+            //echo $e->getMessage();
+            return ResponseHandler::error('Echec lors de l\'enregistrement des données',400,['success'=>false]);
+        }
+
     }
 }

@@ -6,6 +6,7 @@ use App\Helpers\ResponseHandler;
 use App\Mail\NotificationComptable;
 use App\Mail\Paiementattente;
 use App\Models\Auditeurs;
+use App\Models\Detailpaiementouvrages;
 use App\Models\Detailspaiements;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
@@ -271,6 +272,56 @@ class PaiementsService implements PaiementsInterface
 
     }
 
-    
 
+    public function getInfosPaiementOuvrage(string $reference): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getInfosPaiementOuvrage() method.
+        // TODO: Implement getInfosPaiement() method.
+        $paiement = Paiements::leftjoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
+            ->whereReference($reference)
+            ->get(['paiements.id','num_transaction','is_paiement_partiel','reference','montant_total','montant_paye','montant_restant','email','code_inscription','paiements.id_modepaiement','modepaiements.libelle'])
+            ->first();
+        $details = Detailpaiementouvrages::join('ouvrages','ouvrages.id','=','detailpaiementouvrages.id_ouvrage')
+            ->where('paiementouvrage_id ',$paiement->id)
+            ->get(['detailpaiementouvrages.id','detailpaiementouvrages.montant','detailpaiementouvrages.reference','ouvrages.libelle']);
+        // récupération des clés pour les apis
+        if(env('KKIAPAY_SANDBOX') == 1){
+            $code_kkiapay = env('KKIAPAY_SANDBOX_PUBLIC_KEY');
+            $code_fedapay = env('FEDAPAY_CLE_PUBLIQUE');
+            $code_pawapay = env('PAWAPAY_SANDBOX_TOKEN_ID');
+            $code_cinetpay = env('CINETPAY_APIKEY');
+            $env_fedapay = env('FEDAPAY_ENVIRONNEMENT');
+            $env_kkiapay = env('KKIAPAY_SANDBOX');
+        }else{
+            $code_kkiapay = env('KKIAPAY_LIVE_PUBLIC_KEY');
+            $code_fedapay = env('FEDAPAY_CLE_PUBLIQUE');
+            $code_pawapay = env('PAWAPAY_SANDBOX_TOKEN_ID');
+            $code_cinetpay = env('CINETPAY_APIKEY');
+            $env_fedapay = env('FEDAPAY_ENVIRONNEMENT');
+            $env_kkiapay = env('KKIAPAY_SANDBOX');
+        }
+
+        if($paiement){
+            $auditeur = Auditeurs::whereEmail($paiement->email)->first();
+            $dataResponse = [
+                'paiement' => $paiement,
+                'auditeur' => $auditeur,
+                'code_kkiapay' => $code_kkiapay,
+                'code_fedapay' => $code_fedapay,
+                'code_pawapay' => $code_pawapay,
+                'code_cinetpay' => $code_cinetpay,
+                'env_kkiapay' => $env_kkiapay,
+                'env_fedapay' => $env_fedapay,
+                'details' => $details,
+                'success' => true,
+            ];
+            return  ResponseHandler::success("ok",$dataResponse);
+        }
+
+        // paiement non retrouvé
+        $dataResponse = [
+            'success' => false,
+        ];
+        return  ResponseHandler::success("Paiement non retrouvé ou référence invalide",$dataResponse);
+    }
 }

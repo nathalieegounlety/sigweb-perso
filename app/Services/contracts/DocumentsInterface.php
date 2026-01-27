@@ -14,8 +14,10 @@ interface DocumentsInterface
     public function getUrlSignedRecuPaiementDsc(string $reference): \Illuminate\Http\JsonResponse;
     public function getUrlSignedRecuPaiementOuvrage(string $reference): \Illuminate\Http\JsonResponse;
     public function downloadProforma(string $reference);
+    public function downloadProformaOuvrage(string $reference);
     public function getUrlProformaSigned(string $reference): \Illuminate\Http\JsonResponse;
     public function getUrlProformaDscSigned(string $reference): \Illuminate\Http\JsonResponse;
+    public function getUrlProformaOuvrageSigned(string $reference): \Illuminate\Http\JsonResponse;
     public function downloadProformaDsc(string $reference);
     public function getListeAttestationParticipant(Request $request, string $code_formation); //: LengthAwarePaginator;
     public function showAttestationParticipant($rapport_id);

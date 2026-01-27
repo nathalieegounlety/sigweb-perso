@@ -9,6 +9,7 @@ interface PaiementsInterface
     public function getInfosPaiement(string $reference): \Illuminate\Http\JsonResponse;
     public function getInfoPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse;
     public function enregistrerPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse;
+    public function getInfosPaiementOuvrage(string $reference): \Illuminate\Http\JsonResponse;
 
 
 }

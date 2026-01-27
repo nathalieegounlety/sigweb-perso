@@ -27,6 +27,18 @@ class PaiementsController extends Controller
         }
     }
 
+    public function infosPaiementOuvrage(Request $request){
+        try {
+            //
+            return $data = $this->paiementsService->getInfosPaiementOuvrage($request->reference);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
 
 
     public function infoPaiementPartiel(Request $request){
