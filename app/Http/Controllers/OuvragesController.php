@@ -15,7 +15,7 @@ class OuvragesController extends Controller
     public function __construct(OuvragesInterface $ouvragesService)
     {
         // restriction des accès
-         $this->middleware('auth:api', ['except' => ['getObjOuvrage']]);
+         $this->middleware('auth:api', ['except' => ['getObjOuvrage','index']]);
 
         $this->ouvragesService = $ouvragesService;
         //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);
