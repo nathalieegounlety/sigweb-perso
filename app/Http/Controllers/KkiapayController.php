@@ -48,4 +48,19 @@ class KkiapayController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function savePaiementOuvrage(Request $request){
+        try {
+            $validated = $request->validate([
+                'transaction_id' => 'required|string'
+            ]);
+
+            return $data = $this->kkiapayservice->storePaiementOuvrageKkiapay($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 }

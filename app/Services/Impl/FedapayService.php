@@ -4,7 +4,9 @@ namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
 use App\Mail\NotificationComptable;
+use App\Mail\NotificationPaiementOuvrageStaff;
 use App\Mail\Paiementattente;
+use App\Mail\Paiementattenteouvrage;
 use App\Models\Auditeurs;
 use App\Models\Detailspaiements;
 use App\Models\Modepaiements;
@@ -279,6 +281,119 @@ class FedapayService implements  FedapayInterfarce
             return  ResponseHandler::success("ok",$dataResponse);
 
         }
+    }
+
+    public function storePaiementOuvrageFedapay(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement storePaiementOuvrageFedapay() method.
+
+        # code...
+        $reference = $request->reference;
+        $montant_paye = $request->montant_payer;
+        // récupérer le statut de la transaction côté serveur
+        $data_transaction = Transaction::retrieve($request->transaction_id);
+
+        // mise à jour de la table paiement
+        $getPaiement = Paiements::whereReference($reference)->first();
+        $montant_restant = $getPaiement->montant_restant;
+        // mise à jour du montant paye
+        $paiement = Paiements::find($getPaiement->id);
+        $paiement->setAttribute('num_transaction', $data_transaction->id);
+        $paiement->setAttribute('statut_transaction', $data_transaction->status);
+        $paiement->setAttribute('updated_at', date('Y-m-d H:i:s'));
+        $paiement->setAttribute('id_modepaiement', 2); // FedaPay
+        $paiement->update();
+        // récupérer le mode de paiement
+        $libelle_mode_paiement = Modepaiements::find($paiement->id_modepaiement);
+
+        // envoie de mail pour notification paiement en attente
+        // envoie de mail pour notifier l'enregistrement du paiement
+        $auditeur = Auditeurs::where("email",$paiement->email)->first();
+        if ($auditeur) {
+            # code...
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'reference_paiement' => $reference,
+                'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$reference,
+                'email' => $paiement->email,
+                'montant' => $montant_paye,
+                'mode_paiement' => $libelle_mode_paiement->libelle
+            ];
+        } else {
+            # code...
+            $contenu = [
+                'nom' => "",
+                'prenoms' => "",
+                'reference_paiement' => $reference,
+                'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$reference,
+                'email' => $paiement->email,
+                'montant' => $montant_paye,
+                'mode_paiement' => $libelle_mode_paiement->libelle
+            ];
+        }
+        try {
+            # code...
+            Mail::to($paiement->email)->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new Paiementattenteouvrage($contenu));
+        } catch (\Exception $e) {
+            // Get error here
+            Log::info('echec de l\'envoi du mail');
+        }
+
+        if(env('PAIEMENT_NOTIFIER_COMPTABLE')){
+
+            $liste_comptable = User::whereHas('roles', function ($q) {
+                $q->where('libelle', 'COMPTABLE');
+            })->pluck('email');
+
+            $contenu = [
+                'name' => 'COMPTABLE',
+                'reference_paiement' => $reference,
+                'email_auditeur' => $paiement->email,
+                'nom_auditeur' => $auditeur->prenoms.' '.$auditeur->nom,
+                'subject' => 'NOUVEAU PAIEMENT ' . date('d-m-Y H:i:s'),
+                'email' => '',
+                'montant' => $montant_paye,
+                'mode_paiement' => $libelle_mode_paiement->libelle
+            ];
+            try {
+                # code...
+                Mail::to(env('MAIL_CC'))->cc($liste_comptable)->queue(new NotificationPaiementOuvrageStaff($contenu));
+            } catch (\Exception $e) {
+                // Get error here
+            }
+        }
+
+        if(env('PAIEMENT_NOTIFIER_DRD')){
+
+            $liste_DRD = User::whereHas('roles', function ($q) {
+                $q->where('libelle', 'DOCUMENTATION');
+            })->pluck('email');
+
+            $contenu = [
+                'name' => 'DOCUMENTATION',
+                'reference_paiement' => $reference,
+                'email_auditeur' => $paiement->email,
+                'nom_auditeur' => $auditeur->prenoms.' '.$auditeur->nom,
+                'subject' => 'NOUVEAU PAIEMENT ' . date('d-m-Y H:i:s'),
+                'email' => '',
+                'montant' => $montant_paye,
+                'mode_paiement' => $libelle_mode_paiement->libelle
+            ];
+            try {
+                # code...
+                Mail::to(env('MAIL_CC'))->cc($liste_DRD)->queue(new NotificationPaiementOuvrageStaff($contenu));
+            } catch (\Exception $e) {
+                // Get error here
+            }
+        }
+
+        $dataResponse = [
+            'reference' => $paiement->reference,
+            'success' => true,
+        ];
+
+        return  ResponseHandler::success("ok",$dataResponse);
     }
 }
 

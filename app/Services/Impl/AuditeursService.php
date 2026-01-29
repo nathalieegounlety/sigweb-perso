@@ -854,7 +854,7 @@ class AuditeursService implements AuditeursInterface
         $liste_paiement_encours = DB::table('paiements')
             ->leftjoin('auditeurs', 'auditeurs.email', '=', 'paiements.email')
             ->join('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
-            ->select('paiements.reference', 'paiements.montant_paye', 'paiements.num_transaction', 'paiements.updated_at', 'paiements.created_at', 'modepaiements.libelle as mode_paiement', 'paiements.type', 'paiements.code_inscription')
+            ->select('paiements.reference', 'paiements.montant_paye','paiements.montant_restant' ,'paiements.num_transaction', 'paiements.updated_at', 'paiements.created_at', 'modepaiements.libelle as mode_paiement', 'paiements.type', 'paiements.code_inscription')
             ->where('statut_traitement', 'ATTENTE')
             ->where('is_paiement_partiel', false)
             ->where('paiements.type', '!=', 'dsc')
@@ -889,7 +889,7 @@ class AuditeursService implements AuditeursInterface
             ->where('statut_traitement', 'VALIDER')
             ->where('is_paiement_partiel', false)
             ->where('paiements.type', '!=', 'dsc')
-            ->get(['paiements.reference','paiements.montant_paye','paiements.updated_at','modepaiements.libelle as mode_paiement','paiements.type']);
+            ->get(['paiements.reference','paiements.montant_paye','paiements.updated_at','modepaiements.libelle as mode_paiement','paiements.type','paiements.montant_restant']);
 
         $paiements_partiel = DB::table('detailspaiements')
             ->join('modepaiements', 'modepaiements.id', '=', 'detailspaiements.modepaiement_id')

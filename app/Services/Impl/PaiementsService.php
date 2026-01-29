@@ -281,8 +281,8 @@ class PaiementsService implements PaiementsInterface
             ->whereReference($reference)
             ->get(['paiements.id','num_transaction','is_paiement_partiel','reference','montant_total','montant_paye','montant_restant','email','code_inscription','paiements.id_modepaiement','modepaiements.libelle'])
             ->first();
-        $details = Detailpaiementouvrages::join('ouvrages','ouvrages.id','=','detailpaiementouvrages.id_ouvrage')
-            ->where('paiementouvrage_id ',$paiement->id)
+        $details = Detailpaiementouvrages::join('ouvrages','ouvrages.id','=','detailpaiementouvrages.ouvrage_id')
+            ->where('detailpaiementouvrages.paiementouvrage_id',$paiement->id)
             ->get(['detailpaiementouvrages.id','detailpaiementouvrages.montant','detailpaiementouvrages.reference','ouvrages.libelle']);
         // récupération des clés pour les apis
         if(env('KKIAPAY_SANDBOX') == 1){

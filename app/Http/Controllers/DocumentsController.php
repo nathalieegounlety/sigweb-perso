@@ -17,7 +17,7 @@ class DocumentsController extends Controller
         $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
             'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc','listeFormateurs',
             'exportAllAttestationParticipant','telechargerAttestationFormateur','consulterAttestationFormateur','proformaOuvrage',
-            'exportAllAttestationFormateur']]);
+            'exportAllAttestationFormateur','recuPaiementOuvrage']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -44,6 +44,20 @@ class DocumentsController extends Controller
         try {
 
             return $data = $this->documentService->downloadRecuPaiement($reference);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function recuPaiementOuvrage(Request $request, $reference)
+    {
+        try {
+
+            return $data = $this->documentService->downloadRecuPaiementOuvrage($reference);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());

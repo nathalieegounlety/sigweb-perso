@@ -1136,4 +1136,27 @@ class DocumentsService implements DocumentsInterface
         $data = ['url'=>$url];
         return  ResponseHandler::success("ok",$data,200);
     }
+
+    public function downloadRecuPaiementOuvrage(string $reference)
+    {
+        // TODO: Implement downloadRecuPaiementOuvrage() method.
+        $paiement = Paiements::where('reference',$reference)->get()->first();
+        $auditeur = Auditeurs::where('email',$paiement->email)->first();
+        $details_paiement = Detailpaiementouvrages::where("paiementouvrage_id",$paiement->id)->get();
+        // Detailspaiement::where('reference_paiement','ERS-2021-FACT-000001');
+        // return view('public.recu',compact("paiement","details_paiement"));
+        $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
+        $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
+
+        // share data to view
+        view()->share(['formatter'=>$formatter,'paiement'=>$paiement,'auditeur' => $auditeur, 'details_paiement'=>$details_paiement]);
+        $pdf = PDF::loadView('documents.recu_paiement_ouvrage');
+        $customPaper = array(0,0,720,1440);
+        $pdf->setPaper($customPaper, 'landscape');
+
+        $date = date('d_m_Y_His');
+        // download PDF file with download method
+        return $pdf->download('recu_'.$reference.'_'.$date.'.pdf');
+
+    }
 }

@@ -10,6 +10,7 @@ interface DocumentsInterface
 {
     public function getFormationVisuel(int $id);
     public function downloadRecuPaiement(string $reference);
+    public function downloadRecuPaiementOuvrage(string $reference);
     public function getUrlSignedRecuPaiement(string $reference): \Illuminate\Http\JsonResponse;
     public function getUrlSignedRecuPaiementDsc(string $reference): \Illuminate\Http\JsonResponse;
     public function getUrlSignedRecuPaiementOuvrage(string $reference): \Illuminate\Http\JsonResponse;

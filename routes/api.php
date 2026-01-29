@@ -229,12 +229,14 @@ Route::prefix('v1/paiements')->controller(\App\Http\Controllers\PaiementsControl
 Route::prefix('v1/fedapay')->controller(\App\Http\Controllers\FedapayController::class)->group(function () {
     Route::post('store/paiement', 'savePaiement');
     Route::post('store/paiement/partiel', 'savePaiementPartiel');
+    Route::post('store/paiement/ouvrage', 'savePaiementOuvrage');
 });
 
 // gestion des paiements via kkiapay
 Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController::class)->group(function () {
     Route::post('store/paiement', 'savePaiement');
     Route::post('store/paiement/partiel', 'savePaiementPartiel');
+    Route::post('store/paiement/ouvrage', 'savePaiementOuvrage');
 });
 
 // gestion de la comptabilité
