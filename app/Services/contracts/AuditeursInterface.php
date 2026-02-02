@@ -21,6 +21,8 @@ interface AuditeursInterface
 
     public function storeInscriptionFormation(Request $data): \Illuminate\Http\JsonResponse;
 
+    public function storeInscriptionFormationDsc(Request $data): \Illuminate\Http\JsonResponse;
+
     public function getAuditeurByEmail(string $email): \Illuminate\Http\JsonResponse;
 
     public function getListeFormationsByCodeInscription(string $codeInscription): \Illuminate\Http\JsonResponse;

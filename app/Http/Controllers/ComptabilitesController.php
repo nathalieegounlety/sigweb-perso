@@ -13,7 +13,7 @@ class ComptabilitesController extends Controller
     public function __construct(ComptabilitesInterface $comptabiliteService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['listeDesPaiements']]);
+        $this->middleware('auth:api',['except' => ['listeDesPaiements','detailProcessPaiementDsc']]);
         $this->comptabiliteService = $comptabiliteService;
     }
 

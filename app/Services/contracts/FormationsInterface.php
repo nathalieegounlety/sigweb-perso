@@ -23,5 +23,6 @@ interface FormationsInterface
 
     public function getDetailsFormation(Request $request): \Illuminate\Http\JsonResponse;
     public function getFormationsAttestation(Request $request): \Illuminate\Http\JsonResponse;
+    public function getFormationsDsc(Request $request);
 
 }

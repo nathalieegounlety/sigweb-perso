@@ -10,6 +10,8 @@ use App\Mail\Paiementvalider;
 use App\Models\Auditeurs;
 use App\Models\Detailpaiementouvrages;
 use App\Models\Detailspaiements;
+use App\Models\Formations;
+use App\Models\FormationsDsc;
 use App\Models\FormationsTranches;
 use App\Models\Inscriptions;
 use App\Models\Modepaiements;
@@ -1661,11 +1663,25 @@ class ComptabilitesService implements ComptabilitesInterface
     public function getDetailsProcessPaiementDsc(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getDetailsPaiementDsc() method.
+        // reference_paiement peut prendre la valeur de code_inscription
 
         $reference_paiement = $request->reference_paiement;
         // check if reference exist
         $getReferencePaiement = explode("_",$reference_paiement)[0];
         $paiement = Paiements::where('reference',$getReferencePaiement)->first();
+        if($paiement){
+
+        }else{
+            $paiement = Paiements::where('code_inscription',$getReferencePaiement)->first();
+        }
+        $refP = $paiement->reference;
+        $date_limite_inscription = "";
+        $inscription = Inscriptions::where('code_inscription',$paiement->code_inscription)->first();
+        $formation = Formations::where('code_formation',$inscription->code_formation)->first();
+        $getDateInsc = FormationsDsc::where('formation_id',$formation->id)->first();
+        if($getDateInsc){
+            $date_limite_inscription = $getDateInsc->date_limite_paiement_inscription;
+        }
 
         if($paiement){
             $details_paiement = Detailspaiements::join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
@@ -1675,7 +1691,17 @@ class ComptabilitesService implements ComptabilitesInterface
                 ->get(['detailspaiements.id as detailsPaiementId','detailspaiements.reference_paiement','detailspaiements.code_formation','detailspaiements.code_inscription',
                     'detailspaiements.montant_paye','detailspaiements.montant_restant','detailspaiements.id_tarification_formation','formations.theme',
                     'detailspaiements.have_reduction_dsc','grilletarifaires.type_tarif','grilletarifaires.id as grilleId','grilletarifaires.montant as grille_montant']);
-
+            $montant_total = 0;
+            $frais_inscription = 0;
+            $frais_scolarite = 0;
+            foreach($details_paiement as $detail){
+                $montant_total = $montant_total + $detail->montant_restant;
+                if ($detail->type_tarif == 'INSCRIPTION'){
+                    $frais_inscription = $frais_inscription + $detail->montant_restant;
+                }else{
+                    $frais_scolarite = $frais_scolarite + $detail->montant_restant;
+                }
+            }
             $have_tranche = Tranches::where('code_inscription',$paiement->code_inscription)->exists();
             $uniqueTranche = true; // default
 
@@ -1689,7 +1715,12 @@ class ComptabilitesService implements ComptabilitesInterface
                 'detailsPaiement' => $details_paiement,
                 'haveTranche' => $have_tranche,
                 'uniqueTranche' => $uniqueTranche,
-                'referencePaiement' => $request->reference_paiement
+                'referencePaiement' => $request->reference_paiement,
+                'date_limite_inscription' => $date_limite_inscription,
+                'montant_total' => $montant_total,
+                'frais_scolarite' => $frais_scolarite,
+                'frais_inscription' => $frais_inscription,
+                'refP' => $refP
             ];
             return  ResponseHandler::success("ok",$data);
         }else{

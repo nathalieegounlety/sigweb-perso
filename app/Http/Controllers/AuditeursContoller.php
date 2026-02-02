@@ -105,6 +105,27 @@ class AuditeursContoller extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function inscriptionFormationDsc(Request $request)
+    {
+        try {
+            // Validation des données
+            $validatedData = $request->validate([
+                'formations_dsc' => 'required'
+            ]);
+            // procéder à l'enregistrement
+            return $processSave = $this->auditeurService->storeInscriptionFormationDsc($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation ".$request, 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
     public function getAuditeurByEmail(Request $request){
         try {
             //

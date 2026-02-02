@@ -3,12 +3,14 @@
 namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
+use App\Mail\InscriptionFormationDiplomante;
 use App\Mail\InscriptionGratuit;
 use App\Mail\Inscriptionpresentiel;
 use App\Mail\NotificationCompte;
 use App\Models\Auditeurs;
 use App\Models\Detailspaiements;
 use App\Models\Formations;
+use App\Models\Grilletarifaires;
 use App\Models\Inscriptions;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
@@ -782,7 +784,6 @@ class AuditeursService implements AuditeursInterface
         return  ResponseHandler::success("Mise à jour effectuée avec succès");
     }
 
-
     public function getMesPaiements(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getMesPaiements() method.
@@ -947,5 +948,238 @@ class AuditeursService implements AuditeursInterface
 
         return ResponseHandler::success("Modification effectuée avec succès",['success'=>true,'code_formation' => $inscrit->code_formation]);
 
+    }
+
+    public function storeInscriptionFormationDsc(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement storeInscriptionFormationDsc() method.
+        $user = auth('api')->user();
+        $auditeur = Auditeurs::where("email", $user->email)->first();
+
+        if ($auditeur) {
+            # code...
+        } else {
+            # code...
+            $dataResponse = [
+                'success' => false,
+                'message' => "Le compte de l'auditeur n'existe pas"
+            ];
+            return ResponseHandler::success("Le compte de l'auditeur n'existe pas",$dataResponse,500);
+        }
+
+        // ### generer code inscription
+        $generateCode = $this->genarateurCodeService->genererCodeAlphaNumeric(8);
+
+        $montant_total = 0;
+        // vérifier si la variable session existe
+        if ($request->formations_dsc) {
+            // récupérer la liste des formations
+            $liste_formation_tarif = collect($request->input('formations_dsc'))->map(fn ($fm) => (object) $fm);
+            $total_formation = 0;
+            $check_exist = 0;
+            $formationSave = false;
+
+            // enregistrement dans la table inscription suivant le nbre de la formation
+            foreach ($liste_formation_tarif as $data) {
+                $tarif_id = $data->tarif_id;
+                // get formation objet
+                $tarif_formation = Tarificationsformation::find($tarif_id);
+                $formation_type = $tarif_formation->getGrilletarifaire->type_tarif;
+                // return
+                $total_formation  = $total_formation + 1;
+                # code...
+                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
+                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
+                $formation = Formations::where("code_formation", $tarif_formation->code_formation)->get()->first();
+
+                // insert data in table inscrits
+                $created_at = date("Y-m-d H:i:s");
+
+                // enregistrement des données dans la table inscrit
+                // vérifier si l'e-mail existe dans la table des inscrits
+                $check_auditeur = Inscriptions::where('email', trim($auditeur->email))->where('code_formation', $formation->code_formation)->exists();
+
+                if ($check_auditeur) {
+                    $check_exist  = $check_exist + 1;
+                    // if participant exist
+                    $get_auditeur = Inscriptions::where('email', $auditeur->email)
+                        ->where('code_formation', $formation->code_formation)
+                        ->get()
+                        ->first();
+                    $generateCode = $get_auditeur->code_inscription;
+                } else {
+                    // vérifier si la formation est présentiel ou pas
+                    $presentiel = 0;
+                    $checkExitingFormation = Inscriptions::whereCodeFormation($formation->code_formation)
+                        ->whereEmail(trim($auditeur->email))
+                        ->whereTarifFormationId($tarif_formation->id)
+                        ->exists();
+
+                    if (!$checkExitingFormation) {
+
+                        $inscrit = new Inscriptions();
+                        $inscrit->setAttribute("email", trim($auditeur->email));
+                        $inscrit->setAttribute("tarif_formation_id", $tarif_formation->id);
+                        $inscrit->setAttribute("code_inscription", $generateCode);
+                        $inscrit->setAttribute("heure_inscription", date("d-m-Y H:i:s"));
+                        $inscrit->setAttribute("id_webinaire", $formation->code_formation);
+                        $inscrit->setAttribute("code_formation", $formation->code_formation);
+                        $inscrit->setAttribute("presentiel", $presentiel);
+                        $inscrit->setAttribute("type_formation", $formation_type);
+                        $inscrit->setAttribute("created_at", $created_at);
+                        $inscrit->setAttribute("updated_at", $created_at);
+                        $inscrit->save();
+
+                        $formationSave = true;
+                    }
+                }
+            }
+
+
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'civilite' => $auditeur->civilite,
+                'prenoms' => $auditeur->prenoms,
+                'formations' => $request->formations_dsc,
+                'subject' => 'Inscription sur SIGWEB de ' . $auditeur->nom . ' ' . $auditeur->prenoms,
+                'email' => $auditeur->email,
+                'code_inscription' => $generateCode,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma-dsc',['reference' =>$generateCode])
+            ];
+
+            if ($check_exist == $total_formation) {
+                # code...
+                $ok = true;
+            } else {
+
+                try {
+                    # code...
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new InscriptionFormationDiplomante($contenu));
+
+                } catch (\Exception $e) {
+                    // Get error here
+                    Log::info($e->getMessage());
+                }
+            }
+
+            if($formationSave){
+                // enregistrement des informations dans la table de paiement
+
+                # code...
+                /************************ start *********************** */
+                $inscrit = Inscriptions::where("code_inscription", $generateCode)->orderBy("id", "DESC")->get()->first();
+                // vérifier si le paiement existe déjà
+                $check_paiement = Paiements::where("email", $inscrit->email)->where("code_inscription", $inscrit->code_inscription)->exists();
+
+                if ($check_paiement) {
+                    # code...
+                    # code... la formation a été déjà enregistrée
+                } else {
+                    # code...
+
+                    // récupération des variables
+                    $nom = $auditeur->nom;
+                    $prenoms = $auditeur->prenoms;
+                    $email = $auditeur->email;
+                    $telephone = $auditeur->telephone;
+
+                    // enregistrement des informations de tatification
+                    $getGrille = Grilletarifaires::where('type_tarif','INSCRIPTION')->first();
+                    $priceInscription = Tarificationsformation::where("code_formation",$inscrit->code_formation)
+                        ->where('id_grilletarifaire',$getGrille->id)
+                        ->first();
+
+                    $montant_total = $montant_total + $getGrille->montant;
+
+                    // générer le numero de reference facture : ERS-2025-FAC-000001
+                    $reference_paiement =$this->genarateurCodeService->genererNumeroPaiement();
+
+                    // enregistrement du paiement
+                    $statut_details_paiement = "IMPAYE";
+                    $statut_paiement = "EN ATTENTE";
+
+                    // vérifier si le paiement n'est pas déjà enregistré
+                    $checkExistingPaiement = Paiements::whereReference($reference_paiement)->exists();
+                    if (!$checkExistingPaiement) { // si le paiement n'existe pas encore
+
+                        $paiement = new Paiements();
+                        $paiement->setAttribute('reference', $reference_paiement);
+                        $paiement->setAttribute('email', $email);
+                        $paiement->setAttribute('telephone', $telephone);
+                        $paiement->setAttribute('code_inscription', $inscrit->code_inscription);
+                        $paiement->setAttribute('montant_total', $montant_total);
+                        $paiement->setAttribute('montant_restant', $montant_total);
+                        $paiement->setAttribute('statut_paiement', $statut_paiement);
+                        $paiement->setAttribute('type', "DSC");
+
+                        // enregistrement des détails de la facture
+
+                        try {
+                            //code...
+                            $paiement->save();
+
+                            foreach ($liste_formation_tarif as $formations) {
+                                $id_tarification_formation = $formations->tarif_id;
+                                $tarif_formation = Tarificationsformation::find($id_tarification_formation);
+                                $montant = $tarif_formation->getGrilletarifaire->montant;
+                                // enregistrement détails paiement
+                                // frais inscription
+
+                                $details_paiement = new Detailspaiements();
+                                $details_paiement->setAttribute('reference_paiement', $paiement->reference);
+                                $details_paiement->setAttribute('code_formation', $formations->code_formation);
+                                $details_paiement->setAttribute('code_inscription', $paiement->code_inscription);
+                                $details_paiement->setAttribute('montant_restant', $getGrille->montant);
+                                $details_paiement->setAttribute('email', $email);
+                                $details_paiement->setAttribute('id_tarification_formation', $priceInscription->id);
+                                $details_paiement->setAttribute('statut_paiement', 'IMPAYE');
+                                $details_paiement->save();
+
+                                // frais formation
+                                $details_paiement = new Detailspaiements();
+                                $details_paiement->setAttribute('reference_paiement', $paiement->reference);
+                                $details_paiement->setAttribute('code_formation', $formations->code_formation);
+                                $details_paiement->setAttribute('code_inscription', $paiement->code_inscription);
+                                $details_paiement->setAttribute('montant_restant', $montant);
+                                $details_paiement->setAttribute('email', $email);
+                                $details_paiement->setAttribute('id_tarification_formation', $id_tarification_formation);
+                                $details_paiement->setAttribute('statut_paiement', 'IMPAYE');
+                                $details_paiement->save();
+                            }
+                        } catch (\Exception $e) {
+                            //throw $th;
+                            echo $e->getMessage();
+                        }
+
+                    }
+
+                    //##################### end start #################
+                }
+                // formation enregistré :
+                $dataResponse = [
+                    'code_inscription' => $generateCode,
+                    'message' => 'Inscription effectuée',
+                    'success' => true,
+                ];
+
+                return ResponseHandler::success("Modification effectuée avec succès",$dataResponse);
+
+            }else{
+                $dataResponse = [
+                    'success' => false,
+                    'message' => "Vous avez déjà une inscription en cours pour cette formation"
+                ];
+                return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse,500);
+            }
+
+            /************************** end ******************* */
+        } else {
+            $dataResponse = [
+                'success' => false,
+                'message' => "Veuillez choisir la formation auquelle vous voulez vous inscrire."
+            ];
+            return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse,500);
+        }
     }
 }

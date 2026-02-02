@@ -751,22 +751,22 @@ if (!function_exists('getNbrPiecesMail')) {
         $user = auth()->user();
 
         // Effectuer une jointure entre les tables auditeurs et inscrits
-        $inscrit = Inscriptions::where("code_inscription", $code_inscription)->first();
+        $inscrit = \App\Models\Inscriptions::where("code_inscription", $code_inscription)->first();
 
         // Déterminer le type de formation
         $typeFormation = $inscrit->type_formation;
 
         // Récupérer les pièces déjà enregistrées
-        $pieces = InscritsTypePieces::where('created_by', $user->id)->pluck('inscrits_typespieces_id');
+        $pieces = \App\Models\AuditeursPieces::where('created_by', $user->id)->pluck('inscrits_typespieces_id');
 
         // Exclure la pièce appropriée en fonction du type de formation
         if ($typeFormation == 'PROFESSIONNELS') {
-            $typePieces = InscritsTypePieces::whereNotIn('id', $pieces)->where('is_professionnel', true)->orderBy("libelle", "asc")->get();
-            $nbre_piece_require = InscritsTypePieces::where('is_professionnel', true)->count();
+            $typePieces = \App\Models\InscritsTypePieces::whereNotIn('id', $pieces)->where('is_professionnel', true)->orderBy("libelle", "asc")->get();
+            $nbre_piece_require = \App\Models\InscritsTypePieces::where('is_professionnel', true)->count();
 
         } else {
-            $typePieces = InscritsTypePieces::whereNotIn('id', $pieces)->where('is_etudiant', true)->orderBy("libelle", "asc")->get();
-            $nbre_piece_require = InscritsTypePieces::where('is_etudiant', true)->count();
+            $typePieces = \App\Models\InscritsTypePieces::whereNotIn('id', $pieces)->where('is_etudiant', true)->orderBy("libelle", "asc")->get();
+            $nbre_piece_require = \App\Models\InscritsTypePieces::where('is_etudiant', true)->count();
         }
 
         $nombrepieces = count($pieces);

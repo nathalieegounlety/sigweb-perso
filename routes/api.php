@@ -69,6 +69,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::get('recentes', 'recenteFormation');
     Route::post('details', 'detailFormation');
     Route::get('for/attestation', 'listeFormationAttestation');
+    Route::get('dsc', 'formationsDsc');
 });
 
 // gestion des documents
@@ -158,6 +159,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('liste/inscriptions', 'listeInscriptions');
     Route::post('mespaiements', 'mesPaiements');
     Route::post('update/inscription', 'updateInscriptionInfo');
+    Route::post('inscription/formation/dsc', 'inscriptionFormationDsc');
 });
 
 // gestion des api du frontoffice
@@ -237,6 +239,7 @@ Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController:
     Route::post('store/paiement', 'savePaiement');
     Route::post('store/paiement/partiel', 'savePaiementPartiel');
     Route::post('store/paiement/ouvrage', 'savePaiementOuvrage');
+    Route::post('store/paiement/dsc', 'savePaiementDsc');
 });
 
 // gestion de la comptabilité

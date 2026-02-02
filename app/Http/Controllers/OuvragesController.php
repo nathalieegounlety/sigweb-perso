@@ -9,7 +9,6 @@ use Illuminate\Validation\Rule as ValidationRule;
 
 class OuvragesController extends Controller
 {
-
     private OuvragesInterface $ouvragesService;
 
     public function __construct(OuvragesInterface $ouvragesService)

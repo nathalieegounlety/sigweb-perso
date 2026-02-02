@@ -532,4 +532,18 @@ class FormationsService implements FormationsInterface
         return ResponseHandler::success('ok', $liste_formations);
     }
 
+    public function getFormationsDsc(Request $request)
+    {
+        // TODO: Implement getFormationsDsc() method.
+        $date_now = date('Y-m-d');
+        $queryFormations = Formations::select('formations.*')
+            ->with('getTypeformation:id,libelle')
+            ->with('tarifications')
+            ->whereDate('formations.date_fin', '>=', $date_now)
+            ->where('formations.is_formation_dsc',true)
+            ->where('formations.statut','ACTIF')
+            ->where('formations.enable',true)
+            ->orderBy("formations.date_debut","ASC") ;
+        return $queryFormations->get();
+    }
 }
