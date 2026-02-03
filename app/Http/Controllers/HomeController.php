@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Formations;
+use App\Models\FormationsDsc;
 use App\Models\points_de_paiements;
 use Illuminate\Http\Request;
 
@@ -59,6 +60,23 @@ class HomeController extends Controller
 
         // Retourner les détails de la formation
         return response()->json($formation);
+    }
+
+
+    public function detailsformationsdsc($id)
+    {
+        // Récupérer la formation par son ID
+        $formationdsc = FormationsDsc::find($id);
+
+        // Si la formation n'existe pas, retourner une erreur 404
+        if (!$formationdsc) {
+            return response()->json([
+                'message' => 'Formation non trouvée',
+            ], 404);
+        }
+
+        // Retourner les détails de la formation
+        return response()->json($formationdsc);
     }
 
     public function getPointsPaiements()
