@@ -571,6 +571,10 @@ class KkiapayService implements  KkiapayInterfarce
                 if($montant_restant == 0){
                     $paiement->setAttribute('num_transaction', $transactionId);
                     $paiement->setAttribute('statut_transaction', $transactionId);
+                    $paiement->setAttribute('statut_paiement', 'PAYE');
+                    $paiement->setAttribute('statut_traitement', 'VALIDER');
+                    $paiement->setAttribute('agent_traiteur', $userValidateur->id);
+                    $paiement->setAttribute('commentaire', 'Validation automatique webhook Fedapay');
                 }
                 $paiement->setAttribute('id_modepaiement', 1);
                 $paiement->update();

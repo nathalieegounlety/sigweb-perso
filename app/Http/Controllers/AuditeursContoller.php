@@ -16,7 +16,7 @@ class AuditeursContoller extends Controller
     public function __construct(AUDITEURSInterface $auditeurService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['store','getAuditeurByEmail','getListeFormations','inscriptionPaiement','listePays','mesPaiements']]);
+        $this->middleware('auth:api',['except' => ['store','getAuditeurByEmail','getListeFormations','inscriptionPaiement','listePays','mesPaiements','checkPieceDsc']]);
         $this->auditeurService = $auditeurService;
     }
 
@@ -277,6 +277,41 @@ class AuditeursContoller extends Controller
             // procéder à l'enregistrement
             return $processSave = $this->auditeurService->updateInformationInscription($request);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+
+    public function checkPieceDsc(Request $request){
+        try {
+            return $data = $this->auditeurService->checkPiece($request);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function listePieces(Request $request){
+        try {
+            return $data = $this->auditeurService->mesPieces();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function addPiece(Request $request){
+        try {
+            $validatedData = $request->validate([
+                'document' => 'required|file|mimes:pdf|max:5120',
+                'idPiece' => 'required'
+            ]);
+            return $data = $this->auditeurService->ajouterPiece($request);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

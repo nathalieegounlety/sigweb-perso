@@ -20,6 +20,7 @@ use App\Models\PaiementsTranche;
 use App\Models\Tranches;
 use App\Models\User;
 use App\Services\contracts\FedapayInterfarce;
+use App\Services\util\GenarateurCodeService;
 use FedaPay\FedaPay;
 use FedaPay\Transaction;
 use Illuminate\Http\Request;
@@ -29,10 +30,13 @@ use Illuminate\Support\Facades\Mail;
 class FedapayService implements  FedapayInterfarce
 {
 
-    public function __construct()
+    private GenarateurCodeService $genarateurCodeService;
+
+    public function __construct(GenarateurCodeService $genarateurCodeService)
     {
         FedaPay::setApiKey(config('fedapay.secret_key'));
         FedaPay::setEnvironment(config('fedapay.environment'));
+        $this->genarateurCodeService = $genarateurCodeService;
     }
 
     public function storePaiementFedapay(Request $request): \Illuminate\Http\JsonResponse
@@ -134,8 +138,6 @@ class FedapayService implements  FedapayInterfarce
 
     public function storePaiementPartielFedapay(Request $request): \Illuminate\Http\JsonResponse
     {
-        // TODO: Implement storePaiementPartielKkiapay() method.
-
 
         try {
             // récupérer le statut de la transaction côté serveur
@@ -278,7 +280,7 @@ class FedapayService implements  FedapayInterfarce
 
 
         } catch (\Exception $e) {
-            \Log::error('Erreur vérification KKiaPay', ['error' => $e->getMessage()]);
+            \Log::error('Erreur vérification FedaPay', ['error' => $e->getMessage()]);
 
             $dataResponse = [
                 'reference' => $request->reference_paiement,
@@ -405,14 +407,14 @@ class FedapayService implements  FedapayInterfarce
 
 
 
-    public function storePaiementDscKkiapay(Request $request): \Illuminate\Http\JsonResponse
+    public function storePaiementDscFedaPay(Request $request): \Illuminate\Http\JsonResponse
     {
-        // TODO: Implement storePaiementDscKkiapay() method.
+        // TODO: Implement storePaiementDscFedaPay() method.
         $transactionId = Transaction::retrieve($request->transaction_id);
-
 
         try {
 
+            if($transactionId->status == 'approved' || $transactionId->status == 'APPROVED'){
                 $reference = $request->reference;
                 $getPaiement = Paiements::where('reference',$reference)->first();
                 $paiement = Paiements::find($getPaiement->id);
@@ -433,10 +435,14 @@ class FedapayService implements  FedapayInterfarce
                 $paiement->setAttribute('montant_restant',$montant_restant);
                 $paiement->setAttribute('montant_paye',$montant_paye);
                 if($montant_restant == 0){
-                    $paiement->setAttribute('num_transaction', $transactionId);
-                    $paiement->setAttribute('statut_transaction', $transactionId);
+                    $paiement->setAttribute('num_transaction', $transactionId->id);
+                    $paiement->setAttribute('statut_transaction', $transactionId->status);
+                    $paiement->setAttribute('statut_paiement', 'PAYE');
+                    $paiement->setAttribute('statut_traitement', 'VALIDER');
+                    $paiement->setAttribute('agent_traiteur', $userValidateur->id);
+                    $paiement->setAttribute('commentaire', 'Validation automatique webhook Fedapay');
                 }
-                $paiement->setAttribute('id_modepaiement', 1);
+                $paiement->setAttribute('id_modepaiement', 2);
                 $paiement->update();
                 // 2- update details paiement
                 $getPTranche = PaiementsTranche::where("reference","like","%$paiement->reference%")->latest()->first();
@@ -456,11 +462,11 @@ class FedapayService implements  FedapayInterfarce
                         $detailPaiement = Detailspaiements::find($detail->detail_id);
                         $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                         $detailPaiement->setAttribute('montant_restant',$detail->montant_restant-$detail->montant_paye);
-                        $detailPaiement->setAttribute('reference_paiement_partiel',$transactionId);
+                        $detailPaiement->setAttribute('reference_paiement_partiel',$transactionId->id);
                         $detailPaiement->setAttribute('have_reduction_dsc',false);
                         $detailPaiement->setAttribute('statut_paiement',"PAYE");
                         $detailPaiement->setAttribute('statut_traitement',"VALIDER");
-                        $detailPaiement->setAttribute("commentaire","Validation automatique webhook KKiaPay");
+                        $detailPaiement->setAttribute("commentaire","Validation automatique webhook FedaPay");
                         $detailPaiement->update();
 
                         $tranche_paiement = new PaiementsTranche();
@@ -468,8 +474,8 @@ class FedapayService implements  FedapayInterfarce
                         $tranche_paiement->setAttribute('montant_paye',$detail->montant_paye);
                         $tranche_paiement->setAttribute('montant_restant',$detailPaiement->montant_restant);
                         $tranche_paiement->setAttribute('reference',$update_reference);
-                        $tranche_paiement->setAttribute('num_transaction', $transactionId);
-                        $tranche_paiement->setAttribute('statut_transaction', $transactionId);
+                        $tranche_paiement->setAttribute('num_transaction', $transactionId->id);
+                        $tranche_paiement->setAttribute('statut_transaction', $transactionId->status);
                         # code...
                         $tranche_paiement->setAttribute('statut_traitement', 'VALIDER');
                         $tranche_paiement->setAttribute('traiter_par',$userValidateur->id);
@@ -488,6 +494,7 @@ class FedapayService implements  FedapayInterfarce
                                 ->first();
                             // vérifier si la tranche existe pour update
                             $checkTranche = Tranches::whereCodeInscription($paiement->code_inscription)->exists();
+
                             if($checkTranche){
                                 $getTranche = Tranches::whereCodeInscription($paiement->code_inscription)->first();
                                 $tranche = Tranches::find($getTranche->id);
@@ -523,10 +530,10 @@ class FedapayService implements  FedapayInterfarce
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                                 $detailPaiement->setAttribute('montant_restant',$mtRestant);
                                 if($mtRestant == 0){
-                                    $detailPaiement->setAttribute('reference_paiement_partiel',$transactionId);
+                                    $detailPaiement->setAttribute('reference_paiement_partiel',$transactionId->id);
                                     $detailPaiement->setAttribute('statut_paiement',"PAYE");
                                     $detailPaiement->setAttribute('statut_traitement',"VALIDER");
-                                    $detailPaiement->setAttribute("commentaire","Validation automatique webhook KKiaPay");
+                                    $detailPaiement->setAttribute("commentaire","Validation automatique webhook FedaPay");
                                 }
                                 $detailPaiement->setAttribute('have_reduction_dsc',true);
                                 $detailPaiement->update();
@@ -537,8 +544,8 @@ class FedapayService implements  FedapayInterfarce
                                 $tranche_paiement->setAttribute('montant_paye',$detail->montant_paye);
                                 $tranche_paiement->setAttribute('montant_restant',$detailPaiement->montant_restant);
                                 $tranche_paiement->setAttribute('reference',$update_reference);
-                                $tranche_paiement->setAttribute('num_transaction', $transactionId);
-                                $tranche_paiement->setAttribute('statut_transaction', $transactionId);
+                                $tranche_paiement->setAttribute('num_transaction', $transactionId->id);
+                                $tranche_paiement->setAttribute('statut_transaction', $transactionId->status);
                                 $tranche_paiement->setAttribute('statut_traitement', 'VALIDER');
                                 $tranche_paiement->setAttribute('traiter_par',$userValidateur->id);
                                 $tranche_paiement->setAttribute('tranche_id',$tranche->id);
@@ -592,10 +599,10 @@ class FedapayService implements  FedapayInterfarce
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                                 $detailPaiement->setAttribute('montant_restant',$mtRestant);
                                 if($mtRestant == 0){
-                                    $detailPaiement->setAttribute('reference_paiement_partiel',$transactionId);
+                                    $detailPaiement->setAttribute('reference_paiement_partiel',$transactionId->id);
                                     $detailPaiement->setAttribute('statut_paiement',"PAYE");
                                     $detailPaiement->setAttribute('statut_traitement',"VALIDER");
-                                    $detailPaiement->setAttribute("commentaire","Validation automatique webhook KKiaPay");
+                                    $detailPaiement->setAttribute("commentaire","Validation automatique webhook FedaPay");
                                 }
                                 $detailPaiement->setAttribute('have_reduction_dsc',false);
                                 $detailPaiement->update();
@@ -606,8 +613,8 @@ class FedapayService implements  FedapayInterfarce
                                 $tranche_paiement->setAttribute('montant_paye',$detail->montant_paye);
                                 $tranche_paiement->setAttribute('montant_restant',$detailPaiement->montant_restant);
                                 $tranche_paiement->setAttribute('reference',$update_reference);
-                                $tranche_paiement->setAttribute('num_transaction', $transactionId);
-                                $tranche_paiement->setAttribute('statut_transaction', $transactionId);
+                                $tranche_paiement->setAttribute('num_transaction', $transactionId->id);
+                                $tranche_paiement->setAttribute('statut_transaction', $transactionId->status);
                                 $tranche_paiement->setAttribute('statut_traitement', 'VALIDER');
                                 $tranche_paiement->setAttribute('traiter_par',$userValidateur->id);
                                 $tranche_paiement->setAttribute('tranche_id',$tranche->id);
@@ -725,9 +732,16 @@ class FedapayService implements  FedapayInterfarce
                 ];
                 return ResponseHandler::success("ok", $dataResponse);
 
+            }else{
+                $dataResponse = [
+                    'reference' => $request->reference,
+                    'success' => false,
+                ];
+                return ResponseHandler::success("paiement invalide", $dataResponse);
+            }
 
         } catch (\Exception $e) {
-            \Log::error('Erreur vérification KKiaPay', ['error' => $e->getMessage()]);
+            \Log::error('Erreur vérification FedaPay', ['error' => $e->getMessage()]);
 
             $dataResponse = [
                 'reference' => $request->reference,

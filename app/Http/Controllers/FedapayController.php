@@ -66,4 +66,19 @@ class FedapayController extends Controller
         }
     }
 
+    public function savePaiementDsc(Request $request){
+        try {
+            $validated = $request->validate([
+                'transaction_id' => 'required|string'
+            ]);
+
+            return $data = $this->fedapayInterferce->storePaiementDscFedaPay($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
 }
