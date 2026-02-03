@@ -26,7 +26,7 @@
         aux formations : <br><br>
           @foreach ($contenu['formations'] as $item)
                 @php
-                    $resultats = getFormationsMail($item['tarif']);
+                    $resultats = getFormationsMail($item['tarif_id']);
                 @endphp
 
                 @if($resultats)
@@ -53,7 +53,7 @@
         à la formation  <br><br>
             @foreach ($contenu['formations'] as $item)
                 @php
-                    $resultats = getFormationsMail($item['tarif']);
+                    $resultats = getFormationsMail($item['tarif_id']);
                 @endphp
 
                 @if($resultats)

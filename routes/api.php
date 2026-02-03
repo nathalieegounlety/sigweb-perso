@@ -70,6 +70,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('details', 'detailFormation');
     Route::get('for/attestation', 'listeFormationAttestation');
     Route::get('dsc', 'formationsDsc');
+    Route::post('details/dsc', 'detailFormationDsc');
 
 });
 
