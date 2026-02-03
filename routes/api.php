@@ -70,6 +70,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('details', 'detailFormation');
     Route::get('for/attestation', 'listeFormationAttestation');
     Route::get('dsc', 'formationsDsc');
+
 });
 
 // gestion des documents
@@ -175,6 +176,11 @@ Route::get('v1/formations/catalogue', [HomeController::class, 'catalogue']);
 
 // Récupérer toutes les details des formations
 Route::get('v1/detailsformations/{id}', [HomeController::class, 'detailsformations']);
+
+// Récupérer toutes les details des formations dsc
+
+Route::get('v1/detailsformationsdsc/{id}', [HomeController::class, 'detailsformationsdsc']);
+
 
 // Récupérer les moyens de paiements
 Route::get('v1/pointsdepaiements', [HomeController::class, 'getPointsPaiements']);
