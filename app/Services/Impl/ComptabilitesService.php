@@ -1675,6 +1675,7 @@ class ComptabilitesService implements ComptabilitesInterface
             $paiement = Paiements::where('code_inscription',$getReferencePaiement)->first();
         }
         $refP = $paiement->reference;
+        $checkPaiementTranche = PaiementsTranche::where("reference","like","%$paiement->reference%")->exists();
         $date_limite_inscription = "";
         $inscription = Inscriptions::where('code_inscription',$paiement->code_inscription)->first();
         $formation = Formations::where('code_formation',$inscription->code_formation)->first();
@@ -1720,7 +1721,8 @@ class ComptabilitesService implements ComptabilitesInterface
                 'montant_total' => $montant_total,
                 'frais_scolarite' => $frais_scolarite,
                 'frais_inscription' => $frais_inscription,
-                'refP' => $refP
+                'refP' => $refP,
+                'checkPaiementTranche' => $checkPaiementTranche
             ];
             return  ResponseHandler::success("ok",$data);
         }else{

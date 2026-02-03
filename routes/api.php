@@ -191,6 +191,16 @@ Route::prefix('v1/ouvrages')->controller(\App\Http\Controllers\OuvragesControlle
     Route::post('store/achat', 'storeAchat');
 });
 
+// gestion des formations dsc
+Route::prefix('v1/formationsdsc')->controller(\App\Http\Controllers\FormationsDscController::class)->group(function () {
+    Route::post('store', 'store');
+    Route::get('/', 'index');
+    Route::get('obj', 'getObFormationDsc');
+    Route::post('unique', 'getFormationdsc');
+    Route::post('update', 'update');
+    Route::post('remove', 'remove');
+});
+
 // gestion des signataires
 Route::prefix('v1/signataires')->controller(\App\Http\Controllers\SignatairesController::class)->group(function () {
     Route::post('store', 'store');

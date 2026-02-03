@@ -12,6 +12,7 @@ use App\Services\contracts\ComptabilitesInterface;
 use App\Services\contracts\DashboardInterface;
 use App\Services\contracts\DocumentsInterface;
 use App\Services\contracts\FedapayInterfarce;
+use App\Services\contracts\FormationsdscInterface;
 use App\Services\contracts\FormationsInterface;
 use App\Services\contracts\GrilletarifairesInterface;
 use App\Services\contracts\KkiapayInterfarce;
@@ -30,6 +31,7 @@ use App\Services\Impl\ComptabilitesService;
 use App\Services\Impl\DashboardService;
 use App\Services\Impl\DocumentsService;
 use App\Services\Impl\FedapayService;
+use App\Services\Impl\FormationsdscService;
 use App\Services\Impl\FormationsService;
 use App\Services\Impl\GrilletarifairesService;
 use App\Services\Impl\KkiapayService;
@@ -72,6 +74,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(KkiapayInterfarce::class, KkiapayService::class);
         $this->app->bind(ComptabilitesInterface::class, ComptabilitesService::class);
         $this->app->bind(DashboardInterface::class, DashboardService::class);
+        $this->app->bind(FormationsdscInterface::class, FormationsdscService::class);
     }
 
     /**

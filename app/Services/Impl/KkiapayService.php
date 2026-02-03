@@ -20,6 +20,7 @@ use App\Models\PaiementsTranche;
 use App\Models\Tranches;
 use App\Models\User;
 use App\Services\contracts\KkiapayInterfarce;
+use App\Services\util\GenarateurCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -27,6 +28,14 @@ use Kkiapay\Kkiapay;
 
 class KkiapayService implements  KkiapayInterfarce
 {
+
+    private GenarateurCodeService $genarateurCodeService;
+
+    public function __construct(GenarateurCodeService $genarateurCodeService)
+    {
+        $this->genarateurCodeService = $genarateurCodeService;
+    }
+
     public function storePaiementKkiapay(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement storePaiementFedapay() method.
@@ -514,7 +523,6 @@ class KkiapayService implements  KkiapayInterfarce
     public function storePaiementDscKkiapay(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement storePaiementDscKkiapay() method.
-
         $transactionId = $request->input('transaction_id');
 
         $statut_sandbox = env("KKIAPAY_SANDBOX");
@@ -579,7 +587,7 @@ class KkiapayService implements  KkiapayInterfarce
                 }
 
                 foreach ($liste_details as $detail){
-                    if($detail->type_tarif == 'INSCRIPTION' && ($detail->choix == true || $detail->choix == 1 || $detail->choix == '1') && $detail->montant_paye > 0){
+                    if($detail->type_tarif == 'INSCRIPTION' && $detail->choix && $detail->montant_paye > 0){
                         // paiement effectué pour inscription
                         $detailPaiement = Detailspaiements::find($detail->detail_id);
                         $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
@@ -611,23 +619,43 @@ class KkiapayService implements  KkiapayInterfarce
                         if($request->tranche == 'tranche_unique'){ // tranche unique
                             $detailPaiement = Detailspaiements::find($detail->detail_id);
                             // sauvegarde de la tranche
-                            $formationTranche = FormationsTranches::where('tranche','tranche 1')->where('grilletarifaire_id',$detailPaiement->getTarification->getGrilletarifaire->id)->first();
-
-                            $tranche = new Tranches();
-                            $tranche->setAttribute('code_inscription',$paiement->code_inscription);
-                            $tranche->setAttribute('email',$paiement->email);
-                            //$tranche->setAttribute('tranche_1',$item->getTarification->getGrilletarifaire->montant*0.95);
-                            $tranche->setAttribute('tranche_1',$detailPaiement->getTarification->getGrilletarifaire->montant);
-                            $tranche->setAttribute('tranche_2',0);
-                            $tranche->setAttribute('echeance_1',$formationTranche->echeance_1);
-                            $tranche->setAttribute('echeance_2',$formationTranche->echeance_1);
-                            $tranche->setAttribute('statut','ATTENTE');
-                            $tranche->setAttribute('created_by',$user->id);
-                            $tranche->setAttribute('updated_by',$user->id);
-                            $tranche->save();
+                            $formationTranche = FormationsTranches::where('tranche','tranche 1')
+                                ->where('grilletarifaire_id',$detailPaiement->getTarification->getGrilletarifaire->id)
+                                ->first();
+                            // vérifier si la tranche existe pour update
+                            $checkTranche = Tranches::whereCodeInscription($paiement->code_inscription)->exists();
+                            if($checkTranche){
+                                $getTranche = Tranches::whereCodeInscription($paiement->code_inscription)->first();
+                                $tranche = Tranches::find($getTranche->id);
+                                $tranche->setAttribute('code_inscription',$paiement->code_inscription);
+                                $tranche->setAttribute('email',$paiement->email);
+                                //$tranche->setAttribute('tranche_1',$item->getTarification->getGrilletarifaire->montant*0.95);
+                                $tranche->setAttribute('tranche_1',$detailPaiement->getTarification->getGrilletarifaire->montant);
+                                $tranche->setAttribute('tranche_2',0);
+                                $tranche->setAttribute('echeance_1',$formationTranche->echeance_1);
+                                $tranche->setAttribute('echeance_2',$formationTranche->echeance_1);
+                                $tranche->setAttribute('statut','ATTENTE');
+                                $tranche->setAttribute('created_by',$user->id);
+                                $tranche->setAttribute('updated_by',$user->id);
+                                $tranche->update();
+                            }else{
+                                $tranche = new Tranches();
+                                $tranche->setAttribute('code_inscription',$paiement->code_inscription);
+                                $tranche->setAttribute('email',$paiement->email);
+                                //$tranche->setAttribute('tranche_1',$item->getTarification->getGrilletarifaire->montant*0.95);
+                                $tranche->setAttribute('tranche_1',$detailPaiement->getTarification->getGrilletarifaire->montant);
+                                $tranche->setAttribute('tranche_2',0);
+                                $tranche->setAttribute('echeance_1',$formationTranche->echeance_1);
+                                $tranche->setAttribute('echeance_2',$formationTranche->echeance_1);
+                                $tranche->setAttribute('statut','ATTENTE');
+                                $tranche->setAttribute('created_by',$user->id);
+                                $tranche->setAttribute('updated_by',$user->id);
+                                $tranche->save();
+                            }
                             // vérifier si paiement enregistré
-                            if(($detail->choix == true || $detail->choix == 1 || $detail->choix == '1') && $detail->montant_paye > 0){
-                                $mtRestant = $detail->montant_restant - $detail->montant_paye;
+                            if($detail->choix && $detail->montant_paye > 0){
+                                $baseMontantRestant = $detail->montant_restant*0.95;
+                                $mtRestant =  $baseMontantRestant - $detail->montant_paye;
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                                 $detailPaiement->setAttribute('montant_restant',$mtRestant);
                                 if($mtRestant == 0){
@@ -665,19 +693,37 @@ class KkiapayService implements  KkiapayInterfarce
                             // sauvegarde de la tranche
                             $formationTranche = FormationsTranches::where('tranche','tranche 2')->where('grilletarifaire_id',$detailPaiement->getTarification->getGrilletarifaire->id)->first();
 
-                            $tranche = new Tranches();
-                            $tranche->setAttribute('code_inscription',$paiement->code_inscription);
-                            $tranche->setAttribute('email',$paiement->email);
-                            $tranche->setAttribute('tranche_1',$detailPaiement->getTarification->getGrilletarifaire->montant*0.5);
-                            $tranche->setAttribute('tranche_2',$detailPaiement->getTarification->getGrilletarifaire->montant*0.5);
-                            $tranche->setAttribute('echeance_1',$formationTranche->echeance_1);
-                            $tranche->setAttribute('echeance_2',$formationTranche->echeance_2);
-                            $tranche->setAttribute('statut','ATTENTE');
-                            $tranche->setAttribute('created_by',$user->id);
-                            $tranche->setAttribute('updated_by',$user->id);
-                            $tranche->save();
+                            // vérifier si la tranche existe pour update
+                            $checkTranche = Tranches::whereCodeInscription($paiement->code_inscription)->exists();
+                            if($checkTranche){
+                                $getTranche = Tranches::whereCodeInscription($paiement->code_inscription)->first();
+                                $tranche = Tranches::find($getTranche->id);
+                                $tranche->setAttribute('code_inscription',$paiement->code_inscription);
+                                $tranche->setAttribute('email',$paiement->email);
+                                $tranche->setAttribute('tranche_1',$detailPaiement->getTarification->getGrilletarifaire->montant*0.5);
+                                $tranche->setAttribute('tranche_2',$detailPaiement->getTarification->getGrilletarifaire->montant*0.5);
+                                $tranche->setAttribute('echeance_1',$formationTranche->echeance_1);
+                                $tranche->setAttribute('echeance_2',$formationTranche->echeance_2);
+                                $tranche->setAttribute('statut','ATTENTE');
+                                $tranche->setAttribute('created_by',$user->id);
+                                $tranche->setAttribute('updated_by',$user->id);
+                                $tranche->update();
+                            }else{
+                                $tranche = new Tranches();
+                                $tranche->setAttribute('code_inscription',$paiement->code_inscription);
+                                $tranche->setAttribute('email',$paiement->email);
+                                $tranche->setAttribute('tranche_1',$detailPaiement->getTarification->getGrilletarifaire->montant*0.5);
+                                $tranche->setAttribute('tranche_2',$detailPaiement->getTarification->getGrilletarifaire->montant*0.5);
+                                $tranche->setAttribute('echeance_1',$formationTranche->echeance_1);
+                                $tranche->setAttribute('echeance_2',$formationTranche->echeance_2);
+                                $tranche->setAttribute('statut','ATTENTE');
+                                $tranche->setAttribute('created_by',$user->id);
+                                $tranche->setAttribute('updated_by',$user->id);
+                                $tranche->save();
+                            }
+
                             // vérifier si paiement enregistré
-                            if(($detail->choix == true || $detail->choix == 1 || $detail->choix == '1') && $detail->montant_paye > 0){
+                            if($detail->choix && $detail->montant_paye > 0){
                                 $mtRestant = $detail->montant_restant - $detail->montant_paye;
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                                 $detailPaiement->setAttribute('montant_restant',$mtRestant);
@@ -796,7 +842,8 @@ class KkiapayService implements  KkiapayInterfarce
                         'mode_paiement'=>$libelle_mode_paiement->libelle,
                         'montant'=>$request->montant_paye,
                         'montant_restant'=>$paiement->montant_restant,
-                        'type'=>$paiement->type
+                        'type'=>$paiement->type,
+                        'url_recu'=>$this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$update_reference])
                     ];
 
                     try {
@@ -808,6 +855,20 @@ class KkiapayService implements  KkiapayInterfarce
                     }
 
 
+                $dataResponse = [
+                    'reference' => $request->reference,
+                    'success' => true,
+                ];
+                return ResponseHandler::success("ok", $dataResponse);
+
+            }else{
+                \Log::error('paiement invalide', ['error' => 'ok']);
+
+                $dataResponse = [
+                    'reference' => $request->reference,
+                    'success' => false,
+                ];
+                return ResponseHandler::success("ok", $dataResponse);
             }
         } catch (\Exception $e) {
             \Log::error('Erreur vérification KKiaPay', ['error' => $e->getMessage()]);
