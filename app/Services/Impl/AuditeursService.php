@@ -8,10 +8,12 @@ use App\Mail\InscriptionGratuit;
 use App\Mail\Inscriptionpresentiel;
 use App\Mail\NotificationCompte;
 use App\Models\Auditeurs;
+use App\Models\AuditeursPieces;
 use App\Models\Detailspaiements;
 use App\Models\Formations;
 use App\Models\Grilletarifaires;
 use App\Models\Inscriptions;
+use App\Models\InscritsTypePieces;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
 use App\Models\Pays;
@@ -26,6 +28,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AuditeursService implements AuditeursInterface
 {
@@ -1180,6 +1184,120 @@ class AuditeursService implements AuditeursInterface
                 'message' => "Veuillez choisir la formation auquelle vous voulez vous inscrire."
             ];
             return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse,500);
+        }
+    }
+
+    public function checkPiece(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement checkPiece() method.
+
+        //$user = auth('api')->user();
+        $inscrit = Inscriptions::where('code_inscription',$request->code_inscription)->first();
+        $auditeur = Auditeurs::whereEmail($inscrit->email)->first();
+        $countPiece = InscritsTypePieces::count();
+        $countPieceAuditeur = AuditeursPieces::where('auditeur_id',$auditeur->id)->count();
+        $downUploadPiece = true;
+        $dossier_valide = false;
+
+        if ($countPieceAuditeur < $countPiece) {  $downUploadPiece = false; }
+
+        if ($inscrit->statut_dossier == 'VALIDEE') {  $dossier_valide = true; }
+
+        $dataResponse = [
+            'dossier_valide' => $dossier_valide,
+            'downUploadPiece' => $downUploadPiece
+        ];
+
+        return ResponseHandler::success("ok",$dataResponse);
+    }
+
+    public function mesPieces(): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement mesPieces() method.
+        $user = auth('api')->user();
+        $listePieces = InscritsTypePieces::leftJoin(
+            'auditeurs_pieces',
+            function ($join) use ($user) {
+                    $join->on(
+                        'auditeurs_pieces.inscrits_typespieces_id',
+                        '=',
+                        'inscrits_type_pieces.id'
+                    )
+                        ->where('auditeurs_pieces.created_by', $user->id);
+                }
+            )
+            ->get([
+                'inscrits_type_pieces.id',
+                'inscrits_type_pieces.is_professionnel',
+                'inscrits_type_pieces.is_etudiant',
+                'inscrits_type_pieces.libelle',
+                'auditeurs_pieces.piece_path',
+                DB::raw('CASE WHEN auditeurs_pieces.id IS NOT NULL THEN true ELSE false END as checked')
+            ]);
+        $totalPieces = InscritsTypePieces::count();
+        $totalPiecesFournies = DB::table('auditeurs_pieces')
+            ->where('created_by', $user->id)
+            ->count();
+        $dataResponse = [
+            'totalPiecesFournies' => $totalPiecesFournies,
+            'totalPieces' => $totalPieces,
+            'listePieces' => $listePieces
+        ];
+        return ResponseHandler::success("ok",$dataResponse);
+    }
+
+    public function ajouterPiece(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement ajouterPiece() method.
+        try {
+            $user = auth('api')->user();
+            $auditeur = Auditeurs::where("email", $user->email)->first();
+            $userFolder = 'pieces_auditeur/' . Str::slug($user->name);
+
+            // Enregistrer les pièces jointes
+            if ($request->hasFile('document')) {
+
+                $pieceJointe = $request->file('document');
+
+                    if ($pieceJointe) {
+                        # code...
+                        // Vérifier la taille du fichier
+                        if ($pieceJointe->getSize() > 5000000) { // 1 Mo en octets
+                            $message = "La taille du fichier dépasse la limite autorisée (5 Mo).";
+                            return ResponseHandler::error("ok",$message);
+                        }
+
+                        // vérifier si la pièce existe déjà
+                        $checkPiece = AuditeursPieces::where('inscrits_typespieces_id', $request->get('idPiece'))
+                            ->where('auditeur_id', $auditeur->id)
+                            ->exists();
+
+                        if (!$checkPiece) {
+                            # code...
+                            $originalName = $pieceJointe->getClientOriginalName();
+                            $pieceName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+                            $filnalePieceName = $pieceName . '.' . $pieceJointe->extension();
+                            $piecePath = $userFolder . '/' . $filnalePieceName;
+                            Storage::disk('pieces_auditeur')->putFileAs($userFolder, $pieceJointe, $filnalePieceName);
+
+
+                            $inscritspiece = new AuditeursPieces();
+                            $inscritspiece->inscrits_typespieces_id = $request->get('idPiece');
+                            $inscritspiece->auditeur_id = $auditeur->id;
+                            $inscritspiece->piece_path = $piecePath;
+                            $inscritspiece->created_by = $user->id;
+                            $inscritspiece->updated_by = $user->id;
+                            $inscritspiece->save();
+                        }
+                    }
+                $message = "Enregistrement effectué avec succès!";
+                return ResponseHandler::success("ok",$message);
+            } else {
+                return ResponseHandler::error("La pièce n'existe pas","Veuillez renseigner toutes les pièces.");
+            }
+        } catch (\Exception $e) {
+            // Gérer les erreurs
+            echo $e->getMessage(); // Afficher l'erreur
         }
     }
 }

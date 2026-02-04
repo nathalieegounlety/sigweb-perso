@@ -5,6 +5,7 @@ namespace App\Services\Impl;
 use App\Helpers\ResponseHandler;
 use App\Models\Dureeformations;
 use App\Models\Formations;
+use App\Models\FormationsDsc;
 use App\Models\FormationsTranches;
 use App\Models\Grilletarifaires;
 use App\Models\Logopartenaires;
@@ -539,11 +540,31 @@ class FormationsService implements FormationsInterface
         $queryFormations = Formations::select('formations.*')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
-            ->whereDate('formations.date_fin', '>=', $date_now)
+            ->whereDate('formations.date_debut', '>=', $date_now)
             ->where('formations.is_formation_dsc',true)
             ->where('formations.statut','ACTIF')
             ->where('formations.enable',true)
             ->orderBy("formations.date_debut","ASC") ;
         return $queryFormations->get();
+    }
+
+    public function getDetailFormationDsc(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getDetailFormationDsc() method.
+        $queryFormations = Formations::select('formations.*')
+            ->with('getTypeformation:id,libelle')
+            ->with('tarifications')
+            ->whereCodeFormation($request->code_formation)
+            ->first() ;
+        $delais = FormationsDsc::join('formations','formations.id','=','formations_dscs.formation_id')
+            ->where('formations.code_formation',$request->code_formation)
+            ->get(['formations.code_formation','formations_dscs.modalites_path','formations_dscs.duree','date_limite_paiement_inscription','date_limite_inscription','date_remise_diplomes'])->first();
+
+        $dataResponse = [
+            'delais' => $delais,
+            'formation' => $queryFormations
+        ];
+
+        return ResponseHandler::success('ok', $dataResponse);
     }
 }

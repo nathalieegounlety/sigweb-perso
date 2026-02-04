@@ -70,6 +70,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('details', 'detailFormation');
     Route::get('for/attestation', 'listeFormationAttestation');
     Route::get('dsc', 'formationsDsc');
+    Route::post('details/dsc', 'detailFormationDsc');
 
 });
 
@@ -161,6 +162,9 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('mespaiements', 'mesPaiements');
     Route::post('update/inscription', 'updateInscriptionInfo');
     Route::post('inscription/formation/dsc', 'inscriptionFormationDsc');
+    Route::post('check/piece/dsc', 'checkPieceDsc');
+    Route::get('liste/pieces', 'listePieces');
+    Route::post('add/pieces', 'addPiece');
 });
 
 // gestion des api du frontoffice
@@ -248,6 +252,7 @@ Route::prefix('v1/fedapay')->controller(\App\Http\Controllers\FedapayController:
     Route::post('store/paiement', 'savePaiement');
     Route::post('store/paiement/partiel', 'savePaiementPartiel');
     Route::post('store/paiement/ouvrage', 'savePaiementOuvrage');
+    Route::post('store/paiement/dsc', 'savePaiementDsc');
 });
 
 // gestion des paiements via kkiapay
