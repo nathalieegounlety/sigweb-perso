@@ -63,21 +63,22 @@ class HomeController extends Controller
     }
 
 
-    public function detailsformationsdsc($id)
-    {
-        // Récupérer la formation par son ID
-        $formationdsc = FormationsDsc::find($id);
+    public function detailsformationsdsc($code_formation)
+{
+    $formation = Formations::where("code_formation", $code_formation)->first();
 
-        // Si la formation n'existe pas, retourner une erreur 404
-        if (!$formationdsc) {
-            return response()->json([
-                'message' => 'Formation non trouvée',
-            ], 404);
-        }
-
-        // Retourner les détails de la formation
-        return response()->json($formationdsc);
+    if (!$formation) {
+        return response()->json(['message' => 'Formation non trouvée'], 404);
     }
+
+    $formations_dsc = FormationsDsc::where('formation_id', $formation->id)->get();
+
+    return response()->json([
+        'formation' => $formation,
+        'formations_dsc' => $formations_dsc,
+    ]);
+}
+
 
     public function getPointsPaiements()
     {
