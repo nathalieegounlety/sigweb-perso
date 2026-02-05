@@ -178,9 +178,9 @@ Route::get('v1/formations/catalogue', [HomeController::class, 'catalogue']);
 // Récupérer toutes les details des formations
 Route::get('v1/detailsformations/{id}', [HomeController::class, 'detailsformations']);
 
-// Récupérer toutes les details des formations dsc
+// Récupérer toutes les details des formations
 
-Route::get('v1/detailsformationsdsc/{id}', [HomeController::class, 'detailsformationsdsc']);
+Route::get('v1/detailsformationsdsc/{code_formation}', [HomeController::class, 'detailsformationsdsc']);
 
 
 // Récupérer les moyens de paiements

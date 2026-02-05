@@ -27,7 +27,7 @@ class ReductionsController extends Controller
         // récupérer la liste des rôles
         try {
             $perPage = $request->get('per_page',50); // par défaut 50 éléments
-            $data = $this->reductionsService->getOuvrages($request);
+            $data = $this->reductionsService->getReductions($request);
 
             // Transformer pour enlever le bloc 'links'
             $response = [
@@ -59,7 +59,7 @@ class ReductionsController extends Controller
             ]);
 
             // procéder à l'enregistrement
-            return $processSave = $this->reductionsService->saveSignataire($request);
+            return $processSave = $this->reductionsService->saveReduction($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
