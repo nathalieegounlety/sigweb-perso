@@ -19,6 +19,7 @@ interface ComptabilitesInterface
     public function saveDeclassercommande(Request $request): \Illuminate\Http\JsonResponse;
     public function getDetailsPaiementOuvrage(Request $request): \Illuminate\Http\JsonResponse;
     public function getDetailsPaiementDsc(Request $request): \Illuminate\Http\JsonResponse;
+    public function getDetailsPaiementValiderDsc(Request $request): \Illuminate\Http\JsonResponse;
     public function validerPaiement(Request $request): \Illuminate\Http\JsonResponse;
     public function validerPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse;
     public function validerPaiementDsc(Request $request): \Illuminate\Http\JsonResponse;

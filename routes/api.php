@@ -271,6 +271,7 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
     Route::post('details/commande/dsc', 'detailCommandeDsc');
     Route::post('details/paiement/ouvrage', 'detailPaiementOuvrage');
     Route::post('details/paiement/dsc', 'detailPaiementDsc');
+    Route::post('details/paiement/valider/dsc', 'detailPaiementValiderDsc');
     Route::post('deplacer/commande', 'deplacerCommandeFormation');
     Route::post('deplacer/commande/dsc', 'deplacerCommandeFormationDsc');
     Route::post('declasser/commande', 'declasserCommande');
