@@ -34,7 +34,7 @@ class ReductionsService implements ReductionsInterface
         return ResponseHandler::success("Création efféctuée");
     }
 
-    public function getReduction(int $id): Reductions
+    public function getReduction(int $id): \App\Models\Reductions
     {
         // TODO: Implement getReduction() method.
         $data = Reductions::find($id);
