@@ -59,9 +59,12 @@ class ReductionsService implements ReductionsInterface
         $filterAuthor = $request->input('filter_author');
         $filterPercent = $request->input('filter_percent');
 
-        $query = Reductions::with('getUserUpdated:id,name,email,code_user')
-            ->select('reductions.id', 'reductions.libelle','reductions.enable','reductions.pourcentage', 'reductions.updated_at');
-
+        $query = Reductions::with(['getUserUpdated' => function($query) {
+            $query->select('id', 'name', 'email', 'code_user');
+        }])
+        ->select('reductions.*'); // Sélectionnez toutes les colonnes de reductions
+        
+         //   \Log::info($query->toSql());
 
         // On fait la jointure
         $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';

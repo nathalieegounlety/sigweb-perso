@@ -55,6 +55,24 @@ Route::prefix('v1/modepaiements')->group(function () {
     Route::get('obj', [\App\Http\Controllers\ModepaiementsController::class, 'getModepaiementsObj']);
 });
 
+// gestion des type pièces
+Route::prefix('v1/inscritstypepieces')->group(function () {
+    Route::post('store', [\App\Http\Controllers\InscritstypepiecesController::class, 'store']);
+    Route::get('/', [\App\Http\Controllers\InscritstypepiecesController::class, 'index']);
+    Route::post('unique', [\App\Http\Controllers\InscritstypepiecesController::class, 'getInscritstypepiece']);
+    Route::post('update', [\App\Http\Controllers\InscritstypepiecesController::class, 'update']);
+    Route::post('remove', [\App\Http\Controllers\InscritstypepiecesController::class, 'remove']);
+});
+
+// gestion des points de paiements
+Route::prefix('v1/pointsdepaiements')->group(function () {
+    Route::post('store', [\App\Http\Controllers\PointsdepaiementsController::class, 'store']);
+    Route::get('/', [\App\Http\Controllers\PointsdepaiementsController::class, 'index']);
+    Route::post('unique', [\App\Http\Controllers\PointsdepaiementsController::class, 'getPointdepaiement']);
+    Route::post('update', [\App\Http\Controllers\PointsdepaiementsController::class, 'update']);
+    Route::post('remove', [\App\Http\Controllers\PointsdepaiementsController::class, 'remove']);
+    Route::get('obj', [\App\Http\Controllers\PointsdepaiementsController::class, 'getPointsdepaiementsObj']);
+});
 Route::controller(\App\Http\Controllers\MaintenanceController::class)->prefix('v1/maintenance')->group(function () {
     Route::post('update/composant', 'update');
 });

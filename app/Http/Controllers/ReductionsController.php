@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHandler;
+use App\Models\Reductions;
 use App\Services\contracts\ReductionsInterface;
 use Illuminate\Http\Request;
 
@@ -24,6 +25,9 @@ class ReductionsController extends Controller
 
     public function index(Request $request)
     {
+      //  $reduction = Reductions::with('getUserUpdated')->find(1); 
+   //  dd($reduction->getUserUpdated); 
+
         // récupérer la liste des rôles
         try {
             $perPage = $request->get('per_page',50); // par défaut 50 éléments
@@ -40,7 +44,7 @@ class ReductionsController extends Controller
                 'per_page'       => $data->perPage(),
                 'total'          => $data->total(),
             ];
-            return ResponseHandler::success('ok',$response);
+            return ResponseHandler::success('success',$response);
 
         }catch (\Exception $e){
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());

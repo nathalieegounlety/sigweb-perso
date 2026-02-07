@@ -12,7 +12,7 @@ private ModepaiementsInterface $modepaiementInterface;
 
     public function __construct(ModepaiementsInterface $modepaiementInterface)
     {
-        $this->middleware('auth:api', ['except' => ['getModepaiementsObj']]);
+       // $this->middleware('auth:api', ['except' => ['remove']]);
         $this->modepaiementInterface = $modepaiementInterface;
     }
 
@@ -21,7 +21,7 @@ private ModepaiementsInterface $modepaiementInterface;
         // récupérer la liste des rôles
         try {
             $perPage = $request->get('per_page',50); // par défaut 50 éléments
-            $data = $this->modepaiementInterface->getModepaiements($perPage);
+            $data = $this->modepaiementInterface->getModepaiements($request);
 
             // Transformer pour enlever le bloc 'links'
             $response = [
@@ -107,7 +107,7 @@ private ModepaiementsInterface $modepaiementInterface;
                 'id' => 'required|integer'
             ]);
 
-           return  $this->permissionService->remove($request->id);
+           return  $this->ModepaiementsService->remove($request->id);
 
             // call update service
         } catch (\Illuminate\Validation\ValidationException $e) {

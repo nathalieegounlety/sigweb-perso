@@ -34,7 +34,7 @@ class ModepaiementsService implements ModepaiementsInterface
 
     }
 
-    public function getModepaiement(int $id): Modepaiements
+    public function getModepaiement(int $id): \App\Models\Modepaiements
     {
         // TODO: Implement getModepaiement() method.
         $modepaiement = Modepaiements::find($id);
@@ -59,9 +59,13 @@ class ModepaiementsService implements ModepaiementsInterface
         $filterUpdatedAt = $request->input('filter_updated_at');
         $filterAuthor = $request->input('filter_author');
 
-        $query = Modepaiements::with('getUserUpdated:id,name,email,code_user')
-            ->select('modepaiements.id', 'modepaiements.libelle','modepaiements.is_enable', 'modepaiements.updated_at');
+      //  $query = Modepaiements::with('getUserUpdated:id,name,email,code_user')
+         //   ->select('modepaiements.id', 'modepaiements.libelle','modepaiements.is_enable', 'modepaiements.updated_at');
 
+            $query = Modepaiements::with(['getUserUpdated' => function($query) {
+                $query->select('id', 'name', 'email', 'code_user');
+            }])
+            ->select('modepaiements.*'); // Sélectionnez toutes les colonnes de modepaiements
 
         // On fait la jointure
         $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';
@@ -97,7 +101,7 @@ class ModepaiementsService implements ModepaiementsInterface
         if ($sortField === 'get_user_updated.name') {
             $query->orderBy('users.name', $sortOrder);
         } else {
-            $query->orderBy("modepaiements{$sortField}", $sortOrder);
+            $query->orderBy("modepaiements.{$sortField}", $sortOrder);
         }
 
         $query->orderBy($sortField, $sortOrder);
