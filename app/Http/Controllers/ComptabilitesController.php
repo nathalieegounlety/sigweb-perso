@@ -96,6 +96,19 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function detailPaiementValiderDsc(Request $request){
+        try {
+            //
+            return $data = $this->comptabiliteService->getDetailsPaiementValiderDsc($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
     public function deplacerCommandeFormation(Request $request){
         try {
             $validated = $request->validate([

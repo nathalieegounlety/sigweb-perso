@@ -336,7 +336,7 @@ class ComptabilitesService implements ComptabilitesInterface
             auditeurs.prenoms,
             auditeurs.email,
             paiements.reference,
-            paiements.montant_restant as montant,
+            paiements.montant_paye as montant,
             paiements.num_transaction,
             paiements.type,
             paiements.updated_at as date,
@@ -366,7 +366,7 @@ class ComptabilitesService implements ComptabilitesInterface
             auditeurs.prenoms,
             auditeurs.email,
             detailspaiements.reference_paiement as reference,
-            detailspaiements.montant_restant as montant,
+            detailspaiements.montant_paye as montant,
             detailspaiements.reference_paiement_partiel as num_transaction,
             'FORMATION PARTIEL' as type,
             detailspaiements.updated_at as date,
@@ -492,7 +492,7 @@ class ComptabilitesService implements ComptabilitesInterface
             ->join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
             ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
             ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
-            ->select('detailspaiements.have_reduction_dsc','detailspaiements.montant_restant','formations.code_formation', 'formations.theme', 'formations.date_debut','grilletarifaires.montant','reductions.pourcentage','detailspaiements.preuve_path')
+            ->select('detailspaiements.have_reduction_dsc','detailspaiements.montant_restant','detailspaiements.montant_paye','formations.code_formation', 'formations.theme', 'formations.date_debut','grilletarifaires.montant','reductions.pourcentage','detailspaiements.preuve_path')
             ->where('detailspaiements.reference_paiement',$request->get('reference_paiement'))
             ->orderBy('detailspaiements.id', 'DESC')
             ->get();
@@ -1542,6 +1542,23 @@ class ComptabilitesService implements ComptabilitesInterface
             ->select('paiements_tranches.id','formations.code_formation', 'formations.theme', 'formations.date_debut','paiements_tranches.num_transaction','paiements_tranches.montant_paye','detailspaiements.have_reduction_dsc','detailspaiements.preuve_path','grilletarifaires.type_tarif','grilletarifaires.montant')
             ->where('paiements_tranches.reference','like','%'.$request->reference_paiement.'%')
             ->where('paiements_tranches.statut_traitement','ATTENTE')
+            ->orderBy('paiements_tranches.id', 'DESC')
+            ->get();
+
+        return  ResponseHandler::success("ok",$details_paiement);
+    }
+
+    public function getDetailsPaiementValiderDsc(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getDetailsPaiementDsc() method.
+        $details_paiement = DB::table('paiements_tranches')
+            ->join('detailspaiements', 'paiements_tranches.details_paiements_id', '=', 'detailspaiements.id')
+            ->join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
+            ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+            ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
+            ->select('paiements_tranches.id','formations.code_formation', 'formations.theme', 'formations.date_debut','paiements_tranches.num_transaction','paiements_tranches.montant_paye','detailspaiements.have_reduction_dsc','detailspaiements.preuve_path','grilletarifaires.type_tarif','grilletarifaires.montant')
+            ->where('paiements_tranches.reference','like','%'.$request->reference_paiement.'%')
+            ->where('paiements_tranches.statut_traitement','VALIDER')
             ->orderBy('paiements_tranches.id', 'DESC')
             ->get();
 
