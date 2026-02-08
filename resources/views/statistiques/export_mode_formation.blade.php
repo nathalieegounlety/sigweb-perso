@@ -1,0 +1,16 @@
+<table>
+    <thead>
+        <tr>
+            <th>Présentielle</th>
+            <th>Visio</th>
+            <th>Bimodal</th>
+        </tr>
+    </thead>
+    <tbody> 
+        <tr>
+            <td>{{$md_formations_presentielle}}</td>
+            <td>{{$md_formations_visio}}</td>
+            <td>{{$md_formations_bimodale}}</td>
+        </tr>
+    </tbody>
+</table>

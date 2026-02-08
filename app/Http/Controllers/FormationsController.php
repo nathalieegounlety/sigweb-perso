@@ -192,6 +192,7 @@ class FormationsController extends Controller
         try {
             $resp = $this->formationsService->getListeInscrits($request, $request->code_formation);
             $data = $resp['pagination'];
+            $is_dsc = $resp['is_dsc'];
             // Transformer pour enlever le bloc 'links'
             $response = [
                 'current_page' => $data->currentPage(),
@@ -201,7 +202,8 @@ class FormationsController extends Controller
                 'next_page_url'  => $data->nextPageUrl(),
                 'prev_page_url'  => $data->previousPageUrl(),
                 'per_page'       => $data->perPage(),
-                'total'          => $data->total()
+                'total'          => $data->total(),
+                'is_dsc' => $is_dsc
             ];
             return ResponseHandler::success('ok',$response);
 

@@ -330,3 +330,12 @@ Route::prefix('v1/zoom')->controller(\App\Http\Controllers\ZoomController::class
 Route::get('v1/test-error-mail', function () {
     throw new Exception('🔥 Test envoi mail erreur Laravel 12');
 });
+
+Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExcelController::class)->group(function () {
+    Route::get('formation/dsc/{code_formation}', 'exportListeInscritsDsc');
+    Route::get('formation/presentielle/{code_formation}', 'exportListeInscritPresentielleExcel');
+    Route::get('formation/visio/{code_formation}', 'exportListeInscritVisioExcel');
+    Route::get('formation/liste/presence/{code_formation}', 'exportListePresenceExcel');
+    Route::get('formation/visio/presentiel/{code_formation}', 'exportListeInscritPresentielleVisioExcel');
+    //
+});

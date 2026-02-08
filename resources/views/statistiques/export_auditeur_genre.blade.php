@@ -1,0 +1,14 @@
+<table>
+    <thead>
+        <tr>
+            <th>Masculin</th>
+            <th>Féminin</th> 
+        </tr>
+    </thead>
+    <tbody> 
+        <tr>
+            <td>{{$auditeur_genre_masculin}}</td>
+            <td>{{$auditeur_genre_feminin}}</td> 
+        </tr>
+    </tbody>
+</table>

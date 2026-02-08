@@ -626,9 +626,12 @@ class FormationsService implements FormationsInterface
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
 
         $data = $liste_inscrits->paginate($perPage);
+        $formation = Formations::where('code_formation', $code_formation)->first();
+
 
         return [
-            'pagination' => $data
+            'pagination' => $data,
+            'is_dsc' => $formation->is_formation_dsc
         ];
     }
 }
