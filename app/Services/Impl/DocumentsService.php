@@ -1159,4 +1159,6 @@ class DocumentsService implements DocumentsInterface
         return $pdf->download('recu_'.$reference.'_'.$date.'.pdf');
 
     }
+
+    
 }

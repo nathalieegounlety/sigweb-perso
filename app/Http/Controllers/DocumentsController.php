@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHandler;
+use App\Models\Formations;
+use App\Models\Inscriptions;
+use App\Models\Rapports;
 use Illuminate\Http\Request;
 use App\Services\contracts\DocumentsInterface;
 use Illuminate\Support\Facades\DB;
@@ -530,5 +533,68 @@ class DocumentsController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function exportEtatRecapitulatif(Request $request, $code_formation)
+{
+    return Excel::download(new ExportEtatRecapitulatif($code_formation), "SIGWEB_ERSUMA_Etat_recapitulatif_".$code_formation."_".date("Ymd").'_'.date("His").".xlsx");
+}
+
+public function pdfEtatrecapitulatif(Request $request,$code_formation) 
+{   
+    set_time_limit(0);
+    //etats récapitulatif des formations 
+      // information sur la formation en cours
+    $formation = Formations::where("code_formation",$code_formation)->get()->first();
+    // détails paiements formation
+    $liste_participants = DB::table('inscrits')
+    ->leftjoin('auditeurs', 'inscrits.email', '=', 'auditeurs.email') 
+    ->select('inscrits.email','inscrits.email', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms','auditeurs.telephone as telephone','auditeurs.pays as pays','inscrits.tarif_formation_id','inscrits.type_formation')
+    //->where('rapports.code_formation',$code_formation)
+    ->where('inscrits.code_formation',$code_formation)
+    ->orderBy('auditeurs.nom', 'ASC')
+    ->get();
+  
+    $total_participant = Rapports::where("code_formation",$code_formation)->count();    
+    // récupérer la liste des participants en présentielle dont le champ "presentiel" = 1
+    $total_participant_presentiel =  DB::table('rapports')
+    ->join('inscrits', 'inscrits.email', '=', 'rapports.email')
+    ->leftjoin('auditeurs', 'inscrits.email', '=', 'auditeurs.email')
+    ->select('rapports.*', 'inscrits.id as id_inscrit', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.telephone as telephone', 'auditeurs.pays as pays')
+    ->where('rapports.code_formation', $code_formation)
+    ->where('inscrits.code_formation', $code_formation)
+    ->where('rapports.temps_presence', '')
+    ->count();
+     
+    $total_inscrit = Inscriptions::where("code_formation",$code_formation)->count();
+    $total_inscrit_visio = Inscriptions::where("code_formation",$code_formation)->where("presentiel", 0)->count();
+    $total_inscrit_presentiel = Inscriptions::where("code_formation",$code_formation)->where("presentiel", 1)->count();
+
+
+     // Detailspaiement::where('reference_paiement','ERS-2021-FACT-000001');
+    // return view('public.recu',compact("paiement","details_paiement"));
+    $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
+    $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
+
+    // share data to view
+  view()->share([
+        'formation' => $formation,
+        'liste_participants' => $liste_participants, 
+        'total_inscrit' => $total_inscrit,
+        'total_participant_presentiel' => $total_participant_presentiel,
+        'total_participant' => $total_participant,
+        'total_inscrit_visio' => $total_inscrit_visio,
+        'total_inscrit_presentiel' => $total_inscrit_presentiel
+]);
+
+   $pdf = PDF::loadView('statistiques.pdf_etats_recapitulatif');
+   $customPaper = array(0,0,720,1440);
+   $pdf->setPaper($customPaper, 'landscape');
+
+    $date = date('d_m_Y_His');
+   // download PDF file with download method
+  return $pdf->download('Etat_recapitulatif_wb_'.$code_formation.'_'.$date.'.pdf');
+
+      
+} 
 
 }

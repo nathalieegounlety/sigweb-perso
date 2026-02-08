@@ -8,11 +8,15 @@ use App\Mail\Paiementattente;
 use App\Models\Auditeurs;
 use App\Models\Detailpaiementouvrages;
 use App\Models\Detailspaiements;
+use App\Models\Formations;
+use App\Models\Inscriptions;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
+use App\Models\Rapports;
 use App\Models\User;
 use App\Services\contracts\PaiementsInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -324,4 +328,79 @@ class PaiementsService implements PaiementsInterface
         ];
         return  ResponseHandler::success("Paiement non retrouvé ou référence invalide",$dataResponse);
     }
+
+    public function getRecapitulatifPaiements(string $codeFormation): \Illuminate\Http\JsonResponse
+    {
+        // Information sur la formation en cours
+        $formation = Formations::where("code_formation", $codeFormation)->first();
+    
+        // Détails des participants
+        $liste_participants = DB::table('inscriptions')
+            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->select(
+                'inscriptions.email',
+                'auditeurs.nom as nom',
+                'auditeurs.prenoms as prenoms',
+                'auditeurs.telephone as telephone',
+                'auditeurs.pays as pays',
+                'inscriptions.tarif_formation_id',
+                'inscriptions.type_formation',
+                'inscriptions.presentiel'
+            )
+            ->where('inscriptions.code_formation', $codeFormation)
+            ->orderBy('auditeurs.nom', 'ASC')
+            ->get();
+    
+        // Total des participants
+        $total_participant = Rapports::where("code_formation", $codeFormation)->count();
+    
+        // Total des participants en présentiel
+        $total_participant_presentiel = DB::table('rapports')
+            ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->where('rapports.code_formation', $codeFormation)
+            ->where('inscriptions.code_formation', $codeFormation)
+            ->where('rapports.temps_presence', '')
+            ->count();
+    
+        // Total des inscriptions
+        $total_inscrit = Inscriptions::where("code_formation", $codeFormation)->count();
+    
+        // Total des inscriptions en visio
+        $total_inscrit_visio = Inscriptions::where("code_formation", $codeFormation)->where("presentiel", 0)->count();
+    
+        // Total des inscriptions en présentiel
+        $total_inscrit_presentiel = Inscriptions::where("code_formation", $codeFormation)->where("presentiel", 1)->count();
+    
+        // Calcul des statistiques
+        $stats = [
+            'inscriptions_presentiel' => $total_inscrit_presentiel,
+            'gratuits_presentiel' => 0, // À calculer selon votre logique
+            'payants_presentiel' => $total_inscrit_presentiel, // À ajuster selon votre logique
+            'attestations_presentiel' => 0, // À calculer selon votre logique
+            'participants_presentiel' => $total_participant_presentiel,
+    
+            'inscriptions_visio' => $total_inscrit_visio,
+            'gratuits_visio' => 0, // À calculer selon votre logique
+            'payants_visio' => $total_inscrit_visio, // À ajuster selon votre logique
+            'attestations_visio' => 0, // À calculer selon votre logique
+            'participants_visio' => $total_participant - $total_participant_presentiel,
+    
+            'total_inscriptions' => $total_inscrit,
+            'total_gratuits' => 0, // À calculer selon votre logique
+            'total_payants' => $total_inscrit, // À ajuster selon votre logique
+            'total_attestations' => 0, // À calculer selon votre logique
+            'total_participants' => $total_participant,
+        ];
+    
+        // Retourner les données sous forme de JSON
+        return response()->json([
+            'success' => true,
+            'formation' => $formation,
+            'stats' => $stats,
+            'participants' => $liste_participants,
+        ]);
+    }
+    
+
 }
