@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ExportEtatRecapitulatif;
 use App\Helpers\ResponseHandler;
 use App\Models\Formations;
 use App\Models\Inscriptions;
@@ -12,6 +13,7 @@ use App\Services\contracts\DocumentsInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\PDF;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DocumentsController extends Controller
 {
