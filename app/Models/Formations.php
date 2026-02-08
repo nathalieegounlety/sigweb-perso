@@ -67,12 +67,12 @@ class Formations extends Model
 
     public function getTarification($code_formation)
     {
-        $cout_formation = DB::table('tarificationsformation')
-            ->join('formations', 'formations.code_formation', '=', 'tarificationsformation.code_formation')
-            ->join('grilletarifaires', 'grilletarifaires.id', '=', 'tarificationsformation.id_grilletarifaire')
-            ->select('tarificationsformation.id as tarif_id', 'grilletarifaires.id as get_grille_id', 'grilletarifaires.libelle as get_grille_libelle','grilletarifaires.montant','grilletarifaires.type_tarif')
-            ->where('tarificationsformation.code_formation',$code_formation)
-            ->orderBy('tarificationsformation.id', 'DESC')
+        $cout_formation = DB::table('tarificationsformations')
+            ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
+            ->join('grilletarifaires', 'grilletarifaires.id', '=', 'tarificationsformations.id_grilletarifaire')
+            ->select('tarificationsformations.id as tarif_id', 'grilletarifaires.id as get_grille_id', 'grilletarifaires.libelle as get_grille_libelle','grilletarifaires.montant','grilletarifaires.type_tarif')
+            ->where('tarificationsformations.code_formation',$code_formation)
+            ->orderBy('tarificationsformations.id', 'DESC')
             ->get();
 
         return $cout_formation;

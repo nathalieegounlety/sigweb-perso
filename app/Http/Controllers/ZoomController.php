@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHandler;
 use App\Models\Auditeurs;
 use App\Models\Formations;
 use App\Models\Inscriptions;
@@ -89,7 +90,6 @@ class ZoomController extends Controller
 
         // inscription sur zoom
         try {
-
             // refresh token
             $client = new \GuzzleHttp\Client(['headers' => ['Authorization' => env("AUTHORIZATION"), 'Host' => env("HOST"), 'Content-Type' => 'application/x-www-form-urlencoded']]);
             $response = $client->request('POST', 'https://zoom.us/oauth/token', [
@@ -167,23 +167,14 @@ class ZoomController extends Controller
                 }
             }
 
-            $response = [
-                'data'    => $compteur,
-            ];
 
-            return response()->json($response, 200);
+            return  ResponseHandler::success('Synchronisation terminée',['success'=> true, 'code_formation'=>$request->code_formation, 'nbre' => $compteur]);
 
         } catch (\Throwable $th) {
             //throw $th;
 
-            $response = [
-                'data'    => $th->getMessage(),
-            ];
-
-            return response()->json($response, 200);
+            return  ResponseHandler::success('Echec de syncronisation',['success'=> false, 'code_formation'=>$request->code_formation, 'error' => $th->getMessage()]);
         }
-
-        // end inscription sur zoom
 
     }
 
