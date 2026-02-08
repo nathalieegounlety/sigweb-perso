@@ -4,8 +4,15 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 	<title></title>
 	<style type="text/css">
-		@page { size: 29.7cm 21cm; margin-left: 1.75cm;1.27cm; margin-right: 1.75cm;1.27cm; margin-top: 1.27cm;0.73cm; margin-bottom: 1.27cm;0.97cm }
-		p { margin-bottom: 0.25cm; direction: ltr; line-height: 115%; text-align: justify; orphans: 2; widows: 2; background: transparent }
+@page {
+    size: 29.7cm 21cm;
+    margin-left: 1.75cm;
+    margin-right: 1.27cm;
+    margin-top: 1.27cm;
+    margin-bottom: 0.97cm;
+}
+p { background: white !important; }
+body { font-family: Tahoma, sans-serif; background: white !important; }
 		p.western { font-family: Tahoma, sans-serif; so-language: fr-FR }
 		p.cjk { font-family: Tahoma, sans-serif; }
 		p.ctl { font-family: Tahoma, sans-serif; font-size: 10pt }
@@ -69,21 +76,22 @@ style="font-family: Tahoma, sans-serif;
         </div>
     </div>
 
-  <div style="background: url('img/logo/logo-ohada-new500.png');
+    <div style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('img/logo/logo-ohada-new500.png') no-repeat center center;
     opacity: 0.1;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center 70px bottom 20px;
-    z-index: -1;
-    bottom:0;
-    display:block;
-    margin-top:;150px;
-    pdding-top:;10px;
-    ">
-    <!-- div opacity -->
-      <div style="z-index: 300; opacity:0; margin:0;">
+    z-index: -100;
+    pointer-events: none;
+"></div>
 
-              <div style="z-index: 100;clear:both; display:block; margin: 50px 0 0px 0;text-align: center;line-height: 115%;font-size: 16pt; color:#0a0a0a; font-weight:bold;">
+    <!-- div opacity -->
+<div style="z-index: 30;  opacity: 1 !important; margin:0;">
+
+              <div style="z-index: 1000;clear:both; display:block; margin: 50px 0 0px 0;text-align: center;line-height: 115%;font-size: 16pt; color:#0a0a0a; font-weight:bold; opacity:1;">
                 <div style="margin: 30px 0 5px 0; background-color:#dad5d5; padding: 5px;">
                    {{$formation->theme}}  
                    @if ($formation->date_debut == $formation->date_fin)

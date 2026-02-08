@@ -140,6 +140,8 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
 
 
 });
+
+
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function () {
     Route::post('store', 'store');

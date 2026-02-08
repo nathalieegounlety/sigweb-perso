@@ -7,13 +7,13 @@ use App\Helpers\ResponseHandler;
 use App\Models\Formations;
 use App\Models\Inscriptions;
 use App\Models\Rapports;
-use Arius\NumberFormatter;
 use Illuminate\Http\Request;
 use App\Services\contracts\DocumentsInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\PDF;
 use Maatwebsite\Excel\Facades\Excel;
+use NumberFormatter;
+use PDF;
 
 class DocumentsController extends Controller
 {
@@ -538,10 +538,10 @@ class DocumentsController extends Controller
         }
     }
 
-    public function exportEtatRecapitulatif(Request $request, $code_formation)
-{
-    return Excel::download(new ExportEtatRecapitulatif($code_formation), "SIGWEB_ERSUMA_Etat_recapitulatif_".$code_formation."_".date("Ymd").'_'.date("His").".xlsx");
-}
+    public function exportEtatRecapitulatif(Request $request,$code_formation)
+    {
+        return Excel::download(new ExportEtatRecapitulatif($code_formation),"SIGWEB_ERSUMA_Etat_recapitulatif_".$code_formation."_".date("Ymd").'_'.date("His").".xlsx");
+    }
 
 public function pdfEtatrecapitulatif(Request $request,$code_formation)
 {
@@ -590,7 +590,7 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
         'total_inscrit_presentiel' => $total_inscrit_presentiel
 ]);
 
-   $pdf = PDF::loadView('statistiques.pdf_etats_recapitulatif');
+   $pdf = PDF::loadView('documents.pdf_etats_recapitulatif');
    $customPaper = array(0,0,720,1440);
    $pdf->setPaper($customPaper, 'landscape');
 
