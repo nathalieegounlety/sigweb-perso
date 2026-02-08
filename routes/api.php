@@ -89,6 +89,8 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::get('for/attestation', 'listeFormationAttestation');
     Route::get('dsc', 'formationsDsc');
     Route::post('details/dsc', 'detailFormationDsc');
+    Route::get('obj', 'formationsobj');
+    Route::get('liste/inscrits', 'listeIncrits');
 
 });
 
@@ -183,6 +185,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('check/piece/dsc', 'checkPieceDsc');
     Route::get('liste/pieces', 'listePieces');
     Route::post('add/pieces', 'addPiece');
+    Route::post('update/temps/presence', 'updateTempsPresence');
 });
 
 // gestion des api du frontoffice

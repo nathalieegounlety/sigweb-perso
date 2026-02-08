@@ -38,5 +38,6 @@ interface AuditeursInterface
     public function checkPiece(Request $request): \Illuminate\Http\JsonResponse;
     public function mesPieces(): \Illuminate\Http\JsonResponse;
     public function ajouterPiece(Request $request): \Illuminate\Http\JsonResponse;
+    public function doUpdateTempsPresence(Request $request): \Illuminate\Http\JsonResponse;
 
 }

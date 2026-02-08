@@ -16,6 +16,7 @@ use App\Models\Inscriptions;
 use App\Models\InscritsTypePieces;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
+use App\Models\Participants;
 use App\Models\Pays;
 use App\Models\Rapports;
 use App\Models\Reductions;
@@ -1298,6 +1299,62 @@ class AuditeursService implements AuditeursInterface
         } catch (\Exception $e) {
             // Gérer les erreurs
             echo $e->getMessage(); // Afficher l'erreur
+        }
+    }
+
+    public function doUpdateTempsPresence(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement doUpdateTempsPresence() method.
+
+        $check_auditeur = Auditeurs::where("email",trim($request->email))->exists();
+        if ($check_auditeur) {
+            $formation = Formations::where("code_formation",$request->code_formation)->first();
+
+            if (empty($formation->id_webinaire)) {
+                # code...
+                return ResponseHandler::success("L'identifiant du webinaire n'est pas enregistré.",['success'=>false,'code_formation' => $request->code_formation]);
+            }
+            // vérifier si la personne existe déjà
+            $check_rapport = Rapports::where("code_formation",$formation->code_formation)->where("email",$request->email)->exists();
+
+            if ($check_rapport) {
+                # code...
+                // update data
+                $rapport = Rapports::where("code_formation",$formation->code_formation)->where("email",$request->email)->first();
+
+                $rapport->setAttribute("temps_presence",$request->temps_presence);
+                $rapport->setAttribute("observation",$request->observation);
+                $rapport->update();
+
+                return ResponseHandler::success("Mise à jour effectuée avec succès",['success'=>true,'code_formation' => $request->code_formation]);
+            }
+            # code...
+            // enregistrement des informations dans la table participant
+            $participant = new Participants();
+            $participant->setAttribute("a_participe","OUI");
+            $participant->setAttribute("username",$request->nom_inscrit.' '.$request->prenoms_inscrit);
+            $participant->setAttribute("email",$request->email);
+            $participant->setAttribute("heure_arrivee",date("Y-m-d H:i:s"));
+            $participant->setAttribute("heure_depart",date("Y-m-d H:i:s"));
+            $participant->setAttribute("temps_presence",$request->temps_presence);
+            $participant->setAttribute("id_webinaire",$formation->id_webinaire);
+            $participant->setAttribute("code_formation",$formation->code_formation);
+            $participant->save();
+            // enregistrement des informations dans la table rapport
+            $rapport = new Rapports();
+
+            $rapport->setAttribute("email",$request->email);
+            $rapport->setAttribute("temps_presence",$request->temps_presence);
+            $rapport->setAttribute("code_formation",$formation->code_formation);
+            $rapport->setAttribute("id_webinaire",$formation->id_webinaire);
+            $rapport->setAttribute("observation",$request->observation);
+            $rapport->save();
+
+            // mise à jour tarif formation
+            return ResponseHandler::success("Mise à jour effectuée avec succès",['success'=>true,'code_formation' => $request->code_formation]);
+        } else {
+            # code...
+            return ResponseHandler::success("Le compte de l'auditeur n'existe pas",['success'=>false,'code_formation' => $request->code_formation]);
         }
     }
 }

@@ -25,5 +25,7 @@ interface FormationsInterface
     public function getFormationsAttestation(Request $request): \Illuminate\Http\JsonResponse;
     public function getFormationsDsc(Request $request);
     public function getDetailFormationDsc(Request $request): \Illuminate\Http\JsonResponse;
+    public function getFormationsObj(Request $request): \Illuminate\Http\JsonResponse;
+    public function getListeInscrits(Request $request, string $code_formation); //: LengthAwarePaginator;
 
 }

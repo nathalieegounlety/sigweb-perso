@@ -8,7 +8,9 @@ use App\Models\Formations;
 use App\Models\FormationsDsc;
 use App\Models\FormationsTranches;
 use App\Models\Grilletarifaires;
+use App\Models\Inscriptions;
 use App\Models\Logopartenaires;
+use App\Models\Reductions;
 use App\Models\Tarificationsformation;
 use App\Services\contracts\FormationsInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -566,5 +568,67 @@ class FormationsService implements FormationsInterface
         ];
 
         return ResponseHandler::success('ok', $dataResponse);
+    }
+
+    public function getFormationsObj(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getFormationsObj() method.
+        $liste_formations = Formations::query()
+            ->where('enable', true)
+            ->select([
+                'code_formation as code',
+                DB::raw("CONCAT(formations.code_formation, ' - ', formations.theme) AS name")
+            ])
+            ->orderBy('date_debut', 'DESC')
+            ->get();
+        return ResponseHandler::success('ok', $liste_formations);
+    }
+
+    public function getListeInscrits(Request $request, string $code_formation)
+    {
+        // TODO: Implement getListeInscrits() method.
+
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+            ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
+            ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+            ->leftjoin("detailspaiements", function ($leftjoin) {
+                $leftjoin->on('detailspaiements.email', '=', 'inscriptions.email');
+                $leftjoin->on('detailspaiements.id_tarification_formation', '=', 'inscriptions.tarif_formation_id');
+            })
+            ->where('inscriptions.code_formation', $code_formation)
+            ->where('inscriptions.is_delete', false)
+            ->select(['inscriptions.id','inscriptions.sync_zoom','inscriptions.code_inscription', 'inscriptions.created_at',
+                'auditeurs.nom', 'auditeurs.prenoms', 'formations.fm_presentielle', 'formations.fm_visio', 'auditeurs.email',
+                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode', 'inscriptions.type_formation as mode','grilletarifaires.montant',
+                'inscriptions.type_formation', 'detailspaiements.statut_paiement','detailspaiements.reference_paiement', 'auditeurs.id as id_auditeur',
+                'inscriptions.is_formation_dsc', 'inscriptions.is_delete','inscriptions.code_formation','formations.is_formation_dsc'])
+            ->selectRaw(
+                '(EXISTS (
+                SELECT 1 FROM auditeurs_pieces
+                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
+            )) as check_dossier'
+            );
+
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $liste_inscrits->where(function ($q) use ($search) {
+                $q->where('auditeurs.nom', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.email', 'like', "%{$search}%");
+            });
+        }
+        $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
+
+        $data = $liste_inscrits->paginate($perPage);
+
+        return [
+            'pagination' => $data
+        ];
     }
 }

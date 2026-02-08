@@ -32,7 +32,7 @@ class Reductions extends Model
         'updated_by',
         'created_at',
         'updated_at',
-        'statut',
+        'enable',
     ];
 
     public function getUserCreated()
@@ -45,5 +45,5 @@ class Reductions extends Model
         return $this->belongsTo(User::class,'updated_by');
     }
 
-    
+
 }

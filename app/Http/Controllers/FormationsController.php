@@ -174,4 +174,39 @@ class FormationsController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+    public function formationsobj(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $data = $this->formationsService->getFormationsObj($request);
+            return ResponseHandler::success('ok',$data);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+
+    public function listeIncrits(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $resp = $this->formationsService->getListeInscrits($request, $request->code_formation);
+            $data = $resp['pagination'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total()
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
 }
