@@ -135,6 +135,10 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('get/url/all/attestation/formateur', 'urlAllAttestationFormateur');
     Route::get('export/liste/formateurs/{code_formation}', 'listeFormateurs')->name('liste.formateurs')->middleware('signed');
     Route::post('get/url/liste/formateur', 'urlListeFormateur');
+    Route::get('/export/etat-recapitulatif/pdf/{code_formation}', 'pdfEtatrecapitulatif');
+    Route::get('/export/etat-recapitulatif/excel/{code_formation}', 'exportEtatRecapitulatif');
+
+
 });
 // gestion des types de formation
 Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\TypeformationsController::class)->group(function () {
@@ -266,6 +270,8 @@ Route::prefix('v1/paiements')->controller(\App\Http\Controllers\PaiementsControl
     Route::post('info/partiel', 'infoPaiementPartiel');
     Route::post('partiel/store', 'savePaiementPartiel');
     Route::post('infos/ouvrage', 'infosPaiementOuvrage');
+    Route::get('recapitulatif/{codeFormation}', 'getRecapitulatifPaiements');
+
 });
 
 // gestion des paiements via fedapay

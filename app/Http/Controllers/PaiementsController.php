@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHandler;
 use App\Services\contracts\PaiementsInterface;
+use App\Services\Impl\PaiementsService;
 use Illuminate\Http\Request;
 
 class PaiementsController extends Controller
@@ -75,5 +76,12 @@ class PaiementsController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function getRecapitulatifPaiements($code_formation)
+    {
+        $paiementsService = new PaiementsService();
+        return $paiementsService->getRecapitulatifPaiements($code_formation);
+    }
+    
 
 }
