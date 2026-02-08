@@ -1071,7 +1071,7 @@ class DocumentsService implements DocumentsInterface
             ->leftjoin('pays', 'pays.id', '=', 'formateurs.nationalite')
             ->select('formateurs.id as id_formateur', 'formateurs.nom', 'formateurs.prenoms','formateurs.telephone','formateurs.email','pays.nationalite')
             ->where('formations.code_formation',$code_formation)
-            //->where('inscrits.code_formation',$code_formation)
+            //->where('inscriptions.code_formation',$code_formation)
             ->orderBy('formateurs.nom', 'ASC')
             ->get();
         $nbre_formateur = count($liste_formateurs);

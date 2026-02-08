@@ -43,7 +43,7 @@ if (!function_exists('getPaiement')) {
             ->where('detailspaiements.statut_paiement',"PAYE")
             ->where('detailspaiements.id_tarification_formation',$tarif_formation_id)
             ->where('paiements.email',$email)
-            // ->orderBy('inscrits.nom', 'ASC')
+            // ->orderBy('inscriptions.nom', 'ASC')
             ->get();
 
     }
@@ -64,7 +64,7 @@ if (!function_exists('getFraisInscription')) {
             ->where('detailspaiements.statut_paiement',"PAYE")
             ->where('detailspaiements.reference_paiement',$reference_paiement)
             ->where('paiements.email',$email)
-            // ->orderBy('inscrits.nom', 'ASC')
+            // ->orderBy('inscriptions.nom', 'ASC')
             ->get(["detailspaiements.montant_paye"])
             ->first();
 
@@ -86,7 +86,7 @@ if (!function_exists('getPaiementratuit')) {
             ->where('detailspaiements.id_reduction',3)
             ->where('detailspaiements.id_tarification_formation',$tarif_formation_id)
             ->where('paiements.email',$email)
-            // ->orderBy('inscrits.nom', 'ASC')
+            // ->orderBy('inscriptions.nom', 'ASC')
             ->get();
 
     }
@@ -105,7 +105,7 @@ if (!function_exists('getPaiementAll')) {
             ->select('detailspaiements.*','paiements.email as email_paiement','grilletarifaires.type_tarif','grilletarifaires.montant','modepaiements.libelle as modepaiement')
             ->where('tarificationsformations.code_formation',$code_formation)
             ->where('detailspaiements.statut_paiement',"PAYE")
-            // ->orderBy('inscrits.nom', 'ASC')
+            // ->orderBy('inscriptions.nom', 'ASC')
             ->get();
 
     }
@@ -351,7 +351,7 @@ if (!function_exists('getCodeInscription')) {
     # code...
     function getCodeInscription($reference){
         $detailspaiement = Detailspaiements::where("reference_paiement",$reference)->first();
-        return $inscrit = Inscriptions::where("inscrits.email",$detailspaiement->email)->where("inscrits.tarif_formation_id",$detailspaiement->id_tarification_formation)->firstOrFail();
+        return $inscrit = Inscriptions::where("inscriptions.email",$detailspaiement->email)->where("inscriptions.tarif_formation_id",$detailspaiement->id_tarification_formation)->firstOrFail();
     }
 }
 
@@ -448,9 +448,9 @@ if (!function_exists('getInscriptionGratuitePresentiel')) {
     function getInscriptionGratuitePresentiel($code_formation){
         return Detailspaiements::where("detailspaiements.code_formation",$code_formation)
             ->where("id_reduction",3)
-            ->join("inscrits","inscrits.email","detailspaiements.email")
-            ->where("inscrits.type_formation","PRESENTIEL")
-            ->where("inscrits.code_formation",$code_formation)->count();
+            ->join("inscriptions","inscriptions.email","detailspaiements.email")
+            ->where("inscriptions.type_formation","PRESENTIEL")
+            ->where("inscriptions.code_formation",$code_formation)->count();
 
     }
 }
@@ -459,9 +459,9 @@ if (!function_exists('getInscriptionGratuiteVisio')) {
     function getInscriptionGratuiteVisio($code_formation){
         return Detailspaiements::where("detailspaiements.code_formation",$code_formation)
             ->where("id_reduction",3)
-            ->join("inscrits","inscrits.email","detailspaiements.email")
-            ->where("inscrits.type_formation","VISIO")
-            ->where("inscrits.code_formation",$code_formation)->count();
+            ->join("inscriptions","inscriptions.email","detailspaiements.email")
+            ->where("inscriptions.type_formation","VISIO")
+            ->where("inscriptions.code_formation",$code_formation)->count();
 
     }
 }
@@ -750,14 +750,14 @@ if (!function_exists('getNbrPiecesMail')) {
     function getNbrPiecesMail($code_inscription){
         $user = auth()->user();
 
-        // Effectuer une jointure entre les tables auditeurs et inscrits
+        // Effectuer une jointure entre les tables auditeurs et inscriptions
         $inscrit = \App\Models\Inscriptions::where("code_inscription", $code_inscription)->first();
 
         // Déterminer le type de formation
         $typeFormation = $inscrit->type_formation;
 
         // Récupérer les pièces déjà enregistrées
-        $pieces = \App\Models\AuditeursPieces::where('created_by', $user->id)->pluck('inscrits_typespieces_id');
+        $pieces = \App\Models\AuditeursPieces::where('created_by', $user->id)->pluck('inscriptions_typespieces_id');
 
         // Exclure la pièce appropriée en fonction du type de formation
         if ($typeFormation == 'PROFESSIONNELS') {

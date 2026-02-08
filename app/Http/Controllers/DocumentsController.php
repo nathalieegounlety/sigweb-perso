@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ExportEtatRecapitulatif;
 use App\Helpers\ResponseHandler;
 use App\Models\Formations;
 use App\Models\Inscriptions;
@@ -10,6 +11,9 @@ use Illuminate\Http\Request;
 use App\Services\contracts\DocumentsInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use NumberFormatter;
+use PDF;
 
 class DocumentsController extends Controller
 {
@@ -534,10 +538,10 @@ class DocumentsController extends Controller
         }
     }
 
-    public function exportEtatRecapitulatif(Request $request, $code_formation)
-{
-    return Excel::download(new ExportEtatRecapitulatif($code_formation), "SIGWEB_ERSUMA_Etat_recapitulatif_".$code_formation."_".date("Ymd").'_'.date("His").".xlsx");
-}
+    public function exportEtatRecapitulatif(Request $request,$code_formation) 
+    {    
+        return Excel::download(new ExportEtatRecapitulatif($code_formation),"SIGWEB_ERSUMA_Etat_recapitulatif_".$code_formation."_".date("Ymd").'_'.date("His").".xlsx"); 
+    }
 
 public function pdfEtatrecapitulatif(Request $request,$code_formation) 
 {   
@@ -546,22 +550,22 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
       // information sur la formation en cours
     $formation = Formations::where("code_formation",$code_formation)->get()->first();
     // détails paiements formation
-    $liste_participants = DB::table('inscrits')
-    ->leftjoin('auditeurs', 'inscrits.email', '=', 'auditeurs.email') 
-    ->select('inscrits.email','inscrits.email', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms','auditeurs.telephone as telephone','auditeurs.pays as pays','inscrits.tarif_formation_id','inscrits.type_formation')
+    $liste_participants = DB::table('inscriptions')
+    ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email') 
+    ->select('inscriptions.email','inscriptions.email', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms','auditeurs.telephone as telephone','auditeurs.pays as pays','inscriptions.tarif_formation_id','inscriptions.type_formation')
     //->where('rapports.code_formation',$code_formation)
-    ->where('inscrits.code_formation',$code_formation)
+    ->where('inscriptions.code_formation',$code_formation)
     ->orderBy('auditeurs.nom', 'ASC')
     ->get();
   
     $total_participant = Rapports::where("code_formation",$code_formation)->count();    
     // récupérer la liste des participants en présentielle dont le champ "presentiel" = 1
     $total_participant_presentiel =  DB::table('rapports')
-    ->join('inscrits', 'inscrits.email', '=', 'rapports.email')
-    ->leftjoin('auditeurs', 'inscrits.email', '=', 'auditeurs.email')
-    ->select('rapports.*', 'inscrits.id as id_inscrit', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.telephone as telephone', 'auditeurs.pays as pays')
+    ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+    ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+    ->select('rapports.*', 'inscriptions.id as id_inscrit', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.telephone as telephone', 'auditeurs.pays as pays')
     ->where('rapports.code_formation', $code_formation)
-    ->where('inscrits.code_formation', $code_formation)
+    ->where('inscriptions.code_formation', $code_formation)
     ->where('rapports.temps_presence', '')
     ->count();
      
@@ -586,7 +590,7 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
         'total_inscrit_presentiel' => $total_inscrit_presentiel
 ]);
 
-   $pdf = PDF::loadView('statistiques.pdf_etats_recapitulatif');
+   $pdf = PDF::loadView('documents.pdf_etats_recapitulatif');
    $customPaper = array(0,0,720,1440);
    $pdf->setPaper($customPaper, 'landscape');
 
