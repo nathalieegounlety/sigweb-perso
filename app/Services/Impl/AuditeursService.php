@@ -1059,7 +1059,6 @@ class AuditeursService implements AuditeursInterface
 
                 try {
                     # code...
-                        # code...
                         Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new InscriptionFormationDiplomante($contenu));
 
                 } catch (\Exception $e) {
@@ -1168,7 +1167,7 @@ class AuditeursService implements AuditeursInterface
                     'success' => true,
                 ];
 
-                return ResponseHandler::success("Modification effectuée avec succès",$dataResponse);
+                return ResponseHandler::success("Opération effectuée avec succès",$dataResponse);
 
             }else{
                 $dataResponse = [

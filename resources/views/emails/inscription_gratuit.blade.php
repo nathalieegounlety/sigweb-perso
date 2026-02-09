@@ -22,7 +22,7 @@
     <p>Bonjour {{ $contenu['prenoms'] }} {{ $contenu['nom'] }},
     </p>
     <p>Nous vous confirmons avoir enregistré votre inscription
-      @if (count($contenu['formations_classique']) > 1)
+      @if (count($contenu['formations']) > 1)
       aux formations : <br><br>
         @foreach ($contenu['formations'] as $item)
             @foreach (getFormationsMail($item['tarif']) as $data)
