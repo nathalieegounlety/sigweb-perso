@@ -23,7 +23,7 @@ if (! function_exists('getFormationsMail')) {
 if (!function_exists('getDureeEnregistrement')) {
     # code...
     function getDureeEnregistrement($code_formation){
-        $check_duree_formation = Dureeformations::where("code_formation",$code_formation)->first();
+        $check_duree_formation = \App\Models\Dureeformations::where("code_formation",$code_formation)->first();
         if ($check_duree_formation) {
             return $check_duree_formation->duree_enregistrement;
         } else {

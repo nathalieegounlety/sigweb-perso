@@ -757,7 +757,7 @@ if (!function_exists('getNbrPiecesMail')) {
         $typeFormation = $inscrit->type_formation;
 
         // Récupérer les pièces déjà enregistrées
-        $pieces = \App\Models\AuditeursPieces::where('created_by', $user->id)->pluck('inscriptions_typespieces_id');
+        $pieces = \App\Models\AuditeursPieces::where('created_by', $user->id)->pluck('inscrits_typespieces_id');
 
         // Exclure la pièce appropriée en fonction du type de formation
         if ($typeFormation == 'PROFESSIONNELS') {
