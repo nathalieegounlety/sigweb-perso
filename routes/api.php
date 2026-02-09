@@ -137,6 +137,7 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('get/url/liste/formateur', 'urlListeFormateur');
     Route::get('/export/etat-recapitulatif/pdf/{code_formation}', 'pdfEtatrecapitulatif');
     Route::get('/export/etat-recapitulatif/excel/{code_formation}', 'exportEtatRecapitulatif');
+    Route::get('etats-recapitulatif/{id}/ouvrage', 'exportEtatRecapitulatifOuvrage');
 
 
 });
@@ -226,6 +227,7 @@ Route::prefix('v1/ouvrages')->controller(\App\Http\Controllers\OuvragesControlle
     Route::post('remove', 'remove');
     Route::get('obj', 'getObjOuvrage');
     Route::post('store/achat', 'storeAchat');
+    Route::get('stats/recapitulatif', 'statsRecapitulatif');
 });
 
 // gestion des formations dsc
@@ -345,5 +347,6 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     Route::get('formation/visio/{code_formation}', 'exportListeInscritVisioExcel');
     Route::get('formation/liste/presence/{code_formation}', 'exportListePresenceExcel');
     Route::get('formation/visio/presentiel/{code_formation}', 'exportListeInscritPresentielleVisioExcel');
+    Route::get('export/{id}/etats-recapitulatif/ouvrage', 'exportEtatRecapOuvrage');
     //
 });

@@ -157,4 +157,29 @@ class OuvragesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function statsRecapitulatif(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $perPage = $request->get('per_page',50); // par défaut 50 éléments
+            $data = $this->ouvragesService->getRecapOuvrages($request);
+
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+    return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+}
+    }
 }

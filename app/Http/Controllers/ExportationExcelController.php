@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ExportEtatRecapitulatifOuvrage;
 use App\Exports\ExportListePresence;
 use App\Exports\ExportsInscritsDsc;
 use App\Exports\ExportsInscritsExcel;
@@ -55,6 +56,15 @@ class ExportationExcelController extends Controller
     public function exportListeInscritPresentielleVisioExcel($code_formation) // ExportInscritsExcel
     {
         return Excel::download(new ExportsInscritsPresentielVisioExcel($code_formation) ,"SIGWEB_ERSUMA_liste_inscrits_".$code_formation.'_'.date("Ymd").'_'.date("His").".xlsx");
+    }
+
+    /**
+     * Export etat récapitulatif
+     *
+     */
+    public function exportEtatRecapOuvrage(Request $request,$id)
+    {
+        return Excel::download(new ExportEtatRecapitulatifOuvrage($id),"SIGWEB_ERSUMA_Etat_recapitulatif_".date("Ymd").'_'.date("His").".xlsx");
     }
 
 

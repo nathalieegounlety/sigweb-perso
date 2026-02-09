@@ -41,7 +41,7 @@ class Detailpaiementouvrages extends Model
 
     public function getPaiement()
     {
-        return $this->belongsTo(Paiement::class,'paiementouvrage_id');
+        return $this->belongsTo(Paiements::class,'paiementouvrage_id');
     }
 
     public function paiement_valide() {

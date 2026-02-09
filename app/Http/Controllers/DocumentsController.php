@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Exports\ExportEtatRecapitulatif;
 use App\Helpers\ResponseHandler;
+use App\Models\Detailpaiementouvrages;
 use App\Models\Formations;
 use App\Models\Inscriptions;
+use App\Models\Ouvrages;
 use App\Models\Rapports;
 use Illuminate\Http\Request;
 use App\Services\contracts\DocumentsInterface;
@@ -600,5 +602,30 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
 
 
 }
+
+    /**
+     * statsEtatRecapitulatifFormation
+     *
+     */
+    public function exportEtatRecapitulatifOuvrage(Request $request,$id)
+    {
+        $ouvrage = Ouvrages::find($id);
+        $details_paiements = Detailpaiementouvrages::with('paiement_valide')->where("ouvrage_id",$ouvrage->id)->get();
+
+        $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
+        $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
+
+        // share data to view
+        view()->share(['ouvrage'=>$ouvrage,'details_paiements'=>$details_paiements]);
+        $pdf = PDF::loadView('statistiques.pdf_etats_recapitulatif_ouvrage');
+        $customPaper = array(0,0,720,1440);
+        $pdf->setPaper($customPaper, 'landscape');
+
+        $date = date('YmdHis');
+        // download PDF file with download method
+        return $pdf->download('Etat_recapitulatif_ouvrage_'.$date.'.pdf');
+
+
+    }
 
 }

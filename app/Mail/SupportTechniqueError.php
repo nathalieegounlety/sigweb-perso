@@ -28,7 +28,7 @@ class SupportTechniqueError extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '🚨 Support Technique : Erreur serveur détectée',
+            subject: '🚨 Support Technique : Erreur serveur détectée '.date('d-m-Y-H-i-s'),
         );
     }
 

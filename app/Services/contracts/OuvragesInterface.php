@@ -11,7 +11,7 @@ interface OuvragesInterface
     // déclaration des interfaces à utiliser
     public function saveOuvrage(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function getOuvrage(int $id): Ouvrages;
+    public function getOuvrage(int $id);
 
     public function getOuvrages(Request $request): LengthAwarePaginator;
 
@@ -20,5 +20,7 @@ interface OuvragesInterface
     public function remove(int $id): \Illuminate\Http\JsonResponse;
     public function objOuvrage(): \Illuminate\Http\JsonResponse;
     public function saveChoixOuvrages(Request $request): \Illuminate\Http\JsonResponse;
+
+    public function getRecapOuvrages(Request $request): LengthAwarePaginator;
 
 }

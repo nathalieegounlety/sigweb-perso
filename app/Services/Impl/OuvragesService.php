@@ -58,7 +58,7 @@ class OuvragesService implements OuvragesInterface
         return ResponseHandler::success("Création efféctuée");
     }
 
-    public function getOuvrage(int $id): \App\Models\Ouvrages
+    public function getOuvrage(int $id)
     {
         // TODO: Implement getOuvrage() method.
         $data = Ouvrages::find($id);
@@ -297,5 +297,37 @@ class OuvragesService implements OuvragesInterface
             return ResponseHandler::error('Echec lors de l\'enregistrement des données',400,['success'=>false]);
         }
 
+    }
+
+    public function getRecapOuvrages(Request $request): LengthAwarePaginator
+    {
+        // TODO: Implement getRecapOuvrages() method.
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        // Filtres spécifiques
+        $filterIdOuvrage = $request->input('id_ouvrage');
+
+        $query = Detailpaiementouvrages::leftJoin('paiements','paiements.id','=','detailpaiementouvrages.paiementouvrage_id')
+            ->leftJoin('auditeurs','auditeurs.email','=','paiements.email')
+            ->leftJoin('modepaiements','modepaiements.id','=','paiements.id_modepaiement')
+            ->select('detailpaiementouvrages.id', 'auditeurs.nom','auditeurs.prenoms','auditeurs.email', 'paiements.montant_total',
+                'paiements.montant_paye','paiements.montant_restant','modepaiements.libelle','detailpaiementouvrages.montant')
+            ->where("detailpaiementouvrages.ouvrage_id",$filterIdOuvrage);
+
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->Where('modepaiements.libelle', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.nom', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.email', 'like', "%{$search}%");
+            });
+        }
+        $query->orderBy($sortField, $sortOrder);
+
+        return $query->paginate($perPage);
     }
 }
