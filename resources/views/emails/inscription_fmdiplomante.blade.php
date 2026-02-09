@@ -68,7 +68,7 @@
             $nbrePiece = getNbrPiecesMail($code_inscription);
             @endphp
             @if ($nbrePiece > 0)
-            <p>Merci de cliquer sur le lien ci-après pour compléter votre dossier de candidature,  <a href="{{env('frontend_url')}}/auditeur/documents" target="_blank" ><b style="color:#071093;">Ajouter pièces requises</b></a>. </p>
+            <p>Merci de cliquer sur le lien ci-après pour compléter votre dossier de candidature,  <a href="{{env('FRONTEND_URL')}}/auditeur/documents" target="_blank"><b style="color:#071093;">Ajouter pièces requises</b></a>. </p>
             <br>
             @endif
 
