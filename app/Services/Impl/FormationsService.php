@@ -574,7 +574,7 @@ class FormationsService implements FormationsInterface
     {
         // TODO: Implement getFormationsObj() method.
         $liste_formations = Formations::query()
-            ->where('enable', true)
+            ->where('statut', 'ACTIF')
             ->select([
                 'code_formation as code',
                 DB::raw("CONCAT(formations.code_formation, ' - ', formations.theme) AS name")

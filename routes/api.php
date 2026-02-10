@@ -348,5 +348,12 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     Route::get('formation/liste/presence/{code_formation}', 'exportListePresenceExcel');
     Route::get('formation/visio/presentiel/{code_formation}', 'exportListeInscritPresentielleVisioExcel');
     Route::get('export/{id}/etats-recapitulatif/ouvrage', 'exportEtatRecapOuvrage');
+    // importation des rapports
+    Route::post('rapports/webinaire', 'importationRapportsWebianire');
+    Route::post('rapports/presentiel', 'importRapportPresentiel');
+    Route::post('inscriptions', 'importInscription');
+    Route::post('reunions', 'importReunion');
+    Route::post('notes', 'importNotes');
+    Route::post('candidats', 'importCandidats');
     //
 });

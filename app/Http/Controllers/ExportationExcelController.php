@@ -8,7 +8,24 @@ use App\Exports\ExportsInscritsDsc;
 use App\Exports\ExportsInscritsExcel;
 use App\Exports\ExportsInscritsPresentielVisioExcel;
 use App\Exports\ExportsInscritsVisioExcel;
+use App\Helpers\ResponseHandler;
+use App\Imports\ImportCandidatsMoodle;
+use App\Imports\ImportNoteCandidatMoodle;
+use App\Imports\InscriptionPresentielVisioImport;
+use App\Imports\InscriptionReunionImport;
+use App\Imports\ParticipantReunionImport;
+use App\Imports\PresentielImport;
+use App\Imports\WebinairezoomImportation;
+use App\Mail\ImportationPresentiel;
+use App\Mail\NotificationImportation;
+use App\Models\Documentwebinaires;
+use App\Models\Formations;
+use App\Models\Moodlenotes;
+use App\Models\Rapports;
+use App\Models\Tmpmoodlecandidats;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ExportationExcelController extends Controller
@@ -68,4 +85,334 @@ class ExportationExcelController extends Controller
     }
 
 
+    public function importationRapportsWebianire(Request $request)
+    {
+
+
+        // récupérer le code de la formation
+        $code_formation = $request->code_formation;
+        $numero_webinaire = 0; // initialiser numero webinaire
+
+        foreach ($request->doc_participant as $key => $document) {
+            Excel::import(new WebinairezoomImportation($code_formation), $document);
+        }
+
+        // ############### traitement des données importés pour sortir le nombre de temps de chaque participant "
+
+        $liste_participant = DB::table('participants')
+            ->select(DB::raw('sum(temps_presence) as duree'), 'email', 'id_webinaire')
+            ->where('code_formation', $code_formation)
+            ->where('a_participe', 'oui')
+            ->groupBy('email', 'id_webinaire')
+            ->get();
+
+        foreach ($liste_participant as $value) {
+
+            $numero_webinaire = $value->id_webinaire;
+
+            Rapports::create([
+                'email' => $value->email,
+                'temps_presence' => $value->duree,
+                'code_formation' => $code_formation,
+                'id_webinaire' => $value->id_webinaire
+            ]);
+        }
+
+        if (count($liste_participant) > 0) {
+            // sauvegarde des fichiers
+            $fichier_inscription = $request->doc_inscription;
+            $fichier_participation = $request->doc_participant;
+            if (!empty($fichier_inscription)) {
+                $extension = $fichier_inscription->getClientOriginalExtension();
+                $fichier_name = $numero_webinaire . "_rapport_sur_inscriptions_" . date('Ymd-His') . '.' . $extension;
+                echo $fichier_name . "<br>";
+                // $fichier_inscription->move(public_path('documents_csv'), $fichier_name);
+                $fichier_inscription->storeAs('documents_csv', $fichier_name, 'public');
+                Documentwebinaires::create([
+                    'id_webinaire' => $numero_webinaire,
+                    'code_formation' => $code_formation,
+                    'document_name' => $fichier_name
+                ]);
+            }
+            $i = 0;
+            foreach ($fichier_participation as $key => $document) {
+                $i++;
+                $extension = $document->getClientOriginalExtension();
+                $document_name = $numero_webinaire . "_rapport_sur_participants_" . $i . '_' . date('Ymd-His') . '.' . $extension;
+                echo $document_name . "<br>";
+                // Storage::put('avatars/1', $content) Storage::put('avatars/1', $content)
+                // $document->move( public_path('documents_csv'), $document_name);
+                $document->storeAs('documents_csv', $document_name, 'public');
+
+                Documentwebinaires::create([
+                    'id_webinaire' => $numero_webinaire,
+                    'code_formation' => $code_formation,
+                    'document_name' => $document_name
+                ]);
+            }
+
+            // update statut formation
+
+            $formation = Formations::where('code_formation', $code_formation)->first();
+            $formation->setAttribute('statut', 'INACTIF');
+            $formation->update();
+
+            // send mail for notification team ersuma
+            if ($formation) {
+
+                try {
+
+                    // send identifiant to mail for user
+                    //$email = "sigweb.ersuma@ohada.org";
+                    $email = env("MAIL_CC");
+                    $contenu = [
+                        'code_formation' => $formation->code_formation,
+                        'email' => $email,
+                        'subject' => 'SIGWEB - Importation rapports Zoom ' . $formation->code_formation
+                    ];
+
+                    # code...
+                    Mail::to($email)->queue(new NotificationImportation($contenu));
+                } catch (\Exception $e) {
+                    // Get error here
+                }
+            }
+
+            // redirection avec message de succès
+            return ResponseHandler::success("Rapports importés avec succès",['success'=>true]);
+        } else {
+            // redirection avec message d'erreur
+            return ResponseHandler::success("Echec lors de l'importation des données",['success'=>false]);
+        }
+    }
+
+
+    public function importRapportPresentiel(Request $request)
+    {
+
+        // procéder à l'extration des données relatives aux inscrits
+        $importer =   Excel::import(new PresentielImport($request->code_formation),$request->file_presentiel);
+
+        if ($importer) {
+            # code...
+            try {
+
+                // send identifiant to mail for user
+                $email = env("MAIL_CC");
+                $contenu = [
+                    'code_formation' => $request->code_formation,
+                    'email' => $email,
+                    'subject'=>'SIGWEB - Importation liste des participants à la formation : '.$request->code_formation
+                ];
+
+                # code...
+                Mail::to($email)->cc([env('MAIL_SUPPORT_TWO'),env('MAIL_SUPPORT_TREE')])->queue(new ImportationPresentiel($contenu));
+
+            } catch(\Exception $e){
+                // Get error here
+
+            }
+
+            return ResponseHandler::success("Liste Présentiel importée avec succès",['success'=>true]);
+
+        } else {
+            # code...
+            return ResponseHandler::success("Echec importation",['success'=>false]);
+        }
+
+    }
+
+    public function importInscription(Request $request)
+    {
+
+        // procéder à l'extration des données relatives aux inscrits
+        $importer =   Excel::import(new InscriptionPresentielVisioImport($request->code_formation,$request->cout_presentiel,$request->cout_visio),$request->file_presentiel);
+
+        if ($importer) {
+            # code...
+            try {
+
+                // send identifiant to mail for user
+                $email = env("MAIL_CC");
+                $contenu = [
+                    'code_formation' => $request->code_formation,
+                    'email' => $email,
+                    'subject'=>'SIGWEB - Importation liste des participants à la formation : '.$request->code_formation
+                ];
+
+                # code...
+                Mail::to($email)->cc([env('MAIL_SUPPORT_TWO'),env('MAIL_SUPPORT_TREE')])->queue(new ImportationPresentiel($contenu));
+
+            } catch(\Exception $e){
+                // Get error here
+
+            }
+
+            return ResponseHandler::success("Inscription importée avec succès",['success'=>true]);
+
+        } else {
+            # code...
+            return ResponseHandler::success("Echec importation",['success'=>false]);
+        }
+
+
+    }
+
+    public function importReunion(Request $request)
+    {
+        // récupérer le code de la formation
+        $code_formation = $request->code_formation;
+        $numero_webinaire = 0; // initialiser numero webinaire
+        // procéder à l'extration des données relatives aux inscrits
+        Excel::import(new InscriptionReunionImport($code_formation),$request->doc_inscription);
+
+        foreach ($request->doc_participant as $key => $document) {
+            Excel::import(new ParticipantReunionImport($code_formation),$document);
+
+        }
+
+        //  \Session::put('success', 'Your file is imported successfully in database.');
+
+        // ############### traitement des données importés pour sortir le nombre de temps de chaque participant "
+
+        $liste_participant = DB::table('participants')
+            ->select(DB::raw('sum(temps_presence) as duree'), 'email','id_webinaire')
+            ->where('code_formation',$code_formation)
+            ->where('a_participe','oui')
+            ->groupBy('email','id_webinaire')
+            ->get();
+
+        foreach ($liste_participant as $value){
+
+            $numero_webinaire = $value->id_webinaire;
+
+            Rapports::create([
+                'email' => $value->email,
+                'temps_presence' => $value->duree,
+                'code_formation'=>$code_formation,
+                'id_webinaire'=>$value->id_webinaire
+            ]);
+        }
+
+        if(count($liste_participant) > 0){
+            // sauvegarde des fichiers
+            $fichier_inscription = $request->doc_inscription;
+            $fichier_participation = $request->doc_participant;
+            if(!empty($fichier_inscription)){
+                $extension = $fichier_inscription->getClientOriginalExtension();
+                $fichier_name = $numero_webinaire."_rapport_sur_inscriptions_".date('Ymd-His').'.'.$extension;
+                echo $fichier_name."<br>";
+                // $fichier_inscription->move(public_path('documents_csv'), $fichier_name);
+                $fichier_inscription->storeAs('documents_csv', $fichier_name,'public');
+                Documentwebinaires::create([
+                    'id_webinaire' => $numero_webinaire,
+                    'code_formation' => $code_formation,
+                    'document_name'=>$fichier_name
+                ]);
+            }
+            $i = 0;
+            foreach ($fichier_participation as $key => $document) {
+                $i++;
+                $extension = $document->getClientOriginalExtension();
+                $document_name = $code_formation."_rapport_sur_participants_" . $i . '_'.date('Ymd-His').'.'.$extension;
+                //echo $document_name."<br>";
+                // Storage::put('avatars/1', $content) Storage::put('avatars/1', $content)
+                // $document->move( public_path('documents_csv'), $document_name);
+                $document->storeAs('documents_csv', $document_name,'public');
+
+                Documentwebinaires::create([
+                    'id_webinaire' => $numero_webinaire,
+                    'code_formation' => $code_formation,
+                    'document_name'=>$document_name
+                ]);
+
+            }
+
+            // update statut formation
+
+            $formation = Formations::where('code_formation',$code_formation)->first();
+            $formation->setAttribute('statut', 'INACTIF');
+            $formation->update();
+
+            // send mail for notification team ersuma
+            if($formation){
+
+                try {
+
+                    // send identifiant to mail for user
+                    $email = "sigweb.ersuma@ohada.org";
+                    $contenu = [
+                        'code_formation' => $formation->code_formation,
+                        'email' => $email,
+                        'subject'=>'SIGWEB - Importation rapports Zoom '.$formation->code_formation
+                    ];
+
+
+                    # code...
+                    Mail::to($email)->cc([env('MAIL_SUPPORT_TWO'),env('MAIL_SUPPORT_TREE')])->queue(new NotificationImportation($contenu));
+
+                } catch(\Exception $e){
+                    // Get error here
+
+                }
+            }
+
+            // redirection avec message de succès
+
+            return ResponseHandler::success("Rapports importé avec succès",['success'=>true]);
+
+        } else {
+            # code...
+            return ResponseHandler::success("Echec importation",['success'=>false]);
+
+        }
+
+    }
+
+    public function importNotes(Request $request)
+    {
+        ini_set('max_execution_time', 0); // illimité
+
+        // récupérer le code de la formation
+        $code_formation = $request->code_formation;
+        $objFormation = Formations::where("code_formation",$code_formation)->first();
+        $annee_academique = date("Y",strtotime($objFormation->date_debut));
+
+        // procéder à l'extration des données relatives aux notes dans le fichier envoyé
+        Excel::import(new ImportNoteCandidatMoodle($code_formation, $annee_academique),$request->fichier_note);
+
+        // vérifier si les notes sont importées
+        $date = date('Y-m-d');
+        $checkNote = Moodlenotes::where("created_at","like","%$date%")->count();
+
+        if ($checkNote > 0) {
+            # code...
+            return ResponseHandler::success("Rapports importés avec succès", ['success' => true]);
+
+        } else {
+            # code...
+            return ResponseHandler::success("Echec importation", ['success' => false]);
+        }
+
+    }
+
+    public function importCandidats(Request $request)
+    {
+
+        // procéder à l'extration des données relatives aux notes dans le fichier envoyé
+        Excel::import(new ImportCandidatsMoodle(),$request->liste_candidats);
+
+        // vérifier si les notes sont importées
+        $date = date('Y-m-d');
+        $checkData = Tmpmoodlecandidats::where("updated_at","like","%$date%")->count();
+
+        if ($checkData > 0) {
+            # code...
+            return ResponseHandler::success("Importation effectuée avec succès",['success' => true]);
+
+        } else {
+            # code...
+            return ResponseHandler::success("Echec lors de l'importation des données",['success' => false]);
+        }
+    }
 }
