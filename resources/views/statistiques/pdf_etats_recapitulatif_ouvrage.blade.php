@@ -4,7 +4,7 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 	<title></title>
 	<style type="text/css">
-		@page { size: 29.7cm 21cm; margin-left: 1.75cm;1.27cm; margin-right: 1.75cm;1.27cm; margin-top: 1.27cm;0.73cm; margin-bottom: 1.27cm;0.97cm }
+	@page { size: 29.7cm 21cm; margin-left: 1.75cm;1.27cm; margin-right: 1.75cm;1.27cm; margin-top: 1.27cm;0.73cm; margin-bottom: 1.27cm;0.97cm }
 		p { margin-bottom: 0.25cm; direction: ltr; line-height: 115%; text-align: justify; orphans: 2; widows: 2; background: transparent }
 		p.western { font-family: Tahoma, sans-serif; so-language: fr-FR }
 		p.cjk { font-family: Tahoma, sans-serif; }
@@ -62,19 +62,9 @@ style="font-family: Tahoma, sans-serif;
         </div>
     </div>
 
-  <div style="background: url('img/logo/logo-ohada-new500.png');
-    opacity: 0.1;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center 70px bottom 20px;
-    z-index: -1;
-    bottom:0;
-    display:block;
-    margin-top:;150px;
-    pdding-top:;10px;
-    ">
+   
     <!-- div opacity -->
-      <div style="z-index: 300; opacity:0; margin:0;">
+      <div style="z-index: 300; opacity:1; margin:0;">
 
               <div style="z-index: 100;clear:both; display:block; margin: 50px 0 0px 0;text-align: center;line-height: 115%;font-size: 16pt; color:#0a0a0a; font-weight:bold;">
                 <div style="margin: 30px 0 5px 0; background-color:rgb(177, 168, 168); padding: 5px;">
