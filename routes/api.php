@@ -11,11 +11,11 @@ Route::prefix('v1')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('logout', [AuthController::class, 'logout']);
 
- // Demande de réinitialisation
- Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
- Route::post('/reset-password/info', [ResetPasswordController::class, 'infoResetPassword']);
- // Réinitialisation effective du mot de passe
- Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+    // Demande de réinitialisation
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+    Route::post('/reset-password/info', [ResetPasswordController::class, 'infoResetPassword']);
+    // Réinitialisation effective du mot de passe
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
 });
 
@@ -57,21 +57,21 @@ Route::prefix('v1/modepaiements')->group(function () {
 
 // gestion des type pièces
 Route::prefix('v1/inscritstypepieces')->group(function () {
-    Route::post('store', [\App\Http\Controllers\InscritstypepiecesController::class, 'store']);
-    Route::get('/', [\App\Http\Controllers\InscritstypepiecesController::class, 'index']);
-    Route::post('unique', [\App\Http\Controllers\InscritstypepiecesController::class, 'getInscritstypepiece']);
-    Route::post('update', [\App\Http\Controllers\InscritstypepiecesController::class, 'update']);
-    Route::post('remove', [\App\Http\Controllers\InscritstypepiecesController::class, 'remove']);
+    Route::post('store', [\App\Http\Controllers\InscritsTypePiecesController::class, 'store']);
+    Route::get('/', [\App\Http\Controllers\InscritsTypePiecesController::class, 'index']);
+    Route::post('unique', [\App\Http\Controllers\InscritsTypePiecesController::class, 'getInscritstypepiece']);
+    Route::post('update', [\App\Http\Controllers\InscritsTypePiecesController::class, 'update']);
+    Route::post('remove', [\App\Http\Controllers\InscritsTypePiecesController::class, 'remove']);
 });
 
 // gestion des points de paiements
 Route::prefix('v1/pointsdepaiements')->group(function () {
-    Route::post('store', [\App\Http\Controllers\PointsdepaiementsController::class, 'store']);
-    Route::get('/', [\App\Http\Controllers\PointsdepaiementsController::class, 'index']);
-    Route::post('unique', [\App\Http\Controllers\PointsdepaiementsController::class, 'getPointdepaiement']);
-    Route::post('update', [\App\Http\Controllers\PointsdepaiementsController::class, 'update']);
-    Route::post('remove', [\App\Http\Controllers\PointsdepaiementsController::class, 'remove']);
-    Route::get('obj', [\App\Http\Controllers\PointsdepaiementsController::class, 'getPointsdepaiementsObj']);
+    Route::post('store', [\App\Http\Controllers\PointDePaiementsController::class, 'store']);
+    Route::get('/', [\App\Http\Controllers\PointDePaiementsController::class, 'index']);
+    Route::post('unique', [\App\Http\Controllers\PointDePaiementsController::class, 'getPointdepaiement']);
+    Route::post('update', [\App\Http\Controllers\PointDePaiementsController::class, 'update']);
+    Route::post('remove', [\App\Http\Controllers\PointDePaiementsController::class, 'remove']);
+    Route::get('obj', [\App\Http\Controllers\PointDePaiementsController::class, 'getPointsdepaiementsObj']);
 });
 Route::controller(\App\Http\Controllers\MaintenanceController::class)->prefix('v1/maintenance')->group(function () {
     Route::post('update/composant', 'update');
