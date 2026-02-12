@@ -154,6 +154,9 @@ class FedapayService implements  FedapayInterfarce
                 $paiement = Paiements::where('reference', $reference)->get()->first();
                 $update_montant_restant = $paiement->montant_restant - $actuel_montant_paye;
                 $update_montant_paye = $paiement->montant_paye + $actuel_montant_paye;
+            Log::info($update_montant_restant);
+            Log::info($update_montant_paye);
+            Log::info($actuel_montant_paye);
 
                 $update_paiement = Paiements::find($paiement->id);
 

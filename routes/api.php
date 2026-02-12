@@ -284,6 +284,7 @@ Route::prefix('v1/fedapay')->controller(\App\Http\Controllers\FedapayController:
     Route::post('store/paiement/partiel', 'savePaiementPartiel');
     Route::post('store/paiement/ouvrage', 'savePaiementOuvrage');
     Route::post('store/paiement/dsc', 'savePaiementDsc');
+    Route::post('webhook/paiements', 'webhook');
 });
 
 // gestion des paiements via kkiapay

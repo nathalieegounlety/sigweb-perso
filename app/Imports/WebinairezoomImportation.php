@@ -16,8 +16,7 @@ class WebinairezoomImportation implements ToCollection
 
     public function __construct($param)
     {
-        $this->code_formation = $param;
-        print($this->code_formation);
+        $this->code_formation = $param; 
     }
 
     public function genererPassword($length = 25)
@@ -107,8 +106,7 @@ class WebinairezoomImportation implements ToCollection
                 } else if ($rows[$i][0] == "Renseignements sur le participant non-intervenant") {
                     // echo $rows[$i][0];
                     $participant = true;
-                    // $nbr_start_insert_paneliste = $i + 1; // saut de ligne (entête)
-                    echo "Renseignements sur les participants";
+                    // $nbr_start_insert_paneliste = $i + 1; // saut de ligne (entête) 
 
                 } else if ($rows[$i][0] == "Autres présents") {
                     // echo $rows[$i][0];
