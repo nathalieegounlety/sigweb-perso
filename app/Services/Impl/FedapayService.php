@@ -142,6 +142,7 @@ class FedapayService implements  FedapayInterfarce
         try {
             // récupérer le statut de la transaction côté serveur
             $data_transaction = Transaction::retrieve($request->transaction_id);
+            Log::info($data_transaction);
 
                 $reference = $request->reference_paiement;
                 $actuel_montant_paye = $request->montant_total;
