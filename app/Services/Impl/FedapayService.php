@@ -142,7 +142,11 @@ class FedapayService implements  FedapayInterfarce
         try {
             // récupérer le statut de la transaction côté serveur
             $data_transaction = Transaction::retrieve($request->transaction_id);
-
+            
+            Log::info('info fedapay');
+            Log::info($data_transaction);
+            Log::info('end info fedapay');
+ 
                 $reference = $request->reference_paiement;
                 $actuel_montant_paye = $request->montant_total;
                 $mode_paiement = Modepaiements::whereLibelle($request->mode_paiement)->first();
@@ -150,6 +154,9 @@ class FedapayService implements  FedapayInterfarce
                 $paiement = Paiements::where('reference', $reference)->get()->first();
                 $update_montant_restant = $paiement->montant_restant - $actuel_montant_paye;
                 $update_montant_paye = $paiement->montant_paye + $actuel_montant_paye;
+            Log::info($update_montant_restant);
+            Log::info($update_montant_paye);
+            Log::info($actuel_montant_paye);
 
                 $update_paiement = Paiements::find($paiement->id);
 
@@ -167,8 +174,8 @@ class FedapayService implements  FedapayInterfarce
                 if ($update_montant_restant == 0 && $actuel_montant_paye == $paiement->montant_restant) {
                     # code...
                     $update_paiement->setAttribute('statut_paiement',$statut_paiement);
-                    $paiement->setAttribute('num_transaction', $data_transaction->id);
-                    $paiement->setAttribute('statut_transaction', $data_transaction->status);
+                    $update_paiement->setAttribute('num_transaction', $data_transaction->id);
+                    $update_paiement->setAttribute('statut_transaction', $data_transaction->status);
 
                     if ($paiement_partiel) {
                         # code...

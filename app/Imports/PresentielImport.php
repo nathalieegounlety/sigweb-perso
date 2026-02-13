@@ -21,8 +21,7 @@ class PresentielImport implements ToCollection
 
     public function __construct($param)
     {
-        $this->code_formation = $param;
-        print($this->code_formation);
+        $this->code_formation = $param; 
     }
 
     public function genererPassword($length = 25) {
