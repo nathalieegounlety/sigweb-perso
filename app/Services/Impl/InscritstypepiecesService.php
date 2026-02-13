@@ -3,7 +3,7 @@
 namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
-use App\Models\Inscritstypepieces;
+use App\Models\InscritsTypePieces;
 use App\Services\contracts\InscritstypepiecesInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
@@ -11,33 +11,33 @@ use Illuminate\Http\Request;
 class InscritstypepiecesService implements InscritstypepiecesInterface
 {
 
-    public function saveInscritstypepiece(Request $data): \Illuminate\Http\JsonResponse
-    {
-        // TODO: Implement saveInscritstypepiece() method.
-        // vérifier si la inscritstypepiece existe déjà
-        $checkInscritstypepiece = Inscritstypepieces::whereLibelle($data->libelle)->exists();
-        if ($checkInscritstypepiece) {
-            return ResponseHandler::error("La inscritstypepiece existe déjà", 409);
-        }
-        $inscritstypepiece = new Inscritstypepieces();
-        $inscritstypepiece->setAttribute('libelle', $data->libelle);
-        $inscritstypepiece->setAttribute('description', $data->description);
+    public function saveInscritstypepiece(Request $request): \Illuminate\Http\JsonResponse
+{
+    try {
+        $validated = $request->validate([
+            'libelle' => 'required|string|max:255|unique:inscrits_type_pieces,libelle',
+        ]);
 
-        if (auth('api')->user()) {
-            $user = auth('api')->user();
-            $inscritstypepiece->setAttribute('created_by', $user->id);
-            $inscritstypepiece->setAttribute('updated_by', $user->id);
-        }
+        $inscritstypepiece = InscritsTypePieces::create([
+            'libelle' => $validated['libelle'],
+            'created_by' => auth('api')->id(),
+            'updated_by' => auth('api')->id(),
+        ]);
 
-        $inscritstypepiece->save();
-        return ResponseHandler::success("Création efféctuée");
-
+        return ResponseHandler::success("Création effectuée", $inscritstypepiece);
+    } catch (\Exception $e) {
+        // Log l'erreur pour débogage
+        \Log::error("Erreur lors de la sauvegarde : " . $e->getMessage());
+        return ResponseHandler::error("Erreur serveur : " . $e->getMessage(), 500);
     }
+}
 
-    public function getInscritstypepiece(int $id): Inscritstypepieces
+
+
+    public function getInscritstypepiece(int $id): InscritsTypePieces
     {
         // TODO: Implement getInscritstypepiece() method.
-        $inscritstypepiece = Inscritstypepieces::find($id);
+        $inscritstypepiece = InscritsTypePieces::find($id);
         if (!$inscritstypepiece) {
             return ResponseHandler::error("La inscritstypepiece n'existe pas", 409);
         }
@@ -55,7 +55,7 @@ class InscritstypepiecesService implements InscritstypepiecesInterface
 
         // Filtres spécifiques
         $filterLibelle = $request->input('filter_libelle');
-        $filterIsEnable = $request->input('filter_is_enable');
+        $filterIsEnable = $request->input('filter_enable');
         $filterUpdatedAt = $request->input('filter_updated_at');
         $filterAuthor = $request->input('filter_author');
 
@@ -75,7 +75,6 @@ class InscritstypepiecesService implements InscritstypepiecesInterface
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('inscrits_type_pieces.libelle', 'like', "%{$search}%")
-                    ->orWhere('inscrits_type_pieces.description', 'like', "%{$search}%")
                     ->orWhere('users.name', 'like', "%{$search}%"); // Recherche sur auteur
             });
         }
@@ -85,7 +84,7 @@ class InscritstypepiecesService implements InscritstypepiecesInterface
             $query->where('inscrits_type_pieces.libelle', 'like', "%{$filterLibelle}%");
         }
         if ($filterIsEnable !== null && $filterIsEnable !== '') {
-            $query->where('inscrits_type_pieces.is_enable', $filterIsEnable); // 0 ou 1
+            $query->where('inscrits_type_pieces.enable', $filterIsEnable); // 0 ou 1
         }
         if ($filterUpdatedAt) {
             $query->whereDate('inscrits_type_pieces.updated_at', $filterUpdatedAt);
@@ -109,13 +108,13 @@ class InscritstypepiecesService implements InscritstypepiecesInterface
     public function update(Request $data): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement update() method.
-        $inscritstypepiece = Inscritstypepieces::find($data->id);
+        $inscritstypepiece = InscritsTypePieces::find($data->id);
 
         if (!$inscritstypepiece) {
             return ResponseHandler::error("Inscritstypepiece à modifier introuvable",404);
         }
         // check existing data
-        $checkData = Inscritstypepieces::whereLibelle($data->libelle)->where("id", "!=", $inscritstypepiece->id)->exists();
+        $checkData = InscritsTypePieces::whereLibelle($data->libelle)->where("id", "!=", $inscritstypepiece->id)->exists();
 
         if ($checkData) {
             return ResponseHandler::error("Le libellé existe déjà");
@@ -133,7 +132,7 @@ class InscritstypepiecesService implements InscritstypepiecesInterface
     {
         // TODO: Implement remove() method.
         // TODO: Implement remove() method.
-        $inscritstypepiece = Inscritstypepieces::find($idInscritstypepiece);
+        $inscritstypepiece = InscritsTypePieces::find($idInscritstypepiece);
         if (!$inscritstypepiece) {
             return ResponseHandler::error("Inscritstypepiece à supprimer introuvable",404);
         }
