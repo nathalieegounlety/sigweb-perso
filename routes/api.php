@@ -358,3 +358,8 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     Route::post('candidats', 'importCandidats');
     //
 });
+
+// gestion des tarifs
+Route::prefix('v1/tarifications')->controller(\App\Http\Controllers\TarificationsformationController::class)->group(function () {
+    Route::post('get/tarif', 'getTarif'); 
+});

@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Configuration\Middleware; 
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         //$middleware->prepend(\App\Http\Middleware\OwnCors::class);
+        $middleware->redirectGuestsTo(function (Request $request) {
+            return null; // empêcher la redirection vers route('login')
+        });
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\HasRole::class,
@@ -20,6 +25,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+
+           $exceptions->shouldRenderJsonWhen(function (Request $request) {
+                return true; // force JSON pour toutes les requêtes
+            });
+
+            $exceptions->render(function (AuthenticationException $e, Request $request) {
+                return response()->json([
+                    'message' => 'Non authentifié.'
+                ], 401);
+            });
+
         $exceptions->reportable(function (Throwable $e) {
 
             // ❌ ignorer les erreurs HTTP (404, 403…)
