@@ -9,11 +9,11 @@ use Illuminate\Http\Request;
 interface PointDePaiementsInterface
 {
     // déclaration des interfaces à utiliser
-    public function savePointDePaiement(Request $data): \Illuminate\Http\JsonResponse;
+    public function savePointdepaiement(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function getPointDePaiement(int $id): PointDePaiements;
+    public function getPointdepaiement(int $id): PointDePaiements;
 
-    public function getPointDePaiements(Request $request): LengthAwarePaginator;
+    public function getPointdepaiements(Request $request): LengthAwarePaginator;
 
     public function update(Request $data): \Illuminate\Http\JsonResponse;
 

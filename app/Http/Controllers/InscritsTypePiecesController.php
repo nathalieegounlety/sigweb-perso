@@ -12,7 +12,7 @@ class InscritsTypePiecesController extends Controller
 
     public function __construct(InscritstypepiecesInterface $inscritstypepieceService)
     {
-    //    $this->middleware('auth:api', ['except' => ['remove']]);
+       $this->middleware('auth:api', ['except' => ['remove']]);
         $this->inscritstypepieceService = $inscritstypepieceService;
     }
 
@@ -67,7 +67,6 @@ class InscritsTypePiecesController extends Controller
             // validation des données du formulaire
             $validated = $request->validate([
                 'libelle' => 'required|string',
-                'description' => 'string'
             ]);
 
             // procéder à l'enregistrement
@@ -86,7 +85,6 @@ class InscritsTypePiecesController extends Controller
         try {
             $validated = $request->validate([
                 'libelle' => 'required|string',
-                'description' => 'string',
                 'id' => 'required|integer'
             ]);
 

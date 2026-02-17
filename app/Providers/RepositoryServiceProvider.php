@@ -18,11 +18,13 @@ use App\Services\contracts\GrilletarifairesInterface;
 use App\Services\contracts\InscritstypepiecesInterface;
 use App\Services\contracts\KkiapayInterfarce;
 use App\Services\contracts\ModepaiementsInterface;
+use App\Services\contracts\MoodlesmodulesInterface;
 use App\Services\contracts\OuvragesInterface;
 use App\Services\contracts\PaiementsInterface;
 use App\Services\contracts\ReductionsInterface;
 use App\Services\contracts\RolesServiceInterface;
 use App\Services\contracts\PermissionsServiceInterface;
+use App\Services\contracts\PointDePaiementsInterface;
 use App\Services\contracts\SignatairesInterface;
 use App\Services\contracts\TypeformationsInterface;
 use App\Services\contracts\UsersInterface;
@@ -38,9 +40,11 @@ use App\Services\Impl\GrilletarifairesService;
 use App\Services\Impl\InscritstypepiecesService;
 use App\Services\Impl\KkiapayService;
 use App\Services\Impl\ModepaiementsService;
+use App\Services\Impl\MoodlesmodulesService;
 use App\Services\Impl\OuvragesService;
 use App\Services\Impl\PaiementsService;
 use App\Services\Impl\PermissionsService;
+use App\Services\Impl\PointdepaiementsService;
 use App\Services\Impl\ReductionsService;
 use App\Services\Impl\RolesService;
 use App\Services\Impl\SignatairesService;
@@ -78,7 +82,9 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(DashboardInterface::class, DashboardService::class);
         $this->app->bind(FormationsdscInterface::class, FormationsdscService::class);
         $this->app->bind(InscritstypepiecesInterface::class, InscritstypepiecesService::class);
-        $this->app->bind(PointsdepaiementsInterface::class, PointsdepaiementsService::class);
+        $this->app->bind(PointDePaiementsInterface::class, PointdepaiementsService::class);
+        $this->app->bind(MoodlesmodulesInterface::class, MoodlesmodulesService::class);
+
 
     }
 
