@@ -11,7 +11,7 @@ interface PointDePaiementsInterface
     // déclaration des interfaces à utiliser
     public function savePointdepaiement(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function getPointdepaiement(int $id): PointDePaiements;
+    public function getPointdepaiement(int $id);
 
     public function getPointdepaiements(Request $request): LengthAwarePaginator;
 

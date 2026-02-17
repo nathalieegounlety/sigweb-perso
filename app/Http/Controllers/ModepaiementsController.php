@@ -107,7 +107,7 @@ private ModepaiementsInterface $modepaiementInterface;
                 'id' => 'required|integer'
             ]);
 
-           return  $this->ModepaiementsService->remove($request->id);
+           return  $this->modepaiementInterface->remove($request->id);
 
             // call update service
         } catch (\Illuminate\Validation\ValidationException $e) {

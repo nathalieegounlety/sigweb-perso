@@ -43,7 +43,7 @@ class PointdepaiementsService implements PointdepaiementsInterface
         return ResponseHandler::success("Création effectuée", $pointsdepaiement);
     }
 
-    public function getPointdepaiement(int $id): PointDePaiements
+    public function getPointdepaiement(int $id)
     {
         $pointsdepaiement = PointDePaiements::find($id);
         if (!$pointsdepaiement) {
@@ -62,7 +62,7 @@ class PointdepaiementsService implements PointdepaiementsInterface
         $query = PointDePaiements::with(['getUserUpdated' => function($query) {
             $query->select('id', 'name', 'email', 'code_user');
         }])
-        ->select('PointDePaiements.*');
+        ->select('point_de_paiements.*');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
