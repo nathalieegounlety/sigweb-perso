@@ -151,6 +151,15 @@ Route::prefix('v1/typeformations')->controller(\App\Http\Controllers\Typeformati
     Route::post('remove', 'remove');
 });
 
+// gestion des moodlestypeexamens
+Route::prefix('v1/moodletypeexamens')->controller(\App\Http\Controllers\MoodletypeexamensController::class)->group(function () {
+    Route::post('store', 'store');
+    Route::get('/', 'index');
+    Route::post('unique', 'getMoodletypeexamen');
+    Route::post('update', 'update');
+    Route::post('remove', 'remove');
+});
+
 // gestion des moodlesmodules
 Route::prefix('v1/moodlesmodules')->controller(\App\Http\Controllers\MoodlemodulesController::class)->group(function () {
     Route::post('store', 'store');
@@ -159,6 +168,7 @@ Route::prefix('v1/moodlesmodules')->controller(\App\Http\Controllers\Moodlemodul
     Route::post('update', 'update');
     Route::post('remove', 'remove');
 });
+
 
 
 // gestion des grilles tarifaires
