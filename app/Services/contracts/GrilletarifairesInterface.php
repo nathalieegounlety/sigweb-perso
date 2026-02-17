@@ -11,7 +11,7 @@ interface GrilletarifairesInterface
     // déclaration des interfaces à utiliser
     public function saveGrilletarifaire(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function getGrilletarifaire(int $id): Grilletarifaires;
+    public function getGrilletarifaire(int $id);
 
     public function getGrilletarifaires(Request $request): LengthAwarePaginator;
 

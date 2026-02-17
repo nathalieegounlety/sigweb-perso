@@ -372,3 +372,12 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
 Route::prefix('v1/tarifications')->controller(\App\Http\Controllers\TarificationsformationController::class)->group(function () {
     Route::post('get/tarif', 'getTarif'); 
 });
+
+
+// gestion des formateurs
+Route::prefix('v1/formateurs')->controller(\App\Http\Controllers\FormateursController::class)->group(function () {
+    Route::post('store', 'store');
+    Route::get('/', 'index'); 
+    Route::post('update', 'update');
+    Route::post('remove', 'remove'); 
+});

@@ -12,6 +12,7 @@ use App\Services\contracts\ComptabilitesInterface;
 use App\Services\contracts\DashboardInterface;
 use App\Services\contracts\DocumentsInterface;
 use App\Services\contracts\FedapayInterfarce;
+use App\Services\contracts\FormateursInterface;
 use App\Services\contracts\FormationsdscInterface;
 use App\Services\contracts\FormationsInterface;
 use App\Services\contracts\GrilletarifairesInterface;
@@ -34,6 +35,7 @@ use App\Services\Impl\ComptabilitesService;
 use App\Services\Impl\DashboardService;
 use App\Services\Impl\DocumentsService;
 use App\Services\Impl\FedapayService;
+use App\Services\Impl\FormateursService;
 use App\Services\Impl\FormationsdscService;
 use App\Services\Impl\FormationsService;
 use App\Services\Impl\GrilletarifairesService;
@@ -84,8 +86,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(InscritstypepiecesInterface::class, InscritstypepiecesService::class);
         $this->app->bind(PointDePaiementsInterface::class, PointdepaiementsService::class);
         $this->app->bind(MoodlesmodulesInterface::class, MoodlesmodulesService::class);
-
-
+        $this->app->bind(FormateursInterface::class, FormateursService::class);
     }
 
     /**

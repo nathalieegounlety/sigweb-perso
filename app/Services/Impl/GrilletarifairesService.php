@@ -37,7 +37,7 @@ class GrilletarifairesService implements GrilletarifairesInterface
         return ResponseHandler::success("Création efféctuée");
     }
 
-    public function getGrilletarifaire(int $id): Grilletarifaires
+    public function getGrilletarifaire(int $id) 
     {
         // TODO: Implement getGrilletarifaire() method.
         $data = Grilletarifaires::find($id);
