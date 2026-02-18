@@ -17,6 +17,8 @@ interface FormateursInterface
 
     public function remove(int $id): \Illuminate\Http\JsonResponse;    
 
-    public function getFormateur(int $id);
+    public function getFormateur(int $id); 
+
+    public function getFormateurFormations(int $id);
 
 }

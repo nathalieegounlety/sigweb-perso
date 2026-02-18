@@ -4,6 +4,7 @@ namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
 use App\Models\Formateurs;
+use App\Models\Formationsformateurs;
 use App\Services\contracts\FormateursInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
@@ -153,7 +154,27 @@ class FormateursService implements FormateursInterface
     public function getFormateur(int $id) 
     {
         // TODO: Implement getGrilletarifaire() method.
-        $data = Formateurs::find($id);
+        $data = Formateurs::with('getUserUpdated:id,name,email,code_user')
+            ->leftJoin('pays','pays.id','=','formateurs.nationalite')
+            ->select('formateurs.id','formateurs.titre', 'formateurs.nom','formateurs.enable','formateurs.prenoms', 'formateurs.email','formateurs.telephone',
+            'formateurs.organisme','formateurs.specialite','formateurs.fonction','formateurs.genre','formateurs.updated_by', 'formateurs.updated_at',
+            'pays.nom_pays','pays.id as pays_id')
+            ->where('formateurs.id',$id)
+            ->get()->first();
+            // Formateurs::find($id);
+        if (!$data) {
+            return ResponseHandler::error("La données n'existe pas", 409);
+        }
+        return ResponseHandler::success("ok", $data);
+    } 
+
+    public function getFormateurFormations(int $id) 
+    {
+        // TODO: Implement getGrilletarifaire() method.
+        $data = Formationsformateurs::join('formations','formations.id','=','formationsformateurs.formation_id')
+        ->select('formations.theme','formations.code_formation','formations.date_debut','formations.date_fin')
+        ->where('formationsformateurs.formateur_id',$id)
+        ->get() ;
         if (!$data) {
             return ResponseHandler::error("La données n'existe pas", 409);
         }

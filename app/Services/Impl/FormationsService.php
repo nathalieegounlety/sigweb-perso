@@ -257,7 +257,7 @@ class FormationsService implements FormationsInterface
         if ($search) {
             $queryFormations->where(function ($q) use ($search) {
                 $q->where('formations.code_formation', 'like', "%{$search}%")
-                    ->orWhere('formations.theme', 'like', "%{$search}%")
+                ->orWhere('formations.theme', 'like', "%{$search}%")
                 ->orWhere('formations.id_webinaire', 'like', "%{$search}%"); // Recherche sur auteur
             });
         }
@@ -282,7 +282,7 @@ class FormationsService implements FormationsInterface
         }
         if ($filterAuthor) {
             $queryFormations->where('users.name', 'like', "%{$filterAuthor}%");
-        }
+        } 
 
         // Tri
         if ($sortField === 'get_user_updated.name') {
@@ -593,6 +593,11 @@ class FormationsService implements FormationsInterface
         $search = $request->input('search');
         $sortField = $request->input('sort_field', 'id');
         $sortOrder = $request->input('sort_order', 'desc');
+        
+        $filterNom = $request->input('filter_nom');
+        $filterPrenoms = $request->input('filter_prenoms');
+        $filterCreatedAt = $request->input('filter_created_at');
+        
 
         $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
@@ -624,7 +629,44 @@ class FormationsService implements FormationsInterface
                     ->orWhere('auditeurs.email', 'like', "%{$search}%");
             });
         }
+
+        if ($filterNom) {
+            $liste_inscrits->whereDate('auditeurs.nom', $filterNom);
+        }
+
+        if ($filterPrenoms) {
+            $liste_inscrits->whereDate('auditeurs.prenoms', $filterPrenoms);
+        }
+
+        if ($filterCreatedAt) {
+            $liste_inscrits->whereDate('inscriptions.created_at', $filterCreatedAt);
+        }
+
+        if ($sortField == 'nom' || $sortField == 'prenoms' || $sortField == 'email') {
+            # code...
+        $liste_inscrits->orderBy("auditeurs.{$sortField}", $sortOrder);
+
+        }elseif ($sortField == 'mode') {
+            # code... 
+        $liste_inscrits->orderBy("grilletarifaires.type_tarif", $sortOrder);
+
+        }elseif ($sortField == 'montant') {
+            # code... 
+        $liste_inscrits->orderBy("grilletarifaires.{$sortField}", $sortOrder);
+
+        }elseif ($sortField == 'statut_paiement') {
+            # code... 
+        $liste_inscrits->orderBy("detailspaiements.{$sortField}", $sortOrder);
+
+        } 
+        
+        else{
+            
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
+
+        }
+ 
+        //$liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
 
         $data = $liste_inscrits->paginate($perPage);
         $formation = Formations::where('code_formation', $code_formation)->first();

@@ -123,4 +123,46 @@ class FormateursController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function getDetails(Request $request)
+    {
+
+        try {
+
+            // validation des données du formulaire
+            $validated = $request->validate([
+                'idFormateur' => 'required'
+            ]);
+
+            // procéder à l'enregistrement
+            return $processSave = $this->formateurService->getFormateur($request->idFormateur);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function getFormations(Request $request)
+    {
+
+        try {
+
+            // validation des données du formulaire
+            $validated = $request->validate([
+                'idFormateur' => 'required'
+            ]);
+
+            // procéder à l'enregistrement
+            return $processSave = $this->formateurService->getFormateurFormations($request->idFormateur);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
 }

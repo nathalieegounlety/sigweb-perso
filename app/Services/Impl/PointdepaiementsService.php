@@ -115,7 +115,7 @@ class PointdepaiementsService implements PointdepaiementsInterface
         return ResponseHandler::success("Modification effectuée avec succès");
     }
 
-    public function remove(int $id): \Illuminate\Http\JsonResponse
+    public function remove($id): \Illuminate\Http\JsonResponse
     {
         $pointsdepaiement = PointDePaiements::find($id);
         if (!$pointsdepaiement) {
