@@ -102,13 +102,20 @@ class MoodletypeexamensController extends Controller
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(int $id)
+    public function remove(Request $request)
     {
         try {
-            $response = $this->moodletypeexamensService->remove($id);
-            return $response;
+            $validated = $request->validate([
+                'id' => 'required|integer'
+            ]);
+
+            return $response = $this->moodletypeexamensService->remove($request->id);
+
+            // call update service
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
-            return ResponseHandler::error("Erreur lors de la suppression du module", 500, $e->getMessage());
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
 }

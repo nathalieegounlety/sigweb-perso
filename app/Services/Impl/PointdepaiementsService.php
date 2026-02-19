@@ -61,8 +61,7 @@ class PointdepaiementsService implements PointdepaiementsInterface
 
         $query = PointDePaiements::with(['getUserUpdated' => function($query) {
             $query->select('id', 'name', 'email', 'code_user');
-        }])
-        ->select('PointDePaiements.*');
+        }]);
 
         if ($search) {
             $query->where(function ($q) use ($search) {

@@ -73,7 +73,7 @@ class MoodletypeexamensService implements MoodletypeexamensInterface
         $filterUpdatedAt = $request->input('filter_updated_at');
         $filterAuthor = $request->input('filter_author');
 
-       $query = Moodletypeexamens::select('moodletypeexamens.id', 'moodletypeexamens.libelle','moodletypeexamens.code','moodletypeexamens.credit', 'moodletypeexamens.updated_at', 'moodletypeexamens.enable', 'moodletypeexamens.updated_by')
+       $query = Moodletypeexamens::select('moodletypeexamens.id', 'moodletypeexamens.libelle','moodletypeexamens.code', 'moodletypeexamens.updated_at', 'moodletypeexamens.enable', 'moodletypeexamens.updated_by')
             ->with(['getUserUpdated:id,name,email,code_user']);
 
         $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';

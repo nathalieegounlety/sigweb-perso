@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHandler;
-use App\Services\contracts\PointdepaiementsInterface;
+use App\Services\contracts\PointDePaiementsInterface;
 use Illuminate\Http\Request;
 
-class PointsDePaiementsController extends Controller
+class PointDePaiementsController extends Controller
 {
-    private PointdepaiementsInterface $pointsdepaiementsService;
+    private PointDePaiementsInterface $pointsdepaiementsService;
 
-    public function __construct(PointdepaiementsInterface $pointsdepaiementsService)
+    public function __construct(PointDePaiementsInterface $pointsdepaiementsService)
     {
-        $this->middleware('auth:api', ['except' => ['remove']]); 
+       // $this->middleware('auth:api', ['except' => ['remove']]); 
         $this->pointsdepaiementsService = $pointsdepaiementsService;
     }
 
@@ -61,11 +61,13 @@ class PointsDePaiementsController extends Controller
     public function store(Request $request)
     {
         try {
+          //  \Log::debug('Store called', ['payload' => $request->all()]);
+
             $validated = $request->validate([
                 'nom_organisme' => 'required|string|max:255|unique:point_de_paiements,nom_organisme',
                 'adresse' => 'nullable|string',
                 'ville' => 'nullable|string',
-                'pays' => 'nullable|string',
+                'pays' => 'nullable|string', 
                 'telephone' => 'nullable|string',
                 'courriel' => 'nullable|email',
                 'contact1' => 'nullable|string',
@@ -76,12 +78,17 @@ class PointsDePaiementsController extends Controller
                 'courriel2' => 'nullable|email',
                 'description' => 'nullable|string',
             ]);
+           // \Log::debug('Validation OK', $validated);
+
 
             return $this->pointsdepaiementsService->savePointdepaiement($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+           // \Log::error('Validation error', $e->errors());
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
+           // \Log::error('Internal error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
@@ -119,15 +126,16 @@ class PointsDePaiementsController extends Controller
     /**
      * Supprime un point de paiement.
      */
-    public function destroy(Request $request)
+    public function remove(Request $request)
     {
         try {
             $validated = $request->validate([
-                'id' => 'required|integer',
+                'id' => 'required|integer'
             ]);
 
-            return $this->pointsdepaiementsService->remove($request->id);
+            return $response = $this->pointsdepaiementsService->remove($request->id);
 
+            // call update service
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
