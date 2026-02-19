@@ -8,29 +8,7 @@ $fm_gratuite = false;
   @endphp  
 @endif
 @endforeach  
-{{--
-    
-    <div style="z-index:30;">
-        <div style="float:left;width:85%;">
 
-        <div style=" border-bottom:5px double #2681ca; max-width:75%; padding: 0 0 10px 0; ">
-
-        <div style="float:left; width: 90px; margin:0px; height:90px; ">
-        <img src="img/logo/entete-ohada2024.jpg" alt="" height="75px" style="height: 75px;">
-        </div>
-        <div style=" font-size:65%; line-height:1.5; margin: -25px 0 0 95px; padding:0px; top:0; font-family: Tahoma, serif; font-weight:bold; text-align:justify;">
-        Organisation  pour  l’Harmonisation en Afrique du Droit des &nbsp;Affaires <br>
-        Organization &nbsp;&nbsp; for&nbsp;   the&nbsp;  Harmonization &nbsp;&nbsp;  of   Business &nbsp;&nbsp;  Law   in &nbsp;&nbsp; Africa <br>
-        Organización  para la Armonización en África del Derecho  &nbsp;&nbsp;Mercantil <br>
-        Organização para a Harmonização  em África do Direito dos Negócios
-        </div>
-        </div>
-      </div>
-        <div style="float:right;width:15%;position:relative; text-align:right;">
-        <img src="img/logo/attestation_flyers2.png" alt="" height="80px" style="height: 80px;">
-        </div>
-    </div>
---}}
 <table>
     <thead>
         <tr>        
