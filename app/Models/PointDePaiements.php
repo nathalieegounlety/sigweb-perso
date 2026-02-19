@@ -51,6 +51,6 @@ class PointDePaiements extends Model
 
     public function getUserUpdated()
     {
-        return $this->belongsTo(User::class,'updated_by');
+        return $this->belongsTo(User::class,'updated_by','id');
     }
 }

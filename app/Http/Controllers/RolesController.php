@@ -13,7 +13,7 @@ class RolesController extends Controller
     public function __construct(RolesServiceInterface $rolesService)
     {
         // restriction des accès
-        // $this->middleware('auth:api', ['except' => ['store','index','update','remove']]);
+         $this->middleware('auth:api'); // ['except' => ['store','index','update','remove']]
 
         $this->rolesService = $rolesService;
         //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);

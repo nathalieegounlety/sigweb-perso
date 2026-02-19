@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\ResponseHandler;
 use App\Services\contracts\PointDePaiementsInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PointDePaiementsController extends Controller
 {
@@ -65,17 +66,17 @@ class PointDePaiementsController extends Controller
 
             $validated = $request->validate([
                 'nom_organisme' => 'required|string|max:255|unique:point_de_paiements,nom_organisme',
-                'adresse' => 'nullable|string',
-                'ville' => 'nullable|string',
-                'pays' => 'nullable|string', 
+                'adresse' => 'required|string',
+                'ville' => 'required|string',
+                'pays' => 'nullable|string',
                 'telephone' => 'nullable|string',
-                'courriel' => 'nullable|email',
+                'courriel' => 'required|email',
                 'contact1' => 'nullable|string',
                 'telephone1' => 'nullable|string',
-                'courriel1' => 'nullable|email',
+                'courriel1' => 'required|email',
                 'contact2' => 'nullable|string',
                 'telephone2' => 'nullable|string',
-                'courriel2' => 'nullable|email',
+                'courriel2' => 'required|email',
                 'description' => 'nullable|string',
             ]);
            // \Log::debug('Validation OK', $validated);
@@ -128,9 +129,10 @@ class PointDePaiementsController extends Controller
      */
     public function remove(Request $request)
     {
+        Log::info($request);
         try {
             $validated = $request->validate([
-                'id' => 'required|integer'
+                'id' => 'required',
             ]);
 
             return $response = $this->pointsdepaiementsService->remove($request->id);

@@ -43,7 +43,7 @@ class PointdepaiementsService implements PointdepaiementsInterface
         return ResponseHandler::success("Création effectuée", $pointsdepaiement);
     }
 
-    public function getPointdepaiement(int $id): PointDePaiements
+    public function getPointdepaiement(int $id)
     {
         $pointsdepaiement = PointDePaiements::find($id);
         if (!$pointsdepaiement) {
@@ -114,7 +114,7 @@ class PointdepaiementsService implements PointdepaiementsInterface
         return ResponseHandler::success("Modification effectuée avec succès");
     }
 
-    public function remove(int $id): \Illuminate\Http\JsonResponse
+    public function remove($id): \Illuminate\Http\JsonResponse
     {
         $pointsdepaiement = PointDePaiements::find($id);
         if (!$pointsdepaiement) {
