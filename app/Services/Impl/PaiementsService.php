@@ -336,7 +336,7 @@ class PaiementsService implements PaiementsInterface
         $totalInscGratuite = Detailspaiements::where("code_formation",$codeFormation)->where("id_reduction",3)->count();
 
         // Détails des participants
-        $liste_participants = DB::table('inscriptions')
+       $liste_participants = DB::table('inscriptions')
             ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->leftJoin('paiements', 'paiements.code_inscription', '=', 'inscriptions.code_inscription')
             ->leftJoin(
@@ -361,7 +361,7 @@ class PaiementsService implements PaiementsInterface
                     ) as frais_inscription_restant,
                     SUM(
                         CASE
-                            WHEN gt.type_tarif <> "inscription"
+                            WHEN gt.type_tarif <> "INSCRIPTION"
                             THEN dp.montant_paye
                             ELSE 0
                         END
@@ -421,11 +421,13 @@ class PaiementsService implements PaiementsInterface
                 'inscriptions.tarif_formation_id',
                 'inscriptions.type_formation',
                 'inscriptions.presentiel',
+                'inscriptions.observations',
 
                 'paiements.montant_total',
                 'paiements.montant_restant',
                 'paiements.montant_paye',
-
+                'paiements.statut_paiement',
+                
                 // Frais calculés via grille
                 DB::raw('COALESCE(dp_calc.frais_inscription_paye, 0) as frais_inscription_paye'),
                 DB::raw('COALESCE(dp_calc.frais_inscription_restant, 0) as frais_inscription_restant'),
@@ -438,10 +440,17 @@ class PaiementsService implements PaiementsInterface
                 // Toujours retourné
                 DB::raw('COALESCE(dp_flag.have_reduction_dsc, 0) as have_reduction_dsc')
             )
-
+            ->selectRaw(
+                '(EXISTS (
+                    SELECT 1 FROM rapports
+                    WHERE rapports.email = inscriptions.email 
+                    AND rapports.code_formation = ?
+                )) as a_participe',
+                [$codeFormation]
+            )
             ->where('inscriptions.code_formation', $codeFormation)
             ->orderBy('auditeurs.nom', 'ASC')
-            ->get();
+            ->get(); 
             /*->leftJoin('detailspaiements as dp', function ($join) {
                 $join->on('dp.reference_paiement', '=', 'paiements.reference')
                     ->where('paiements.type', '=', 'DSC');

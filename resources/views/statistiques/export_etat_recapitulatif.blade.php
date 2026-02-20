@@ -31,7 +31,7 @@ $fm_gratuite = false;
         </div>
     </div>
 --}}
-<table>
+<table> 
     <thead>
         <tr>        
             <th>
@@ -62,7 +62,7 @@ $fm_gratuite = false;
                        {{ \Carbon\Carbon::parse($formation->date_debut)->isoFormat('DD MMM') }}
                        au
                        {{ \Carbon\Carbon::parse($formation->date_fin)->isoFormat('DD MMM YYYY') }}
-                    @endif
+                    @endif 
                     <br>
                     Thème :  {{$formation->theme}}
                 </b>
@@ -108,29 +108,29 @@ $fm_gratuite = false;
         <tr>
             <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">PRESENTIEL</td>
             {{-- Nbre Inscrits en présentiel --}}
-            <td style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$total_inscrit_presentiel}}</b></td>
+            <td style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$stats->inscrits_presentiel}}</b></td>
             {{-- Participants à titre gratuit en présentiel --}}
-            <td style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">@if($fm_gratuite) <b>{{$total_participant_presentiel->count()}}</b> @else <b>{{getInscriptionGratuitePresentiel($formation->code_formation)}}</b> @endif</td>
+            <td style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">@if($formation->is_gratuite) <b>{{$stats->participants_presentiel}}</b> @else <b>{{$stats->gratuits_presentiel}}</b> @endif</td>
             {{-- Participants à titre payant en présentiel --}}
-            <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">@if($fm_gratuite) <b>0</b> @else <b>{{$total_inscrit_presentiel - getInscriptionGratuitePresentiel($formation->code_formation)}}</b> @endif</td>
+            <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">@if($formation->is_gratuite) <b>0</b> @else <b>{{$stats->inscrits_presentiel - $stats->gratuits_presentiel}}</b> @endif</td>
             {{-- Participants effectifs en présentiel --}}
-            @if($fm_gratuite)<td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{getPaiementAll($formation->code_formation)->count()}}</b></td>@endif
+            @if($formation->is_gratuite)<td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$stats->attestations_presentiel}}</b></td>@endif
             {{-- Participants effectifs en présentiel --}}
-            <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$total_participant_presentiel}}</b></td>
+            <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$stats->participants_presentiel}}</b></td>
             
         </tr>
         <tr>
             <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">VISIO</td>
             {{-- Nbre Inscrits en VISIO --}}
-            <td style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$total_inscrit_visio}}</b></td>
+            <td style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$stats->inscrits_visio}}</b></td>
             {{-- Participants à titre gratuit en VISIO --}}
-            <td style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">@if($fm_gratuite) <b>{{$liste_participants->count() - $total_participant_presentiel->count()}}</b> @else <b>{{getInscriptionGratuiteVisio($formation->code_formation)}}</b> @endif</td>
+            <td style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">@if($formation->is_gratuite) <b>{{ $stats->total_participants - $stats->participants_presentiel }}</b> @else <b>{{$stats->gratuits_visio}}</b> @endif</td>
             {{-- Participants à titre payant en VISIO --}}
-            <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">@if($fm_gratuite) <b>0</b> @else <b>{{$total_inscrit_visio - getInscriptionGratuiteVisio($formation->code_formation)}}</b> @endif</td>
+            <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;">@if($formation->is_gratuite) <b>0</b> @else <b>{{$stats->inscrits_visio - $stats->gratuits_visio}}</b> @endif</td>
             {{-- Participants effectifs en présentiel --}}
-            @if($fm_gratuite)<td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{getPaiementAll($formation->code_formation)->count()}}</b></td>@endif
+            @if($formation->is_gratuite)<td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$stats->attestations_visio}}</b></td>@endif
             {{-- Participants effectifs en VISIO --}}
-            <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$total_participant - $total_participant_presentiel}}</b></td>
+            <td colspan="2" style="text-align: center;  border:1px solid #000; line-height:1.5pt; padding:10px; font-size:14px;"><b>{{$stats->participants_visio}}</b></td>
             
         </tr>
         <tr>
@@ -139,54 +139,28 @@ $fm_gratuite = false;
             </th>
             {{-- Total des inscrits --}}
             <th style="text-align: center; background:#83abd8; border:2px solid #000; line-height:1.5pt; padding:10px; font-size:16px;">
-                <b>{{$total_inscrit}}</b>
+                <b>{{$stats->total_inscrits}}</b>
             </th>
             {{-- Total Participants à titre gratuit --}}
             <th style="text-align: center; background:#83abd8; border:2px solid #000; line-height:1.5pt; padding:10px; font-size:16px;">
-                @if($fm_gratuite) <b>{{$liste_participants->count()}}</b> @else <b>{{getInscriptionGratuite($formation->code_formation)}}</b> @endif
+                @if($formation->is_gratuite) <b>{{$stats->total_participants}}</b> @else <b>{{$stats->total_insc_gratuite}}</b> @endif
             </th>
             {{-- Total Participants à titre payant --}}
             <th colspan="2" style="text-align: center; background:#83abd8; border:2px solid #000; line-height:1.5pt; padding:10px; font-size:16px;">
-                @if($fm_gratuite) <b>0</b> @else <b>{{$total_inscrit - getInscriptionGratuite($formation->code_formation)}}</b> @endif
+                @if($formation->is_gratuite) <b>0</b> @else <b>{{$stats->total_inscrits - $stats->total_insc_gratuite}}</b> @endif
             </th>
             {{-- Total Participants effectifs --}}
-            @if($fm_gratuite)
+            @if($formation->is_gratuite)
             <th colspan="2" style="text-align: center; background:#83abd8; border:2px solid #000; line-height:1.5pt; padding:10px; font-size:16px;">
-                <b>{{getPaiementAll($formation->code_formation)->count()}}</b>
+                <b>{{$stats->total_attestations}}</b>
                 
             </th>
             @endif
             {{-- Total Participants effectifs --}}
             <th colspan="2" style="text-align: center; background:#83abd8; border:2px solid #000; line-height:1.5pt; padding:10px; font-size:16px;">
-                <b>{{$total_participant}}</b>                
+                <b>{{$stats->total_participants}}</b>                
             </th>
-        </tr>
-        {{--
-            
-        <tr>
-            <th colspan="10"></th>
-        </tr>
-        <tr>
-            <th colspan="2" style="border: 1px solid black; text-align:left;">TOTAL DES INSCRITS : </th>
-            <th style="border: 1px solid black; text-align:center;"><b>{{$total_inscrit}}</b></th>
         </tr> 
-        <tr>
-            <th colspan="2" style="border: 1px solid black; text-align:left;">PARTICIPANTS A TITRE GRATUIT : </th>
-            <th style="border: 1px solid black; text-align:center;"><b>@if($fm_gratuite) <b>{{$liste_participants->count()}}</b> @else <b>{{getInscriptionGratuite($formation->code_formation)}}</b> @endif</b></th>
-        </tr> 
-        <tr>
-            <th colspan="2" style="border: 1px solid black; text-align:left;">PARTICIPANTS A TITRE PAYANT EN PRESENTIEL : </th>
-            <th style="border: 1px solid black; text-align:center;"><b>{{$total_inscrit}}</b></th>
-        </tr> 
-        <tr>
-            <th colspan="2" style="border: 1px solid black; text-align:left;">PARTICIPANTS A TITRE PAYANT EN VISIO : </th>
-            <th style="border: 1px solid black; text-align:center;"><b>@if($fm_gratuite) <b>0</b> @else <b>{{$total_inscrit - getInscriptionGratuite($formation->code_formation)}}</b> @endif</b></th>
-        </tr> 
-        <tr>
-            <th colspan="2" style="border: 1px solid black; text-align:left;">PARTICIPANTS EFFECTIFS</th>
-            <th style="border: 1px solid black; text-align:center;"><b>{{$liste_participants->count()}}</b></th>
-        </tr> 
-        --}}
         <tr>
             <th colspan="10"></th>
         </tr>
@@ -202,11 +176,17 @@ $fm_gratuite = false;
             <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:200px;"><b>E-mail</b></th> 
             <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:100px;"><b>Tel</b></th> 
             <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:100px;"><b>Mode</b></th> 
-            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:70px;"><b>Part.?</b></th>
+            @if ($formation->is_formation_dsc)
+            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:70px;"><b>Frais d'inscription</b></th>
+            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:70px;"><b>Frais de participation</b></th>                
+            @endif
+            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:70px;"><b>Réduction</b></th>  
+            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:70px;"><b>Montant total</b></th>              
+            
             <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:80px;"><b>Statut</b></th> 
-            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:100px;"><b>Montant</b></th>  
-            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:100px;"><b>Payé</b></th>  
-            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:100px;"><b>Restant</b></th>  
+            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:100px;"><b>Montant Payé</b></th>  
+            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:100px;"><b>Montant Restant</b></th>  
+            <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:100px;"><b>A participé</b></th>  
             <th style="margin:0; padding:5px; border: 1px solid black; background:#83abd8; text-align: center; width:180px;"><b>Obs.</b></th> 
             <th></th>
         </tr> 
@@ -215,16 +195,15 @@ $fm_gratuite = false;
 <tbody>  
 
 @php
-    $i=0;
-    $somme_montant_total_paye = 0;
-    $somme_montant_total = 0;
-    $somme_montant_total_restant = 0;
-    $total_paye = 0;
+    $i=0; 
+    $total_frais_inscription = 0;
+    $total_frais_scolarite = 0;
+    $total_frais = 0;
+    $total_frais_paye = 0;
+    $total_frais_restant = 0; 
 @endphp
-@foreach($liste_participants as $item) 
-<!-- vérifier si le participant a effectuer un paiement sur la plateforme -->
-@if (getPaiement($formation->code_formation,$item->email,$item->tarif_formation_id)->count() > 0)
-@foreach (getPaiement($formation->code_formation,$item->email,$item->tarif_formation_id) as $data) 
+@foreach($participants as $item) 
+<!-- vérifier si le participant a effectuer un paiement sur la plateforme -->  
 <tr style="margin:0; backround-color:#c6f7e6;">
 <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;"><b>{{ ++$i  }}</b></td>
 <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->nom }}</td>
@@ -232,110 +211,78 @@ $fm_gratuite = false;
 <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->email }}</td>  
 <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->telephone }}</td>  
 <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{ $item->type_formation }}</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">    
-    @if (checkAParticiper($formation->code_formation,$item->email))
-      OUI                                      
-    @else
-      NON                                      
-    @endif                               
-</td> 
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">PAYE</td> 
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">{{ $data->montant_paye+$data->montant_restant }}</td>  
-@if ($item->type_formation = "ETUDIANTS" || $item->type_formation = "PROFESSIONNELS")
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">{{ $data->montant_paye }}</td>  
-@else
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">{{ $data->montant_paye }}</td>  
-@endif 
-@php 
-    $somme_montant_total_paye = $somme_montant_total_paye + $data->montant_paye;
-    $somme_montant_total_restant = $somme_montant_total_restant + $data->montant_paye;
-    $somme_montant_total = $somme_montant_total + $somme_montant_total_restant + $somme_montant_total_paye;
-@endphp
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">{{ $data->montant_restant }}</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$data->modepaiement}}</td>   
-</tr> 
-@if ($data->montant_paye)
+@if ($formation->is_formation_dsc)
+@php
     
+    $total_frais_inscription = $total_frais_inscription + $item->frais_inscription_paye + $item->frais_inscription_restant;
+    $total_frais_scolarite = $total_frais_scolarite + $item->frais_scolarite_paye + $item->frais_scolarite_restant ; 
+@endphp
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{ $item->frais_inscription_paye + $item->frais_inscription_restant }}</td>  
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{ $item->frais_scolarite_paye + $item->frais_scolarite_restant }}</td>      
 @endif 
-@endforeach 
-@elseif(getPaiementratuit($formation->code_formation,$item->email,$item->tarif_formation_id)->count() > 0)
-<tr style="margin:0; backround-color:#aba3a3;">
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;"><b>{{ ++$i  }}</b></td>
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->nom }}</td>
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->prenoms }}</td>
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->email }}</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->telephone }}</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{ $item->type_formation }}</td> 
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">    
-    @if (checkAParticiper($formation->code_formation,$item->email))
-      OUI                                      
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+    @if ($item->have_reduction_dsc)
+        5%
     @else
-      NON                                      
-    @endif                               
+        {{ $item->reduction_pourcentage }}%
+    @endif
 </td> 
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">GRATUIT</td>  
-@php
-                                      $getMontants = getMontantFm($formation->code_formation,$item->email);
-                                      $mtFm = 0; $mtPaye = 0; $mtRestant = 0;
-                                  @endphp
-                                  @foreach ($getMontants as $mt)
-                                      @php
-                                          $mtPaye = $mtPaye+$mt->montant_paye; 
-                                          $mtRestant = $mtRestant +$mt->montant_restant;
-                                          $mtFm = $mtFm + $mt->mtPaye + $mtRestant; 
-                                      @endphp
-                                  @endforeach
-                                  @php 
-                                    $somme_montant_total_paye = $somme_montant_total_paye + $mtPaye;
-                                    $somme_montant_total_restant = $somme_montant_total_restant + $mtRestant;
-                                    $somme_montant_total = $somme_montant_total + $mtRestant + $mtPaye;
-                                @endphp
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$mtPaye + $mtRestant}}</td> 
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$mtPaye}}</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$mtRestant}}</td>   
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;"></td>   
-</tr>  
-@else 
-<tr style="margin:0; backround-color:#aba3a3;">
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;"><b>{{ ++$i  }}</b></td>
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->nom }}</td>
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->prenoms }}</td>
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->email }}</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $item->telephone }}</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{ $item->type_formation }}</td> 
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">    
-    @if (checkAParticiper($formation->code_formation,$item->email))
-      OUI                                    
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">
+    @php 
+    $total_frais = $item->montant_total + $total_frais; 
+    @endphp
+    {{ $item->montant_total }}</td>
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$item->statut_paiement ? $item->statut_paiement : 'IMPAYE'}}</td>   
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+    @if ($item->type_formation === 'PROFESSIONNELS' || $item->type_formation === 'ETUDIANTS' || $item->type_formation === 'INSCRIPTION')
+    @php  
+    $total_frais_paye = $total_frais_paye + $item->frais_inscription_paye + $item->frais_scolarite_paye; 
+    @endphp
+        {{ $item->frais_inscription_paye + $item->frais_scolarite_paye }}
     @else
-      NON                                     
-    @endif                               
-</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">IMPAYE</td>  
-@php
-$getMontants = getMontantFm($formation->code_formation, $item->email);
-$mtFm = 0;
-$mtPaye = 0;
-$mtRestant = 0;
-@endphp
-@foreach ($getMontants as $mt)
-@php
-    $mtRestant = $mtRestant + $mt->montant_restant;
-    $mtFm = $mtFm + $mt->mtPaye + $mtRestant;
-@endphp
-@endforeach
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$mtRestant+$mtPaye}}</td>  
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$mtPaye}}</td>
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$mtRestant}}</td>
-<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;"></td>   
+    @php  
+    $total_frais_paye = $total_frais_paye + $item->montant_paye ; 
+    @endphp
+
+        {{ $item->montant_paye }}
+    @endif
+</td>   
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+    @if ($item->type_formation === 'PROFESSIONNELS' || $item->type_formation === 'ETUDIANTS' || $item->type_formation === 'INSCRIPTION')
+        @php 
+            $total_frais_restant = $total_frais_restant + $item->frais_inscription_restant + $item->frais_scolarite_restant; 
+        @endphp
+        {{ $item->frais_inscription_restant + $item->frais_scolarite_restant }}
+    @else
+        @php 
+            $total_frais_restant = $total_frais_restant + $item->montant_restant; 
+        @endphp
+        {{ $item->montant_restant }}
+    @endif
+</td>   
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
+    @if ($item->a_participe)
+        Oui
+    @else
+        Non
+    @endif
+</td>   
+<td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{$item->observations}}</td>   
 </tr>  
-@endif
-@endforeach
+@endforeach   
 
 <tr style="margin:0;min-height:35px;">
-    <td colspan="8" style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b>Total</b></td> 
-    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b>{{ $somme_montant_total }}</b></td> 
-    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b>{{ $somme_montant_total_paye }}</b></td>    
-    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;">{{ $somme_montant_total_restant }}</td>    
+    <td colspan="6" style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b>Total</b></td> 
+    @if ($formation->is_formation_dsc)
+    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b>{{ $total_frais_inscription }}</b></td> 
+    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b>{{ $total_frais_scolarite }}</b></td>         
+    @endif
+    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b></b></td> 
+    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b>{{ $total_frais }}</b></td>  
+    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"><b></b></td>   
+    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;">{{ $total_frais_paye }}</td>  
+    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;">{{ $total_frais_restant }}</td>   
+    <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"></td>   
     <td style="margin:0; padding:5px; background:#83abd8; border: 1px solid black; text-align:center;"></td>   
 </tr>
 </tbody>

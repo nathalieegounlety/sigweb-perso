@@ -26,7 +26,7 @@ class DocumentsController extends Controller
         $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
             'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc','listeFormateurs',
             'exportAllAttestationParticipant','telechargerAttestationFormateur','consulterAttestationFormateur','proformaOuvrage',
-            'exportAllAttestationFormateur','recuPaiementOuvrage']]);
+            'exportAllAttestationFormateur','recuPaiementOuvrage','exportEtatRecapitulatif']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -541,7 +541,7 @@ class DocumentsController extends Controller
     }
 
     public function exportEtatRecapitulatif(Request $request,$code_formation)
-    {
+    { 
         return Excel::download(new ExportEtatRecapitulatif($code_formation),"SIGWEB_ERSUMA_Etat_recapitulatif_".$code_formation."_".date("Ymd").'_'.date("His").".xlsx");
     }
 
