@@ -66,11 +66,11 @@ Route::prefix('v1/inscritstypepieces')->group(function () {
 
 // gestion des points de paiements
 Route::prefix('v1/pointdepaiements')->group(function () {
-    Route::post('store', [\App\Http\Controllers\PointsDePaiementsController::class, 'store']);
-    Route::get('/', [\App\Http\Controllers\PointsDePaiementsController::class, 'index']);
-    Route::post('unique', [\App\Http\Controllers\PointsDePaiementsController::class, 'getPointdepaiement']);
-    Route::post('update', [\App\Http\Controllers\PointsDePaiementsController::class, 'update']);
-    Route::post('remove', [\App\Http\Controllers\PointsDePaiementsController::class, 'remove']);
+    Route::post('store', [\App\Http\Controllers\PointDePaiementsController::class, 'store']);
+    Route::get('/', [\App\Http\Controllers\PointDePaiementsController::class, 'index']);
+    Route::post('unique', [\App\Http\Controllers\PointDePaiementsController::class, 'getPointdepaiement']);
+    Route::post('update', [\App\Http\Controllers\PointDePaiementsController::class, 'update']);
+    Route::post('remove', [\App\Http\Controllers\PointDePaiementsController::class, 'remove']);
 });
 Route::controller(\App\Http\Controllers\MaintenanceController::class)->prefix('v1/maintenance')->group(function () {
     Route::post('update/composant', 'update');
@@ -357,6 +357,9 @@ Route::prefix('v1/zoom')->controller(\App\Http\Controllers\ZoomController::class
     Route::post('inscription/store', 'inscriptionStore')->name('zoom.sync-inscrit');
 });
 
+
+
+
 Route::get('v1/test-error-mail', function () {
     throw new Exception('🔥 Test envoi mail erreur Laravel 12');
 });
@@ -393,3 +396,14 @@ Route::prefix('v1/formateurs')->controller(\App\Http\Controllers\FormateursContr
     Route::post('get/details', 'getDetails'); 
     Route::post('get/formations', 'getFormations'); 
 });
+
+// gestion de zoom records
+Route::prefix('v1/zoom-records')->controller(\App\Http\Controllers\ZoomRecordController::class)->group(function () {
+    Route::post('store', 'store');
+    Route::get('/', 'index');
+    Route::post('update', 'update');
+    Route::post('remove', 'remove');
+   Route::post('get/details', 'getDetails');
+    Route::post('get/formations', 'getFormations');
+});
+

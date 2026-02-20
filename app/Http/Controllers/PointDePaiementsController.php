@@ -62,7 +62,7 @@ class PointDePaiementsController extends Controller
     public function store(Request $request)
     {
         try {
-          //  \Log::debug('Store called', ['payload' => $request->all()]);
+            \Log::debug('Store called', ['payload' => $request->all()]);
 
             $validated = $request->validate([
                 'nom_organisme' => 'required|string|max:255|unique:point_de_paiements,nom_organisme',
@@ -79,16 +79,16 @@ class PointDePaiementsController extends Controller
                 'courriel2' => 'required|email',
                 'description' => 'nullable|string',
             ]);
-           // \Log::debug('Validation OK', $validated);
+            \Log::debug('Validation OK', $validated);
 
 
             return $this->pointsdepaiementsService->savePointdepaiement($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-           // \Log::error('Validation error', $e->errors());
+            \Log::error('Validation error', $e->errors());
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
-           // \Log::error('Internal error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            \Log::error('Internal error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
