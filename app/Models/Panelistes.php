@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Panelistes extends Model
 {
-    
     use HasFactory;
     protected $table = 'panelistes';
     protected $primaryKey = 'id';
@@ -39,6 +38,6 @@ class Panelistes extends Model
 
     public function getInscrit()
     {
-        return $this->belongsTo(Inscriptions::class,'id', 'email');
+        return $this->belongsTo(Inscription::class,'id', 'email');
     }
 }
