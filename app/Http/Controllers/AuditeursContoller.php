@@ -1,10 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
-
-use App\Helpers\ResponseHandler;
-use App\Models\Auditeurs;
-use App\Models\cr;
+namespace App\Http\Controllers; 
+use App\Helpers\ResponseHandler; 
 use App\Services\contracts\AuditeursInterface;
 use Illuminate\Http\Request;
 
@@ -13,7 +10,7 @@ class AuditeursContoller extends Controller
 
     private AuditeursInterface $auditeurService;
 
-    public function __construct(AUDITEURSInterface $auditeurService)
+    public function __construct(AuditeursInterface $auditeurService)
     {
         // restriction des accès
         $this->middleware('auth:api',['except' => ['store','getAuditeurByEmail','getListeFormations','inscriptionPaiement','listePays','mesPaiements','checkPieceDsc']]);
@@ -27,7 +24,7 @@ class AuditeursContoller extends Controller
     {
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         return substr(str_shuffle($chars), 0, $length);
-    }
+    } 
 
     /**
      * Display a listing of the resource.
@@ -198,16 +195,25 @@ class AuditeursContoller extends Controller
     }
 
     public function indicateurs(Request $request){
-        try {
-            //
+        try { 
             return $data = $this->auditeurService->getIndicateurs();
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+        public function indicateursAuditeur(Request $request){
+        try { 
+            return $data = $this->auditeurService->getIndicateursAuditeur($request->email);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
 
 
     public function listeInscriptions(Request $request){
@@ -331,6 +337,45 @@ class AuditeursContoller extends Controller
             ]);
             // procéder à l'enregistrement
             return $processSave = $this->auditeurService->doUpdateTempsPresence($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function getAuditeurById(Request $request){
+        try {
+            //
+            return $data = $this->auditeurService->getAuditeurById($request->idAuditeur);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function listeModes(Request $request){
+        try {
+            //
+            return $data = $this->auditeurService->getMode($request->codeFormation);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    public function updateMode(Request $request){
+        try {
+            $this->validate($request, [
+            'code_inscription' => 'required',
+            'code_formation' => 'required', 
+            'choix_mode' => 'required'
+        ]); 
+            return $data = $this->auditeurService->updateMode($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());

@@ -196,7 +196,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::get('/', 'index');
     Route::post('update', 'update');
     Route::post('remove', 'remove');
-    Route::post('get_user', 'getUser');
+    Route::post('get_user', 'getAuditeurById');
     Route::post('inscription/formation', 'inscriptionFormation');
     Route::post('formations', 'getListeFormations');
     Route::post('by/email', 'getAuditeurByEmail');
@@ -212,6 +212,9 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::get('liste/pieces', 'listePieces');
     Route::post('add/pieces', 'addPiece');
     Route::post('update/temps/presence', 'updateTempsPresence');
+    Route::post('info/indicateurs', 'indicateursAuditeur');
+    Route::post('liste/modes', 'listeModes');
+    Route::post('update/modes', 'updateMode');
 });
 
 // gestion des api du frontoffice

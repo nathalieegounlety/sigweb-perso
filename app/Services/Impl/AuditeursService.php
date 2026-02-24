@@ -7,6 +7,7 @@ use App\Mail\InscriptionFormationDiplomante;
 use App\Mail\InscriptionGratuit;
 use App\Mail\Inscriptionpresentiel;
 use App\Mail\NotificationCompte;
+use App\Mail\Paiement;
 use App\Models\Auditeurs;
 use App\Models\AuditeursPieces;
 use App\Models\Detailspaiements;
@@ -16,11 +17,13 @@ use App\Models\Inscriptions;
 use App\Models\InscritsTypePieces;
 use App\Models\Modepaiements;
 use App\Models\Paiements;
+use App\Models\PaiementsTranche;
 use App\Models\Participants;
 use App\Models\Pays;
 use App\Models\Rapports;
 use App\Models\Reductions;
 use App\Models\Tarificationsformation;
+use App\Models\Tranches;
 use App\Models\User;
 use App\Services\contracts\AuditeursInterface;
 use App\Services\util\GenarateurCodeService;
@@ -45,14 +48,14 @@ class AuditeursService implements AuditeursInterface
     public function saveAuditeur(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement saveAuditeur() method.
-        $user = auth()->user();
+        $user = auth('api')->user();
         // generator password
         $generate_password = $this->genarateurCodeService->genererCodeAlphaNumeric(8);
         $check_auditeur = Auditeurs::where("email", $request->email)->exists();
         $check_user = User::where("email", $request->email)->exists();
 
         if ($check_user == true && $check_auditeur == true) {
-            return redirect()->back()->with("Cet auditeur existe déjà");
+            return ResponseHandler::success("Cet auditeur existe déjà");
         }
         // create user acount
         $dataUser = ['email' => $request->email, 'password' => $request->password,'name' => $request->nom.' '.$request->prenoms];
@@ -685,6 +688,8 @@ class AuditeursService implements AuditeursInterface
         $data = Inscriptions::query()
             ->leftJoin('formations', 'formations.code_formation', '=', 'inscriptions.code_formation')
             ->leftJoin('inscriptions_dscs', 'inscriptions_dscs.code_inscription', '=', 'inscriptions.code_inscription')
+            ->leftJoin('tarificationsformations', 'tarificationsformations.id', '=', 'inscriptions.tarif_formation_id')
+            ->leftJoin('grilletarifaires', 'grilletarifaires.id', '=', 'tarificationsformations.id_grilletarifaire')
             ->leftJoin('paiements', 'paiements.code_inscription', '=', 'inscriptions.code_inscription')
             ->select([
                 'formations.id as id_formation',
@@ -698,8 +703,9 @@ class AuditeursService implements AuditeursInterface
                 'inscriptions.email',
                 'paiements.reference',
                 'paiements.num_transaction',
-                'paiements.statut_paiement'
-            ])
+                'paiements.statut_paiement',
+                'grilletarifaires.libelle'
+            ]) 
             ->addSelect([
                 // verifier le paiement
                 \DB::raw('CASE WHEN paiements.num_transaction IS NOT NULL THEN 1 ELSE 0 END as checkPaiement'),
@@ -1354,6 +1360,694 @@ class AuditeursService implements AuditeursInterface
         } else {
             # code...
             return ResponseHandler::success("Le compte de l'auditeur n'existe pas",['success'=>false,'code_formation' => $request->code_formation]);
+        }
+    }
+
+    public function getAuditeurById($idAuditeur): \Illuminate\Http\JsonResponse
+    { 
+        $auditeur = Auditeurs::find($idAuditeur);
+
+        return  ResponseHandler::success("ok",$auditeur);
+    }
+    
+
+    public function getIndicateursAuditeur($email): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getListePays() method.
+        $user = Auditeurs::whereEmail($email)->first();
+        $nbreInscription = Inscriptions::whereEmail($user->email)->count();
+        $nbreAttestation = Rapports::whereEmail($user->email)->whereAttestationSend(true)->count();
+        $nbreParticipation = Paiements::whereEmail($user->email)->where('montant_paye','>',0)->count();
+        $nbreParticipationGratuit = Paiements::whereEmail($user->email)
+            ->whereIn('montant_paye',[0,10000])->count();
+        $totalPaye = Detailspaiements::leftJoin('paiements','paiements.reference','=','detailspaiements.reference_paiement')
+        ->where('paiements.email',$user->email)
+        ->sum('detailspaiements.montant_paye');
+        $totalRestant = Detailspaiements::leftJoin('paiements','paiements.reference','=','detailspaiements.reference_paiement')
+        ->where('paiements.email',$user->email)
+        ->sum('detailspaiements.montant_restant');
+
+        $data = [
+            'nbreInscription' => $nbreInscription,
+            'nbreAttestation' => $nbreAttestation,
+            'nbreParticipation' => $nbreParticipation,
+            'nbreParticipationGratuit' => $nbreParticipationGratuit,
+            'totalPaye' => $totalPaye,
+            'totalRestant' => $totalRestant
+        ];
+
+        return  ResponseHandler::success("ok",$data);
+
+    }
+    
+
+    public function getMode($codeFormation): \Illuminate\Http\JsonResponse
+    {
+        $modes = Tarificationsformation::join("grilletarifaires", "grilletarifaires.id", "=", "tarificationsformations.id_grilletarifaire")
+                ->where("tarificationsformations.code_formation", $codeFormation)
+                ->get(["tarificationsformations.id as code", "grilletarifaires.libelle as name"]);
+            $response["modes"] = $modes; 
+        return  ResponseHandler::success("ok",$modes);
+    }
+    
+
+    public function updateMode(Request $request): \Illuminate\Http\JsonResponse
+    {
+       
+        $new_tarification_id = $request->choix_mode;
+        $anc_tarif_fm = Inscriptions::where("code_inscription", $request->code_inscription)
+            ->where("code_formation", $request->code_formation)
+            ->first();
+
+        if (!empty($anc_tarif_fm->tarif_formation_id)) {
+            # code...
+            // vérifier le mode de la formation
+            $formation = Formations::where("code_formation", $request->code_formation)->first();
+            if ($formation->is_formation_dsc) {
+                # code...
+                //############################## contrôle spécifique pour les formations DSC #############################################
+
+                // récupérer le montant par défaut
+                $default_price = $anc_tarif_fm->getTarifFormation->getGrilletarifaire->montant;
+                $details_paiement = Detailspaiements::where("code_inscription", $request->code_inscription)
+                    ->where("id_tarification_formation", $anc_tarif_fm->tarif_formation_id)
+                    ->first();
+
+                $remise = 0 / 100;
+                if (!empty($details_paiement)) {
+                    // vérifier si la remise existe
+                    if (!empty($details_paiement->id_reduction)) {
+                        # code...
+                        $remise = $details_paiement->getReduction->pourcentage / 100;
+                    }
+                } else {
+                    $details_paiement = Detailspaiements::where("email", $anc_tarif_fm->email)
+                        ->where("id_tarification_formation", $anc_tarif_fm->tarif_formation_id)
+                        ->first();
+                    if (!empty($details_paiement)) {
+                        // vérifier si la remise existe
+                        if (!empty($details_paiement->id_reduction)) {
+                            # code...
+                            $remise = $details_paiement->getReduction->pourcentage / 100;
+                        }
+                    } else {
+                        // les données ne sont pas encore enregistrées dans la table détails paiement
+                        // update inscription
+                        $new_tarif = Tarificationsformation::find($new_tarification_id);
+                        $anc_tarif_fm->setAttribute("type_formation", $new_tarif->getGrilletarifaire->type_tarif);
+                        $anc_tarif_fm->setAttribute("tarif_formation_id", $new_tarification_id);
+                        if ($new_tarif->getGrilletarifaire->type_tarif == "PRESENTIEL") {
+                            # code...
+                            $anc_tarif_fm->setAttribute("presentiel", 1);
+                        } else {
+                            $anc_tarif_fm->setAttribute("presentiel", 0);
+                        }
+                        $anc_tarif_fm->update();
+
+                        // return success msg 
+                        return  ResponseHandler::success("Mise à jour effectuée avec succèsok");
+                    }
+ 
+                }
+
+                // $default_price = $default_price - ($default_price * $remise);
+                $new_tarif = Tarificationsformation::find($new_tarification_id);
+                $new_price = $new_tarif->getGrilletarifaire->montant; // montant scolarité
+                //$new_price = $new_price - ($new_price * $remise);
+                // vérifier si la commande est déjà payé 
+                //$paiement = ModelsPaiement::where("code_inscription", $request->code_inscription)->first();
+                $paiement = Paiements::where("reference", $details_paiement->reference_paiement)->first();
+
+                if ($paiement) {
+                    # code...
+                    if ($paiement->statut_paiement == "PAYE") {
+                        # code...
+                        // vous ne pouvez pas changer le mode de cette formation 
+                        return ResponseHandler::success("Vous ne pouvez pas changer le mode de formation. Paiement déjà enregistré.");
+                    } else {
+                        # code...
+                        // update detail paiement
+                        /*$details_paiement = Detailspaiement::where("code_inscription", $request->code_inscription)
+                                        ->where("id_tarification_formation", $anc_tarif_fm->tarif_formation_id)
+                                        ->first(); */
+
+                        // vérifier si dans détail on a un paiement
+                        $checkDetail = Detailspaiements::where("statut_paiement", "PAYE")->where("reference_paiement", $details_paiement->reference_paiement)->exists();
+
+                        if ($checkDetail) {
+                            # code...// vous ne pouvez pas changer le mode de cette formation
+                        return ResponseHandler::success("Vous ne pouvez pas changer le mode de formation. Paiement déjà enregistré.");
+                        }
+
+                        if (!empty($details_paiement)) {
+                            # code...
+                            $reference_paiement = $details_paiement->reference_paiement;
+                            // update ligne scolarité
+                            $details_paiement->setAttribute("id_tarification_formation", $new_tarification_id);
+                            $details_paiement->setAttribute("have_reduction_dsc", false);
+                            $details_paiement->setAttribute("id_reduction", null);
+                            $details_paiement->setAttribute("montant_paye", 0);
+                            $details_paiement->setAttribute("montant_restant", $new_price);
+                            $details_paiement->setAttribute("statut_paiement", "IMPAYE");
+                            $details_paiement->setAttribute("statut_traitement", "ATTENTE");
+                            $details_paiement->update();
+                            // delete paiement tranche 
+                            $deletePaiementTranche = PaiementsTranche::where("details_paiements_id", $details_paiement->id)->delete();
+
+                            $new_montant_total = $new_price;
+
+                            // update frais inscription
+                            $checkInscriptionDetails = Detailspaiements::where("id", "!=", $details_paiement->id)->where("reference_paiement", $details_paiement->reference_paiement)->exists();
+                            if ($checkInscriptionDetails) {
+                                # code...
+                                $upInscriptionDetails = Detailspaiements::where("id", "!=", $details_paiement->id)
+                                    ->where("reference_paiement", $details_paiement->reference_paiement)
+                                    ->first();
+                                $updateDetailPaiementInsc = Detailspaiements::find($upInscriptionDetails->id);
+                                $getGrille = Grilletarifaires::where('type_tarif', 'INSCRIPTION')->first();
+
+                                $priceInscription = Tarificationsformation::where("code_formation", $request->code_formation)
+                                    ->where('id_grilletarifaire', $getGrille->id)
+                                    ->first();
+
+                                $updateDetailPaiementInsc->setAttribute("id_tarification_formation", $priceInscription->id);
+                                $updateDetailPaiementInsc->setAttribute("montant_paye", 0);
+                                $updateDetailPaiementInsc->setAttribute("montant_restant", $getGrille->montant);
+                                $updateDetailPaiementInsc->setAttribute("statut_paiement", "IMPAYE");
+                                $updateDetailPaiementInsc->setAttribute("statut_traitement", "ATTENTE");
+                                $updateDetailPaiementInsc->update();
+
+                                // delete paiement tranche 
+                                $deletePaiementTranche = PaiementsTranche::where("details_paiements_id", $updateDetailPaiementInsc->id)->delete();
+
+                                $new_montant_total = $new_montant_total + $getGrille->montant;
+                            }
+                            // update paiement
+                            //$update_price = $paiement->montant_total - $default_price;
+                            //$new_price_update = $update_price = $new_price;
+                            $paiement->setAttribute("montant_total", $new_montant_total);
+                            $paiement->setAttribute("montant_paye", 0);
+                            $paiement->setAttribute("montant_restant", $new_montant_total);
+                            $paiement->setAttribute("statut_paiement", "EN ATTENTE");
+                            $paiement->setAttribute("statut_traitement", "ATTENTE");
+                            $paiement->update();
+
+                            // delete tranche
+                            $deleteTranche = Tranches::where("code_inscription", $request->code_inscription)->delete();
+
+                            // update inscription
+                            $anc_tarif_fm->setAttribute("type_formation", $new_tarif->getGrilletarifaire->type_tarif);
+                            $anc_tarif_fm->setAttribute("tarif_formation_id", $new_tarification_id);
+                            if ($new_tarif->getGrilletarifaire->type_tarif == "PRESENTIEL") {
+                                # code...
+                                $anc_tarif_fm->setAttribute("presentiel", 1);
+                            } else {
+                                $anc_tarif_fm->setAttribute("presentiel", 0);
+                            }
+                            $anc_tarif_fm->update();
+
+                              // Send Mail for auditeur
+
+                     // envoie de mail pour la refence de la facture
+            $auditeur = Auditeurs::whereEmail($anc_tarif_fm->email)->first();
+            $formation = Tarificationsformation::whereId($new_tarification_id)->pluck("id");
+                           
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'formations' => $formation,
+                'subject' => 'Inscription sur SIGWEB de ' . $auditeur->nom . ' ' . $auditeur->prenoms,
+                'email' => $auditeur->email,
+                'code_inscription' => $anc_tarif_fm->code_inscription,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' =>$anc_tarif_fm->code_inscription])
+            ];
+ 
+
+                try {
+                    # code...
+                    if ($paiement->montant_total == 0) {
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new InscriptionGratuit($contenu));
+                    } else {
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Inscriptionpresentiel($contenu));
+                    }
+                } catch (\Exception $e) {
+                    // Get error here
+
+                }
+           
+
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'reference_paiement' => $paiement->reference,
+                'subject' => 'INFORMATION SUR VOTRE DEMANDE DE PAIEMENT',
+                'email'=>$auditeur->email,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' =>$anc_tarif_fm->code_inscription])
+            ];
+
+            try {
+             # code...
+             Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
+            } catch(\Exception $e){
+                // Get error here
+
+            } 
+                            // return success msg 
+                        return ResponseHandler::success("Mise à jour effectuée");
+                        } else {
+                            # code...
+                        return ResponseHandler::success("Vous ne pouvez pas changer le mode de formation. L'identifiant code inscription n'existe pas.."); 
+                        }
+                    }
+                } else {
+                    # code...
+                    // code inscription n'existe pas 
+                        return ResponseHandler::success("Vous ne pouvez pas changer le mode de formation. L'identifiant code inscription n'existe pas...");
+                }
+
+
+                //############################## end contrôle spécifique pour les formations DSC #############################################
+            }
+
+            // récupérer le montant par défaut
+            $default_price = $anc_tarif_fm->getTarifFormation->getGrilletarifaire->montant;
+            $details_paiement = Detailspaiements::where("code_inscription", $request->code_inscription)
+                ->where("id_tarification_formation", $anc_tarif_fm->tarif_formation_id)
+                ->first();
+
+            $remise = 0 / 100;
+            if (!empty($details_paiement)) {
+                // vérifier si la remise existe
+                if (!empty($details_paiement->id_reduction)) {
+                    # code...
+                    $remise = $details_paiement->getReduction->pourcentage / 100;
+                }
+            } else {
+
+                $details_paiement = Detailspaiements::where("email", $anc_tarif_fm->email)
+                    ->where("id_tarification_formation", $anc_tarif_fm->tarif_formation_id)
+                    ->first();
+                if (!empty($details_paiement)) {
+                    // vérifier si la remise existe
+                    if (!empty($details_paiement->id_reduction)) {
+                        # code...
+                        $remise = $details_paiement->getReduction->pourcentage / 100;
+                    }
+                } else {
+                    // les données ne sont pas encore enregistrées dans la table détails paiement
+                    // update inscription
+                    $new_tarif = Tarificationsformation::find($new_tarification_id);
+                    $anc_tarif_fm->setAttribute("type_formation", $new_tarif->getGrilletarifaire->type_tarif);
+                    $anc_tarif_fm->setAttribute("tarif_formation_id", $new_tarification_id);
+                    if ($new_tarif->getGrilletarifaire->type_tarif == "PRESENTIEL") {
+                        # code...
+                        $anc_tarif_fm->setAttribute("presentiel", 1);
+                    } else {
+                        $anc_tarif_fm->setAttribute("presentiel", 0);
+                    }
+                    $anc_tarif_fm->update();
+
+                    // généré les informations dans la table paiement
+                    //#################### start ###############################"
+                    $montant_formation = $anc_tarif_fm->getTarifFormation->getGrilletarifaire->montant;
+                    // enregistrement des details de formation inscription et frais de scolarite 
+                      
+            if ($montant_formation > 0) {
+                # code...
+                
+            // générer le numero de reference facture
+            // procédure d'incrémentation du numéro inventaire
+            $annee_actuelle = date('Y');
+            $type_reference = "FACT";
+            $indicatif = "ERS";
+            $id_1 = "";
+
+            // récupérer le dernier enregistrement
+            $last_numero_paiement = Paiements::orderBy('id', 'desc')->first();
+
+            if ($last_numero_paiement == NULL) {
+                $last_id = "";
+            } else {
+                $last_id = $last_numero_paiement->reference;
+            }
+
+            if (!empty($last_id)) {
+                $id_1 = explode('-', $last_id);
+                //vérifier si nous somme dans une nouvelle année pour réinitialiser le compteur
+                $get_date = $id_1[1];
+                if ($annee_actuelle > $get_date) {
+                    # code...
+                    $numero = '0000000';
+                } else {
+                    # code...
+                    $numero = $id_1[3];
+                }
+            } else {
+                $id_1 = '000000';
+                $numero = '000000';
+            }
+
+            $numero_fact = $numero + 1;
+
+            $numero_fact_formatted = str_pad($numero_fact, 6, "0", STR_PAD_LEFT);
+            $reference_paiement = $indicatif . '-' . $annee_actuelle . '-' . $type_reference . '-' . $numero_fact_formatted;
+
+            // enregistrement du paiement 
+            $statut_details_paiement = "IMPAYE";
+            $statut_paiement = "EN ATTENTE";
+
+            $paiement = new Paiements();
+            $paiement->setAttribute('reference', $reference_paiement); 
+            $paiement->setAttribute('email', $anc_tarif_fm->email);
+            $paiement->setAttribute('telephone', 88888888);
+            $paiement->setAttribute('code_inscription', $anc_tarif_fm->code_inscription);
+            $paiement->setAttribute('montant_total', $montant_formation);
+            $paiement->setAttribute('montant_restant', $montant_formation); 
+            $paiement->setAttribute('statut_paiement', $statut_paiement); 
+            $paiement->setAttribute('type', "FORMATION");
+            $paiement->save();
+            // enregistrement des détails de la facture
+ 
+                    $details_paiement = new Detailspaiements();
+                    $details_paiement->setAttribute('reference_paiement', $paiement->reference);
+                    $details_paiement->setAttribute('code_formation', $anc_tarif_fm->code_formation);
+                    $details_paiement->setAttribute('code_inscription', $anc_tarif_fm->code_inscription);
+                    $details_paiement->setAttribute('email', $anc_tarif_fm->email);
+                    $details_paiement->setAttribute('id_tarification_formation', $new_tarif->id);
+                    $details_paiement->setAttribute('statut_paiement', 'IMPAYE'); 
+                    $details_paiement->setAttribute('statut_traitement', 'ATTENTE');
+                    $details_paiement->setAttribute('montant_restant', $montant_formation);
+                    $details_paiement->save();
+
+                     // mise à jour tarif formation
+                        if (isset($_POST["reduction_id"]) && !empty($_POST["reduction_id"])) {
+
+                            // check inscription
+                            $check_inscription = Inscriptions::where("code_formation", $request->code_formation)
+                                ->where("code_inscription", $request->code_inscription)
+                                ->first();
+                            if ($check_inscription) {
+                                // check details paiements
+
+                                $chec_details_paiements = Detailspaiements::where("code_formation", $request->code_formation)
+                                    //->where("email",$request->email)
+                                    ->where("code_inscription", $check_inscription->code_inscription)
+                                    ->exists();
+
+                                if ($chec_details_paiements) {
+                                    $detail_paiement = Detailspaiements::where("code_formation", $request->code_formation)
+                                        //->where("email",$request->email)
+                                        ->where("code_inscription", $check_inscription->code_inscription)
+                                        ->first();
+                                    // check if reduction existe
+                                    if ($detail_paiement->id_reduction) {
+                                        return ResponseHandler::success("Opération effectuée avec succès. Echec d'application de la réduction. Une réduction existe déjà.");
+                                    }
+                                    $paiement = Paiements::where("reference", $detail_paiement->reference_paiement)->first();
+                                    if ($paiement->montant_total > 0) {
+                                        # code...
+                                        // récupération montant actuel de la formation et mise à jour montant total dans la table paiement
+                                        // en retirant le montant actuel de la formation du montant total dans la table paiement
+                                        $montant_formation = $detail_paiement->getTarification->getGrilletarifaire->montant;
+                                        $update_montant_paiement = $paiement->montant_total - $montant_formation;
+                                        $reduction = Reductions::find($request->reduction_id);
+                                        // application reduction au montant existant
+                                        $montant_formation_reduction = $montant_formation - ($montant_formation * ($reduction->pourcentage / 100));
+                                        $update_montant_paiement_final = $update_montant_paiement + $montant_formation_reduction;
+
+                                        // update table details paiement 
+                                        $detail_paiement->setAttribute("id_reduction", $request->reduction_id);
+                                        $detail_paiement->update();
+                                        // update table paiement
+                                        $paiement->setAttribute("montant_total", $update_montant_paiement_final);
+                                        $paiement->update();
+                                    } else {
+                                        # code...
+                                        return ResponseHandler::success("Opération effectuée avec succès. Echec d'application de la réduction");
+                                    }
+                                }
+                            }
+                        }
+
+                    // Send Mail for auditeur
+
+                     // envoie de mail pour la refence de la facture
+            $auditeur = Auditeurs::whereEmail($anc_tarif_fm->email)->first();
+            $formation =  Tarificationsformation::whereId($new_tarification_id)->pluck("id");
+        
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'formations' => $formation,
+                'subject' => 'Inscription sur SIGWEB de ' . $auditeur->nom . ' ' . $auditeur->prenoms,
+                'email' => $auditeur->email,
+                'code_inscription' => $anc_tarif_fm->code_inscription,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' =>$anc_tarif_fm->code_inscription])
+            ];
+
+                       
+
+                try {
+                    # code...
+                    if ($montant_formation == 0) {
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new InscriptionGratuit($contenu));
+                    } else {
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Inscriptionpresentiel($contenu));
+                    }
+                } catch (\Exception $e) {
+                    // Get error here
+
+                }
+           
+
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'reference_paiement' => $paiement->reference,
+                'subject' => 'INFORMATION SUR VOTRE DEMANDE DE PAIEMENT',
+                'email'=>$auditeur->email,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' =>$anc_tarif_fm->code_inscription])
+            ];
+
+            try {
+             # code...
+             Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
+            } catch(\Exception $e){
+                // Get error here
+
+            }
+
+
+            } else {
+                # code...
+
+                 $auditeur = Auditeurs::whereEmail($anc_tarif_fm->email)->first(); 
+
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'formations' => $formation,
+                'subject' => 'Inscription sur SIGWEB de ' . $auditeur->nom . ' ' . $auditeur->prenoms,
+                'email' => $auditeur->email,
+                'code_inscription' => $anc_tarif_fm->code_inscription,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' =>$anc_tarif_fm->code_inscription])
+            ]; 
+
+                try {
+                    # code...
+                    if ($montant_formation == 0) {
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new InscriptionGratuit($contenu));
+                    } else {
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Inscriptionpresentiel($contenu));
+                    }
+                } catch (\Exception $e) {
+                    // Get error here
+
+                }
+            }
+            
+                    //################### end #######################################
+
+                    // return success msg
+                    return ResponseHandler::success("Mise à jour effectuée avec succès");
+                }
+
+                //  return redirect()->back()->with("error", "Vous ne pouvez pas changer le mode de formation.. L'identifiant code inscription n'existe pas.");
+            }
+
+            $default_price = $default_price - ($default_price * $remise);
+            $new_tarif = Tarificationsformation::find($new_tarification_id);
+            $new_price = $new_tarif->getGrilletarifaire->montant;
+            $new_price = $new_price - ($new_price * $remise);
+            // vérifier si la commande est déjà payé 
+            //$paiement = ModelsPaiement::where("code_inscription", $request->code_inscription)->first();
+            $paiement = Paiements::where("reference", $details_paiement->reference_paiement)->first();
+
+            if ($paiement) {
+                # code...
+                if ($paiement->statut_paiement == "PAYE") {
+                    # code...
+                    // vous ne pouvez pas changer le mode de cette formation
+                    return ResponseHandler::success("Vous ne pouvez pas changer le mode de formation. Paiement déjà enregistré.");
+                } else {
+                    # code... 
+
+                    if (!empty($details_paiement)) {
+                        # code...
+                        $reference_paiement = $details_paiement->reference_paiement;
+                        $details_paiement->setAttribute("id_tarification_formation", $new_tarification_id);
+                        $details_paiement->setAttribute("montant_paye", 0);
+                        $details_paiement->setAttribute("montant_restant", $new_price);
+                        $details_paiement->setAttribute("statut_paiement", "IMPAYE");
+                        $details_paiement->setAttribute("statut_traitement", "ATTENTE");
+                        $details_paiement->update();
+                        // update paiement
+                        $update_price = $paiement->montant_total - $default_price;
+                        $new_price_update = $update_price + $new_price;
+                        $paiement->setAttribute("montant_total", $new_price_update);
+                        $paiement->setAttribute("montant_paye", 0);
+                        $paiement->setAttribute("montant_restant", $new_price_update);
+                        $paiement->setAttribute("statut_paiement", "EN ATTENTE");
+                        $paiement->setAttribute("statut_traitement", "ATTENTE");
+                        $paiement->update();
+
+                        // update inscription
+                        $anc_tarif_fm->setAttribute("type_formation", $new_tarif->getGrilletarifaire->type_tarif);
+                        $anc_tarif_fm->setAttribute("tarif_formation_id", $new_tarification_id);
+                        if ($new_tarif->getGrilletarifaire->type_tarif == "PRESENTIEL") {
+                            # code...
+                            $anc_tarif_fm->setAttribute("presentiel", 1);
+                        } else {
+                            $anc_tarif_fm->setAttribute("presentiel", 0);
+                        }
+                        $anc_tarif_fm->update();
+
+
+                        //################# mise à jour reduction #################
+                        // mise à jour tarif formation
+                        if (isset($_POST["reduction_id"]) && !empty($_POST["reduction_id"])) {
+
+                            // check inscription
+                            $check_inscription = Inscriptions::where("code_formation", $request->code_formation)
+                                ->where("code_inscription", $request->code_inscription)
+                                ->first();
+                            if ($check_inscription) {
+                                // check details paiements
+
+                                $chec_details_paiements = Detailspaiements::where("code_formation", $request->code_formation)
+                                    //->where("email",$request->email)
+                                    ->where("code_inscription", $check_inscription->code_inscription)
+                                    ->exists();
+
+                                if ($chec_details_paiements) {
+                                    $detail_paiement = Detailspaiements::where("code_formation", $request->code_formation)
+                                        //->where("email",$request->email)
+                                        ->where("code_inscription", $check_inscription->code_inscription)
+                                        ->first();
+                                    // check if reduction existe
+                                    if ($detail_paiement->id_reduction) {
+                                        return ResponseHandler::success( "Opération effectuée avec succès. Echec d'application de la réduction. Une réduction existe déjà.");
+                                    }
+                                    $paiement = Paiements::where("reference", $detail_paiement->reference_paiement)->first();
+                                    if ($paiement->montant_total > 0) {
+                                        # code...
+                                        // récupération montant actuel de la formation et mise à jour montant total dans la table paiement
+                                        // en retirant le montant actuel de la formation du montant total dans la table paiement
+                                        $montant_formation = $detail_paiement->getTarification->getGrilletarifaire->montant;
+                                        $update_montant_paiement = $paiement->montant_total - $montant_formation;
+                                        $reduction = Reductions::find($request->reduction_id);
+                                        // application reduction au montant existant
+                                        $montant_formation_reduction = $montant_formation - ($montant_formation * ($reduction->pourcentage / 100));
+                                        $update_montant_paiement_final = $update_montant_paiement + $montant_formation_reduction;
+
+                                        // update table details paiement 
+                                        $detail_paiement->setAttribute("id_reduction", $request->reduction_id);
+                                        $detail_paiement->update();
+                                        // update table paiement
+                                        $paiement->setAttribute("montant_total", $update_montant_paiement_final);
+                                        $paiement->update();
+                                    } else {
+                                        # code...
+                                        return ResponseHandler::success( "Opération effectuée avec succès. Echec d'application de la réduction");
+                                    }
+                                }
+                            }
+                        }
+                        // ################# end mise à jour ####################
+
+                          // Send Mail for auditeur
+
+                     // envoie de mail pour la refence de la facture
+            $auditeur = Auditeurs::whereEmail($anc_tarif_fm->email)->first();
+            $formation =  Tarificationsformation::whereId($new_tarification_id)->pluck("id");
+                       
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'formations' => $formation,
+                'subject' => 'Inscription sur SIGWEB de ' . $auditeur->nom . ' ' . $auditeur->prenoms,
+                'email' => $auditeur->email,
+                'code_inscription' => $anc_tarif_fm->code_inscription,
+                'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' =>$anc_tarif_fm->code_inscription])
+            ];
+
+
+                try {
+                    # code...
+                    if ($paiement->montant_total == 0) {
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new InscriptionGratuit($contenu));
+                    } else {
+                        # code...
+                        Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Inscriptionpresentiel($contenu));
+                    }
+                } catch (\Exception $e) {
+                    // Get error here
+
+                }
+           
+
+            $contenu = [
+                'nom' => $auditeur->nom,
+                'prenoms' => $auditeur->prenoms,
+                'reference_paiement' => $paiement->reference,
+                'subject' => 'INFORMATION SUR VOTRE DEMANDE DE PAIEMENT',
+                'email'=>$auditeur->email
+            ];
+
+            try {
+             # code...
+             Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
+            } catch(\Exception $e){
+                // Get error here
+
+            }
+            
+
+                        // return success msg
+                        return ResponseHandler::success("Mise à jour effectuée avec succès");
+                    } else {
+                        # code...
+
+                        return ResponseHandler::success("Vous ne pouvez pas changer le mode de formation. L'identifiant code inscription n'existe pas..");
+                    }
+                }
+            } else {
+                # code...
+                // code inscription n'existe pas
+                return ResponseHandler::success("Vous ne pouvez pas changer le mode de formation. L'identifiant code inscription n'existe pas...");
+            }
+        } else {
+            # code...
+            // l'id de la tarification par défaut n'existe pas
+            // return redirect()->back()->with("error", "Vous ne pouvez pas changer le mode de formation. L'identifiant id tarif formation n'existe pas.");
+            return  ResponseHandler::success("ok");
         }
     }
 }

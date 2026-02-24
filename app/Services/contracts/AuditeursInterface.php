@@ -39,5 +39,9 @@ interface AuditeursInterface
     public function mesPieces(): \Illuminate\Http\JsonResponse;
     public function ajouterPiece(Request $request): \Illuminate\Http\JsonResponse;
     public function doUpdateTempsPresence(Request $request): \Illuminate\Http\JsonResponse;
+    public function getAuditeurById($idAuditeur): \Illuminate\Http\JsonResponse;
+    public function getIndicateursAuditeur($email): \Illuminate\Http\JsonResponse;
+    public function getMode($codeFormation): \Illuminate\Http\JsonResponse;
+    public function updateMode(Request $request): \Illuminate\Http\JsonResponse;
 
 }

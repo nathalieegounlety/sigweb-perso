@@ -4,9 +4,10 @@ namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
 use App\Models\Reductions;
-use App\Services\contracts\ReductionsInterface;
+use App\Services\contracts\ReductionsInterface; 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB as FacadesDB;
 
 class ReductionsService implements ReductionsInterface
 {
@@ -158,8 +159,12 @@ class ReductionsService implements ReductionsInterface
     public function getReductionObjet(): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getReductionObjet() method.
-        $data = Reductions::whereEnable(true)
-            ->select('reductions.id as code', 'reductions.libelle as name','reductions.pourcentage')
+        $data = Reductions::query()
+            ->whereEnable(true)
+            ->select([
+                'reductions.id as code',
+                FacadesDB::raw("CONCAT(reductions.libelle, ' - ', reductions.pourcentage,'%') AS name")
+            ]) 
             ->get();
 
         return ResponseHandler::success("ok",$data);
