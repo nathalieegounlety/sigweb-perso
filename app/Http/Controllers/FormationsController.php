@@ -211,4 +211,37 @@ class FormationsController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+    
+    public function addReductions(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            return $data = $this->formationsService->saveReduction($request); 
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    
+    public function deleteReduction(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+           return $data = $this->formationsService->saveDeleteReduction($request); 
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    
+    public function listeReductions(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+           return  $data = $this->formationsService->getListeReductions($request); 
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
 }

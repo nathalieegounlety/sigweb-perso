@@ -91,6 +91,9 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('details/dsc', 'detailFormationDsc');
     Route::get('obj', 'formationsobj');
     Route::get('liste/inscrits', 'listeIncrits');
+    Route::post('liste/reductions', 'listeReductions');
+    Route::post('add/reductions', 'addReductions');
+    Route::post('delete/reduction', 'deleteReduction');
 
 });
 

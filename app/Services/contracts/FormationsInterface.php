@@ -27,5 +27,8 @@ interface FormationsInterface
     public function getDetailFormationDsc(Request $request): \Illuminate\Http\JsonResponse;
     public function getFormationsObj(Request $request): \Illuminate\Http\JsonResponse;
     public function getListeInscrits(Request $request, string $code_formation); //: LengthAwarePaginator;
+    public function saveReduction(Request $request): \Illuminate\Http\JsonResponse;
+    public function saveDeleteReduction(Request $request): \Illuminate\Http\JsonResponse;
+    public function getListeReductions(Request $request): \Illuminate\Http\JsonResponse;
 
 }

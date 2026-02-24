@@ -11,6 +11,7 @@ use App\Models\Grilletarifaires;
 use App\Models\Inscriptions;
 use App\Models\Logopartenaires;
 use App\Models\Reductions;
+use App\Models\ReductionsFormations;
 use App\Models\Tarificationsformation;
 use App\Services\contracts\FormationsInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -676,5 +677,61 @@ class FormationsService implements FormationsInterface
             'pagination' => $data,
             'is_dsc' => $formation->is_formation_dsc
         ];
+    }
+    
+
+    public function saveReduction(Request $request): \Illuminate\Http\JsonResponse
+    {
+         if (is_array($request->idReduction) && count($request->idReduction) > 0) {
+            $liste = $request->idReduction;
+            $formation = Formations::where('code_formation',$request->code_formation)->first();
+
+            foreach ($liste as $key => $id) {
+                # code...
+                $reduction = Reductions::find($id);
+                $checkReduction = ReductionsFormations::where('reduction_id',$reduction->id)
+                ->where('formation_id',$formation->id)
+                ->exists();
+                if(!$checkReduction){
+                    $newFmReduction = new ReductionsFormations();
+                    $newFmReduction->setAttribute('reduction_id',$reduction->id);
+                    $newFmReduction->setAttribute('formation_id',$formation->id);
+                    $newFmReduction->save();
+                }
+            } 
+
+            return  ResponseHandler::success("Création efféctuée",['success'=>true]);
+
+        }else{
+            return  ResponseHandler::error("Echec lors de la création");
+        } 
+    }
+
+    
+
+    public function getListeReductions(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $formation = Formations::where('code_formation',$request->code_formation)->first();
+        $liste = ReductionsFormations::join('reductions','reductions.id','=','reductions_formations.reduction_id')
+        ->where('formation_id',$formation->id)
+        ->get(['reductions_formations.id','reductions.id','reductions.libelle','reductions.pourcentage']);
+
+        return ResponseHandler::success('ok', ['success'=>true,'listeReductions' => $liste]);
+    }
+
+    
+
+    public function saveDeleteReduction(Request $request): \Illuminate\Http\JsonResponse
+    { 
+        try {
+            //code...
+            $id = (int) $request->idReduction;
+            $data = ReductionsFormations::find($id);
+            $data->delete();
+            return ResponseHandler::success("ok",['success'=>true]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return ResponseHandler::error("ok",$th->getMessage());
+        }  
     }
 }
