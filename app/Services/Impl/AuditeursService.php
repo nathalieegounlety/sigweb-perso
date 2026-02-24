@@ -133,7 +133,7 @@ class AuditeursService implements AuditeursInterface
         $filterActif = $request->input('filter_actif');
         $filterUpdatedAt = $request->input('filter_updated_at');
 
-        $queryData = Auditeurs::select(["auditeurs.id", "auditeurs.nom", "auditeurs.prenoms", "auditeurs.email", "auditeurs.telephone", "auditeurs.pays", "auditeurs.created_at"])
+        $queryData = Auditeurs::select(["auditeurs.id", "auditeurs.nom", "auditeurs.prenoms", "auditeurs.email", "auditeurs.telephone", "auditeurs.pays", "auditeurs.updated_at"])
             ->selectRaw(
                 '(EXISTS (
                     SELECT 1 FROM auditeurs_pieces
