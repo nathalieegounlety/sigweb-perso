@@ -30,6 +30,8 @@ use App\Services\contracts\PointDePaiementsInterface;
 use App\Services\contracts\SignatairesInterface;
 use App\Services\contracts\TypeformationsInterface;
 use App\Services\contracts\UsersInterface;
+use App\Services\contracts\ZoomRecordInterface;
+use App\Services\contracts\ZoomRecordsInterface;
 use App\Services\Impl\AuditeursService;
 use App\Services\Impl\AuthService;
 use App\Services\Impl\ComptabilitesService;
@@ -54,6 +56,7 @@ use App\Services\Impl\RolesService;
 use App\Services\Impl\SignatairesService;
 use App\Services\Impl\TypeformationsService;
 use App\Services\Impl\UsersService;
+use App\Services\Impl\ZoomRecordService;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -89,8 +92,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(PointDePaiementsInterface::class, PointdepaiementsService::class);
         $this->app->bind(MoodlesmodulesInterface::class, MoodlesmodulesService::class);
         $this->app->bind(MoodletypeexamensInterface::class, MoodletypeexamensService::class);
-
         $this->app->bind(FormateursInterface::class, FormateursService::class);
+        $this->app->bind(ZoomRecordInterface::class, ZoomRecordService::class);
     }
 
     /**
