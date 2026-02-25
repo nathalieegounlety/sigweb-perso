@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Formations;
 use App\Models\FormationsDsc;
+use App\Models\PointDePaiements;
 use App\Models\points_de_paiements;
 use Illuminate\Http\Request;
 
@@ -82,8 +83,8 @@ class HomeController extends Controller
 
     public function getPointsPaiements()
     {
-        $liste_pointsdepaiements = points_de_paiements::select('point_de_paiements.*')
-            ->whereEnable(true)
+        $liste_pointsdepaiements = PointDePaiements::select('point_de_paiements.*')
+           // ->whereEnable(true)
             ->orderBy("pays", "ASC")
             ->get();
 
