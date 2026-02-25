@@ -58,7 +58,7 @@ class ReductionsController extends Controller
 
             // validation des données du formulaire
             $this->validate($request, [
-                'pourcentage' => 'required|unique:reductions,pourcentage',
+                'pourcentage' => 'required',
                 'libelle' => 'required'
             ]);
 
@@ -78,7 +78,7 @@ class ReductionsController extends Controller
         try {
 
             $this->validate($request, [
-                'pourcentage' => 'required|unique:reductions,pourcentage',
+                'pourcentage' => 'required',
                 'libelle' => 'required'
             ]);
 
