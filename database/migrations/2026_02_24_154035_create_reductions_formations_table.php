@@ -11,12 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reductions_formations', function (Blueprint $table) {
-            $table->id()->autoIncrement(); 
-            $table->unsignedBigInteger('reduction_id');
-            $table->unsignedBigInteger('formation_id');
-            $table->foreign('reduction_id')->references('id')->on('reductions')->onDelete(('cascade'));
-            $table->foreign('formation_id')->references('id')->on('formations')->onDelete(('cascade'));
+         Schema::create('reductions_formations', function (Blueprint $table) {
+            $table->id()->autoIncrement();
+
+            $table->foreignId('reduction_id')
+                ->constrained('reductions')
+                ->cascadeOnDelete();
+
+            $table->foreignId('formation_id')
+                ->constrained('formations')
+                ->cascadeOnDelete();
+
             $table->timestamps();
         });
     }
