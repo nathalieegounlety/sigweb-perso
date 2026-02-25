@@ -16,7 +16,7 @@ class FormationsController extends Controller
 
     public function __construct(FormationsInterface $formationsService){
         // restriction des accès
-        $this->middleware('auth:api', ['except' => ['recenteFormation','index','detailFormation','listeFormationAttestation','formationsDsc','detailFormationDsc']]);
+        $this->middleware('auth:api', ['except' => ['recenteFormation','index','detailFormation','listeFormationAttestation','formationsDsc','detailFormationDsc','objReductionFormation']]);
         //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);
         //$this->middleware('role:ADMIN')->only(['index']);
         //$this->middleware('permission:CREATE')->only(['index']);
@@ -239,6 +239,17 @@ class FormationsController extends Controller
         // récupérer la liste des rôles
         try {
            return  $data = $this->formationsService->getListeReductions($request); 
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    
+    public function objReductionFormation(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+           return  $data = $this->formationsService->getReductionFormation($request); 
 
         }catch (\Exception $e){
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());

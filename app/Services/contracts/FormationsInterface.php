@@ -30,5 +30,6 @@ interface FormationsInterface
     public function saveReduction(Request $request): \Illuminate\Http\JsonResponse;
     public function saveDeleteReduction(Request $request): \Illuminate\Http\JsonResponse;
     public function getListeReductions(Request $request): \Illuminate\Http\JsonResponse;
+    public function getReductionFormation(Request $request): \Illuminate\Http\JsonResponse;
 
 }

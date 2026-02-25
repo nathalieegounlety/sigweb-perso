@@ -17,6 +17,7 @@ use App\Services\contracts\FormationsInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FormationsService implements FormationsInterface
 {
@@ -714,7 +715,7 @@ class FormationsService implements FormationsInterface
         $formation = Formations::where('code_formation',$request->code_formation)->first();
         $liste = ReductionsFormations::join('reductions','reductions.id','=','reductions_formations.reduction_id')
         ->where('formation_id',$formation->id)
-        ->get(['reductions_formations.id','reductions.id','reductions.libelle','reductions.pourcentage']);
+        ->get(['reductions_formations.id','reductions.id as id_reduction','reductions.libelle','reductions.pourcentage']);
 
         return ResponseHandler::success('ok', ['success'=>true,'listeReductions' => $liste]);
     }
@@ -724,6 +725,7 @@ class FormationsService implements FormationsInterface
     public function saveDeleteReduction(Request $request): \Illuminate\Http\JsonResponse
     { 
         try {
+            Log::info($request->idReduction);
             //code...
             $id = (int) $request->idReduction;
             $data = ReductionsFormations::find($id);
@@ -731,7 +733,22 @@ class FormationsService implements FormationsInterface
             return ResponseHandler::success("ok",['success'=>true]);
         } catch (\Throwable $th) {
             //throw $th;
-            return ResponseHandler::error("ok",$th->getMessage());
+            return ResponseHandler::error("ok",400,$th->getMessage());
         }  
+    }
+
+    public function getReductionFormation(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $formation = Formations::where('code_formation',$request->code_formation)->firstOrFail();
+        $data = ReductionsFormations::query()
+        ->join('reductions','reductions.id','=','reductions_formations.reduction_id')
+        ->where('formation_id',$formation->id) 
+        ->select([ 
+                DB::raw("CONCAT(reductions.id, '-', reductions.pourcentage) AS code"),
+                DB::raw("CONCAT(reductions.libelle, ' - ', reductions.pourcentage,'%') AS name")
+        ]) 
+        ->get(); 
+
+        return ResponseHandler::success('ok', ['success'=>true,'listeReductions' => $data]);
     }
 }

@@ -527,8 +527,9 @@ class AuditeursService implements AuditeursInterface
                         $upDetail = Detailspaiements::find($checkDetail->id);
                         $upDetail->setAttribute('montant_restant', $formation->montant_a_payer);
                         // vérifier si la réduction est appliquée
-                        if ($formation->taux_reduction > 0){
-                            $reduction = Reductions::where('pourcentage', $formation->taux_reduction)->first();
+                        if ($formation->taux_reduction !== 0 && $formation->taux_reduction !== '0'){
+                            $id = explode('-',$formation->taux_reduction)[0];
+                            $reduction = Reductions::find($id);
                             $upDetail->setAttribute('id_reduction', $reduction->id);
                         }
                         // enregistrement de la preuve si ça existe

@@ -94,6 +94,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('liste/reductions', 'listeReductions');
     Route::post('add/reductions', 'addReductions');
     Route::post('delete/reduction', 'deleteReduction');
+    Route::post('obj/liste/reductions', 'objReductionFormation');
 
 });
 
