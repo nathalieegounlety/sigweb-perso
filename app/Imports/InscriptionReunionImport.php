@@ -8,17 +8,30 @@ use App\Models\Dureeformations;
 use App\Models\Inscriptions;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 
-class InscriptionReunionImport implements ToCollection
+class InscriptionReunionImport implements ToCollection, WithCustomCsvSettings
 {
     private $code_formation;
 
     public function __construct($param)
     {
         $this->code_formation = $param;
-        print($this->code_formation);
+       // print($this->code_formation);
+    }
+
+     public function getCsvSettings(): array
+    {
+        return [
+           'delimiter'        => ',',
+            'input_encoding'   => 'UTF-8',
+            'enclosure'        => '"',
+            'escape_character' => '"',   
+            'input_bom'        => true, 
+        ];
     }
 
     public function genererPassword($length = 25) {
@@ -107,10 +120,7 @@ class InscriptionReunionImport implements ToCollection
 
                         // save role user
                         $role_id = 6 ; // auditeur role
-                        $role_user = new Rolesusers();
-                        $role_user->setAttribute("roles_id", $role_id);
-                        $role_user->setAttribute("users_id", $user->id);
-                        $role_user->save();
+                        $user->roles()->sync($role_id); 
 
                         // register data into auditeur table
                         $auditeur = new Auditeurs();

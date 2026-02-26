@@ -19,10 +19,10 @@
       <p>Bonjour Madame/Monsieur,<br>
     </p><br>
     <p>Nous vous confirmons que l'importation des rapports Zoom de la formation {{ $contenu['code_formation'] }} sur la plateforme SIGWEB-ERSUMA s'est déroulée avec succès.</p>
-    <p>Merci de vous rendre sur <a href="{{ route('login') }}" target="_blank" style="text-decoration: none;">SIGWEB-ERSUMA </a> pour récupérer les rapports.</p>  
+    <p>Merci de vous rendre sur <a href="{{ env('FRONTEND_URL') }}" target="_blank" style="text-decoration: none;">SIGWEB-ERSUMA </a> pour récupérer les rapports.</p>  
     <p style="color: blue;">
     <center>« L’ERSUMA, pour une règle de droit effective, efficace et efficiente »</center>
-    </p>
+    </p> 
     
           <!-- source notification -->
             @include('emails.source_notification')

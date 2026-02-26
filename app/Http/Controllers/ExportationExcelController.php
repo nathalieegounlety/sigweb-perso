@@ -125,7 +125,7 @@ class ExportationExcelController extends Controller
             if (!empty($fichier_inscription)) {
                 $extension = $fichier_inscription->getClientOriginalExtension();
                 $fichier_name = $numero_webinaire . "_rapport_sur_inscriptions_" . date('Ymd-His') . '.' . $extension;
-                echo $fichier_name . "<br>";
+               // echo $fichier_name . "<br>";
                 // $fichier_inscription->move(public_path('documents_csv'), $fichier_name);
                 $fichier_inscription->storeAs('documents_csv', $fichier_name, 'public');
                 Documentwebinaires::create([
@@ -139,7 +139,7 @@ class ExportationExcelController extends Controller
                 $i++;
                 $extension = $document->getClientOriginalExtension();
                 $document_name = $numero_webinaire . "_rapport_sur_participants_" . $i . '_' . date('Ymd-His') . '.' . $extension;
-                echo $document_name . "<br>";
+                //echo $document_name . "<br>";
                 // Storage::put('avatars/1', $content) Storage::put('avatars/1', $content)
                 // $document->move( public_path('documents_csv'), $document_name);
                 $document->storeAs('documents_csv', $document_name, 'public');
@@ -160,7 +160,7 @@ class ExportationExcelController extends Controller
             // send mail for notification team ersuma
             if ($formation) {
 
-                try {
+                //try {
 
                     // send identifiant to mail for user
                     //$email = "sigweb.ersuma@ohada.org";
@@ -173,9 +173,9 @@ class ExportationExcelController extends Controller
 
                     # code...
                     Mail::to($email)->queue(new NotificationImportation($contenu));
-                } catch (\Exception $e) {
+                /*} catch (\Exception $e) {
                     // Get error here
-                }
+                }*/
             }
 
             // redirection avec message de succès

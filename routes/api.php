@@ -142,7 +142,10 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::get('/export/etat-recapitulatif/pdf/{code_formation}', 'pdfEtatrecapitulatif');
     Route::get('/export/etat-recapitulatif/excel/{code_formation}', 'exportEtatRecapitulatif');
     Route::get('etats-recapitulatif/{id}/ouvrage', 'exportEtatRecapitulatifOuvrage');
-
+    // liste rapports 
+    Route::get('liste/rapports', 'listeRapports');
+    Route::get('exportation/liste_globale_pdf/{code_formation}','exportListeGlobaleToPDF');
+    Route::get('exportation_pdf/{code_formation}','exportListeParticipantAttestationPDF');
 
 });
 

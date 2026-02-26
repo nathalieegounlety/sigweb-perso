@@ -9,14 +9,26 @@ use App\Models\Participants;
 use App\Models\Sessionformations;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 
-class WebinairezoomImportation implements ToCollection
+class WebinairezoomImportation implements ToCollection, WithCustomCsvSettings
 {
     private $code_formation;
 
     public function __construct($param)
     {
         $this->code_formation = $param; 
+    }
+
+     public function getCsvSettings(): array
+    {
+        return [
+           'delimiter'        => ',',
+            'input_encoding'   => 'UTF-8',
+            'enclosure'        => '"',
+            'escape_character' => '"',   
+            'input_bom'        => true, 
+        ];
     }
 
     public function genererPassword($length = 25)
@@ -41,6 +53,9 @@ class WebinairezoomImportation implements ToCollection
         $nbr_data_participant = count($rows);
         // initialiser le id_webinaire
         $id_webinaire = 0;
+
+         
+
         //#################### je récupère id_webinaire dans le fichier
         foreach ($rows[3] as $key => $value) {
             $id_webinaire = preg_replace("/\s+/", "", $rows[3][1]);

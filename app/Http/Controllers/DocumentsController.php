@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\ExportEtatRecapitulatif;
 use App\Helpers\ResponseHandler;
 use App\Models\Detailpaiementouvrages;
+use App\Models\Dureeformations;
 use App\Models\Formations;
 use App\Models\Inscriptions;
 use App\Models\Ouvrages;
@@ -26,7 +27,7 @@ class DocumentsController extends Controller
         $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
             'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc','listeFormateurs',
             'exportAllAttestationParticipant','telechargerAttestationFormateur','consulterAttestationFormateur','proformaOuvrage',
-            'exportAllAttestationFormateur','recuPaiementOuvrage','exportEtatRecapitulatif']]);
+            'exportAllAttestationFormateur','recuPaiementOuvrage','exportEtatRecapitulatif','exportListeGlobaleToPDF','exportListeParticipantAttestationPDF']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -627,5 +628,124 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
 
 
     }
+
+    
+
+    public function listeRapports(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $resp = $this->documentService->getListeRapports($request, $request->code_formation);
+            $data = $resp['pagination'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(), 
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+
+    
+
+  // Generate PDF pour la liste globale
+  public function exportListeGlobaleToPDF($code_formation)
+  {
+    set_time_limit(0);
+    // récupérer la liste des rapports dont le code de formation est passé en url
+    $liste_participants = DB::table('rapports')
+      ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+      ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+      ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays')
+      ->where('rapports.code_formation', $code_formation)
+      ->where('inscriptions.code_formation', $code_formation)
+      ->orderBy('auditeurs.nom', 'ASC')
+      ->get();
+
+    $formation = Formations::where('code_formation', $code_formation)->get()->first();
+
+    // share data to view
+    view()->share(['liste_participants' => $liste_participants, 'code_formation' => $code_formation, 'formation' => $formation,]);
+    // ############ personalisation de l'exportation des données ######################
+    $pdf = PDF::loadView('documents.exportation_liste_globale_pdf');
+    $pdf->output();
+    $pdf->setPaper('A4', 'landscape');
+    // ##### a considerer pour pagination ############### 
+    $dom_pdf = $pdf->getDomPDF();
+    $canvas = $dom_pdf->get_canvas();
+    $footer = $canvas->open_object();
+    $w = $canvas->get_width();
+    $h = $canvas->get_height();
+    $canvas->close_object();
+    $canvas->add_object($footer, "all");
+    $date = date('d-m-YH:i:s');
+
+    return $pdf->download($code_formation . '_LISTE_GLOBALE_PARTICIPANT_' . $date . '.pdf');
+  }
+
+  
+
+  // Generate PDF ok
+  public function exportListeParticipantAttestationPDF($code_formation)
+  {
+    set_time_limit(0);
+    // récupérer la liste des rapports dont le code de formation est passé en url
+    $liste_participants = DB::table('rapports')
+      ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+      ->leftjoin('auditeurs', 'auditeurs.email', '=', 'inscriptions.email')
+      ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays')
+      ->where('rapports.code_formation', $code_formation)
+      ->where('inscriptions.code_formation', $code_formation)
+      ->orderBy('auditeurs.nom', 'ASC')
+      ->get();
+    $duree_formation = Dureeformations::all()->where('code_formation', $code_formation)->sortByDesc("id");
+    //variable temps de latence
+    $temps_latence = 90; // par jour de formation || 
+    // récupérer le nbre de jour de formation pour la formation en cours
+    // $nbre_session_formation = Sessionformation::where('code_formation',$code_formation)->count();
+    //$total_temps_latence = $temps_latence * $nbre_session_formation; 
+
+    $duree_session = DB::table('sessionformations')
+      ->select(DB::raw('sum(duree_reel - ' . $temps_latence . ') as duree_session'))
+      ->where('code_formation', $code_formation)
+      ->get();
+
+
+    $date = date('d-m-YH:i:s');
+    // share data to view
+    view()->share(['liste_participants' => $liste_participants, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session]);
+    // ############ personalisation de l'exportation des données ######################
+
+
+    // ########### end personalisationd de l'exportation des données ##################
+
+    $pdf = PDF::loadView('documents.liste_participant_eligible_pdf');
+    $pdf->output();
+    $pdf->setPaper('A4', 'landscape');
+    // ##### a considerer pour pagination ###############
+    // $pdf->output();
+    $dom_pdf = $pdf->getDomPDF();
+    $canvas = $dom_pdf->get_canvas();
+    $footer = $canvas->open_object();
+    $w = $canvas->get_width();
+    $h = $canvas->get_height();
+    //     $canvas->page_text($w-60,$h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
+    $canvas->close_object();
+    $canvas->add_object($footer, "all");
+    //  $canvas->get_cpdf()->setEncryption('frogs', '', array('print'));
+    // ##### end a considerer pour pagination ###############
+    // download PDF file with download method
+
+    return $pdf->download($code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
+  }
 
 }

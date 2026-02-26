@@ -1160,5 +1160,84 @@ class DocumentsService implements DocumentsInterface
 
     }
 
-    
+        public function getListeRapports(Request $request, string $code_formation) //: LengthAwarePaginator
+    { 
+        // ##################### calcul scoring ###########################################
+        $getDuree = 0;
+        $check_duree_formation = Dureeformations::where("code_formation",$code_formation)->first();
+
+        if ($check_duree_formation) {
+            $nbr_duree_enregistrement = $check_duree_formation->duree_enregistrement;
+        } else {
+            # code... create durée
+            $nbr_duree_enregistrement = 0;
+        }
+        //variable temps de latence
+        $temps_latence = 90; // par jour de formation ||
+        // récupérer le nbre de jour de formation pour la formation en cours
+        //$nbre_session_formation = Sessionformation::where('code_formation',$code_formation)->count();
+        //$total_temps_latence = $temps_latence * $nbre_session_formation;
+
+        $duree_formation = DB::table('sessionformations')
+            ->select(DB::raw('sum(duree_reel - ' . $temps_latence . ') as duree_session'))
+            ->where('code_formation', $code_formation)
+            ->get();
+
+        if($nbr_duree_enregistrement > 0){
+            $getDuree = $nbr_duree_enregistrement;
+        }else{
+            $getDuree = $duree_formation[0]->duree_session;
+        }
+
+        $scoring = intval(($getDuree*2)/3);
+        //####################### end calcul scoring ####################################################
+
+
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $query = DB::table('rapports')
+            ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email') 
+            ->select(
+                'rapports.id',
+                'rapports.email',
+                'rapports.attestation_send',
+                'rapports.code_formation',
+                'rapports.temps_presence',
+                'inscriptions.id as id_inscrit',
+                'auditeurs.nom',
+                'auditeurs.prenoms',
+                'auditeurs.pays',
+                'auditeurs.civilite',
+                'auditeurs.genre'
+            )
+            ->where('rapports.code_formation', $code_formation)
+            ->where('inscriptions.code_formation', $code_formation);
+            /*->where(function ($q) use ($scoring) {
+                $q->where('rapports.temps_presence', 0)
+                    ->orWhere('rapports.temps_presence', '>=', $scoring);
+            });*/
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('auditeurs.nom', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('rapports.email', 'like', "%{$search}%")
+                    ->orWhere('rapports.temps_presence', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.pays', 'like', "%{$search}%"); // Recherche sur auteur
+            });
+        }
+        $query->orderBy("rapports.{$sortField}", $sortOrder);
+
+        $data = $query->paginate($perPage);
+
+        return [
+            'pagination' => $data,
+            'nbr_duree_enregistrement' => $nbr_duree_enregistrement,
+            'duree_formation' => $duree_formation
+        ];
+    }
 }

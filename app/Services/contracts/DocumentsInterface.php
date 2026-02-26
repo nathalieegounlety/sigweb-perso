@@ -42,5 +42,6 @@ interface DocumentsInterface
     public function downloadAllAttestationFormateur($code_formation);
     public function getUrlAllAttestationFormateur($code_formation);
     public function downloadListeFormateur($code_formation);
-    public function getUrlListeFormateur($code_formation);
+    public function getUrlListeFormateur($code_formation);    
+    public function getListeRapports(Request $request, string $code_formation); //: LengthAwarePaginator;
 }
