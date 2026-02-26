@@ -14,13 +14,11 @@ return new class extends Migration
          Schema::create('reductions_formations', function (Blueprint $table) {
             $table->id()->autoIncrement();
 
-            $table->foreignId('reduction_id')
-                ->constrained('reductions')
-                ->cascadeOnDelete();
+           $table->unsignedBigInteger('reduction_id');
+            $table->unsignedBigInteger('formation_id');
 
-            $table->foreignId('formation_id')
-                ->constrained('formations')
-                ->cascadeOnDelete();
+            $table->index('reduction_id');
+            $table->index('formation_id');
 
             $table->timestamps();
         });
