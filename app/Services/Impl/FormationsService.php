@@ -581,7 +581,7 @@ class FormationsService implements FormationsInterface
                 'code_formation as code',
                 DB::raw("CONCAT(formations.code_formation, ' - ', formations.theme) AS name")
             ])
-            ->where('is_formation_dsc',false)
+            //->where('is_formation_dsc',false)
             ->orderBy('date_debut', 'DESC')
             ->get();
         return ResponseHandler::success('ok', $liste_formations);
