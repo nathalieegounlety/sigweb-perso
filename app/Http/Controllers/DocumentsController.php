@@ -659,43 +659,47 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
 
   // Generate PDF pour la liste globale
   public function exportListeGlobaleToPDF($code_formation)
-  {
+{
     set_time_limit(0);
-    // récupérer la liste des rapports dont le code de formation est passé en url
+
     $liste_participants = DB::table('rapports')
-      ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
-      ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
-      ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays')
-      ->where('rapports.code_formation', $code_formation)
-      ->where('inscriptions.code_formation', $code_formation)
-      ->orderBy('auditeurs.nom', 'ASC')
-      ->get();
+        ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+        ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+        ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays')
+        ->where('rapports.code_formation', $code_formation)
+        ->where('inscriptions.code_formation', $code_formation)
+        ->orderBy('auditeurs.nom', 'ASC')
+        ->get();
 
-    $formation = Formations::where('code_formation', $code_formation)->get()->first();
+    $formation = Formations::where('code_formation', $code_formation)->first();
 
-    // share data to view
-    view()->share(['liste_participants' => $liste_participants, 'code_formation' => $code_formation, 'formation' => $formation,]);
-    // ############ personalisation de l'exportation des données ######################
+    // Partager les données avec la vue
+    view()->share([
+        'liste_participants' => $liste_participants,
+        'code_formation' => $code_formation,
+        'formation' => $formation,
+    ]);
+
     $pdf = PDF::loadView('documents.exportation_liste_globale_pdf');
-    $pdf->output();
+
     $pdf->setPaper('A4', 'landscape');
-    // ##### a considerer pour pagination ############### 
     $dom_pdf = $pdf->getDomPDF();
     $canvas = $dom_pdf->get_canvas();
     $footer = $canvas->open_object();
     $w = $canvas->get_width();
     $h = $canvas->get_height();
+    $canvas->page_text($w - 100, $h - 30, "Page {PAGE_NUM} / {PAGE_COUNT}", null, 10, array(0, 0, 0));
     $canvas->close_object();
     $canvas->add_object($footer, "all");
-    $date = date('d-m-YH:i:s');
 
+    $date = date('d-m-Y_H-i-s');
     return $pdf->download($code_formation . '_LISTE_GLOBALE_PARTICIPANT_' . $date . '.pdf');
-  }
+}
 
   
 
   // Generate PDF ok
-  public function exportListeParticipantAttestationPDF($code_formation)
+ /* public function exportListeParticipantAttestationPDF($code_formation)
   {
     set_time_limit(0);
     // récupérer la liste des rapports dont le code de formation est passé en url
@@ -746,6 +750,56 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
     // download PDF file with download method
 
     return $pdf->download($code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
-  }
+  }*/
+
+  public function exportListeParticipantAttestationPDF($code_formation)
+{
+    set_time_limit(0);
+
+    $liste_participants = DB::table('rapports')
+        ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+        ->leftjoin('auditeurs', 'auditeurs.email', '=', 'inscriptions.email')
+        ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays')
+        ->where('rapports.code_formation', $code_formation)
+        ->where('inscriptions.code_formation', $code_formation)
+        ->orderBy('auditeurs.nom', 'ASC')
+        ->get();
+
+    // Variable temps de latence
+    $temps_latence = 90; // par jour de formation
+
+    
+    $duree_formation = Dureeformations::where('code_formation', $code_formation)
+        ->orderByDesc("id")
+        ->get();
+
+    $duree_session = DB::table('sessionformations')
+        ->select(DB::raw('SUM(duree_reel - ' . (int)$temps_latence . ') as duree_session'))
+        ->where('code_formation', $code_formation)
+        ->get();
+
+    view()->share([
+        'liste_participants' => $liste_participants,
+        'code_formation' => $code_formation,
+        'durees' => $duree_formation,
+        'duree_session' => $duree_session,
+    ]);
+
+    $pdf = PDF::loadView('documents.liste_participant_eligible_pdf');
+
+    $pdf->setPaper('A4', 'landscape');
+    $dom_pdf = $pdf->getDomPDF();
+    $canvas = $dom_pdf->get_canvas();
+    $footer = $canvas->open_object();
+    $w = $canvas->get_width();
+    $h = $canvas->get_height();
+    $canvas->page_text($w - 100, $h - 30, "Page {PAGE_NUM} / {PAGE_COUNT}", null, 10, array(0, 0, 0));
+    $canvas->close_object();
+    $canvas->add_object($footer, "all");
+
+    $date = date('d-m-Y_H:i:s');
+    return $pdf->download($code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
+}
+
 
 }
