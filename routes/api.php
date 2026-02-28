@@ -328,6 +328,7 @@ Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController:
 // gestion de la comptabilité
 Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\ComptabilitesController::class)->group(function () {
     Route::get('commandes', 'listeCommandes');
+    Route::get('commandes/ouvrages', 'listeCommandesOuvrages');
     Route::post('details/commande/formation', 'detailCommandeFormation');
     Route::post('details/commande/ouvrage', 'detailCommandeOuvrage');
     Route::post('details/commande/dsc', 'detailCommandeDsc');
@@ -342,6 +343,7 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
     Route::post('traitement/paiement/dsc', 'traitementPaiementDsc');
     Route::post('traitement/paiement', 'traitementPaiement');
     Route::get('paiements/valide', 'listePaiementsValide');
+    Route::get('paiements/ouvrages/valide', 'listePaiementsOuvragesValide');
     Route::get('liste/paiements', 'listeDesPaiements');
     Route::post('details/process/paiements/dsc', 'detailProcessPaiementDsc');
     Route::post('traitement/process/paiement/dsc', 'traitementProcessPaiementDsc');

@@ -1743,7 +1743,7 @@ class AuditeursService implements AuditeursInterface
                     $details_paiement->save();
 
                      // mise à jour tarif formation
-                        if (isset($_POST["reduction_id"]) && !empty($_POST["reduction_id"])) {
+                        if ($request->has('reduction_id') && !empty($request->input('reduction_id'))) {
 
                             // check inscription
                             $check_inscription = Inscriptions::where("code_formation", $request->code_formation)
@@ -1932,7 +1932,7 @@ class AuditeursService implements AuditeursInterface
 
                         //################# mise à jour reduction #################
                         // mise à jour tarif formation
-                        if (isset($_POST["reduction_id"]) && !empty($_POST["reduction_id"])) {
+                        if ($request->has('reduction_id') && !empty($request->input('reduction_id'))) {
 
                             // check inscription
                             $check_inscription = Inscriptions::where("code_formation", $request->code_formation)
