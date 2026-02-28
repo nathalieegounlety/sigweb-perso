@@ -340,7 +340,9 @@
       </tr>
       </thead>
       <tbody>
-      
+        @if($liste_participants->isEmpty())
+    <p>Aucun participant trouvé pour cette formation.</p>
+    @else
         @foreach ($liste_participants as $participant) 
         @php 
           $i = $i+1;
@@ -355,6 +357,9 @@
         </tr>  
 
         @endforeach
+        @endif
+
+
       </tbody>
     </table>
             

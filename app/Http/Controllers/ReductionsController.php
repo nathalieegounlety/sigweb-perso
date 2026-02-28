@@ -53,12 +53,12 @@ class ReductionsController extends Controller
 
     public function store(Request $request)
     {
-
+      //  dd($request->all());
         try {
 
             // validation des données du formulaire
             $this->validate($request, [
-                'pourcentage' => 'required',
+                'pourcentage' => 'required|numeric',
                 'libelle' => 'required'
             ]);
 
