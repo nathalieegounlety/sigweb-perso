@@ -83,6 +83,30 @@ class AuditeursContoller extends Controller
         }
     }
 
+    
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function updateEmailAuditeur(Request $request)
+    {
+        try {
+            // Validation des données
+            $validatedData = $request->validate([
+                'anc_email' => 'required',
+                'new_email' => 'required',
+                'identifiant' => 'required'
+            ]);
+            // procéder à l'enregistrement
+            return $processSave = $this->auditeurService->saveUpdateEmailAuditeur($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
     /**
      * Store a newly created resource in storage.
      */

@@ -2051,4 +2051,105 @@ class AuditeursService implements AuditeursInterface
             return  ResponseHandler::success("ok");
         }
     }
+
+    
+    public function saveUpdateEmailAuditeur(Request $request): \Illuminate\Http\JsonResponse
+    {  
+ 
+         // Désactiver temporairement la vérification des clés étrangères
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+        // update table auditeur
+        $auditeur = Auditeurs::find($request->identifiant);
+
+        $check_auditeur = Auditeurs::where('email', $request->new_email)->exists();
+        if ($check_auditeur) {
+            // another user have the new email
+
+            // return redirect()->route("auditeurs.index")->with("error","Echec lors de la modification, l'adresse mail existe déjà.");
+
+            // update table user
+            $check_user = User::where('email', $request->new_email)->exists();
+            if ($check_user) {
+            } else {
+                $update = User::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table details paiement
+            $check_auditeur = Detailspaiements::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Detailspaiements::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table inscrits
+            $check_auditeur = Inscriptions::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Inscriptions::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table paiement
+            $check_auditeur = Paiements::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Paiements::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table participant
+            $check_auditeur = Participants::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Participants::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table rapports
+            $check_auditeur = Rapports::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Rapports::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            } 
+            return  ResponseHandler::success("Mise à jour effectuée avec succès");
+        } else {
+            $auditeur->setAttribute('email', $request->new_email);
+            $auditeur->update();
+
+            // update table user
+            $check_user = User::where('email', $request->new_email)->exists();
+            if ($check_user) {
+            } else {
+                $update = User::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table details paiement
+            $check_auditeur = Detailspaiements::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Detailspaiements::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table inscrits
+            $check_auditeur = Inscriptions::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Inscriptions::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table paiement
+            $check_auditeur = Paiements::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Paiements::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table participant
+            $check_auditeur = Participants::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Participants::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+
+            // update table rapports
+            $check_auditeur = Rapports::where('email', $request->anc_email)->exists();
+            if ($check_auditeur) {
+                $update = Rapports::where('email', $request->anc_email)->update(['email' => $request->new_email]);
+            }
+            // Réactiver la vérification des clés étrangères
+            DB::statement('SET FOREIGN_KEY_CHECKS=1'); 
+        return  ResponseHandler::success("Mise à jour effectuée avec succès");
+        }
+        
+
+    }
 }

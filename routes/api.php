@@ -223,6 +223,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('info/indicateurs', 'indicateursAuditeur');
     Route::post('liste/modes', 'listeModes');
     Route::post('update/modes', 'updateMode');
+    Route::post('update/email', 'updateEmailAuditeur');
 });
 
 // gestion des api du frontoffice
