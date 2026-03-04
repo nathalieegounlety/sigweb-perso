@@ -84,7 +84,7 @@ class HomeController extends Controller
     public function getPointsPaiements()
     {
         $liste_pointsdepaiements = PointDePaiements::select('point_de_paiements.*')
-           // ->whereEnable(true)
+           ->whereEnable(true)
             ->orderBy("pays", "ASC")
             ->get();
 

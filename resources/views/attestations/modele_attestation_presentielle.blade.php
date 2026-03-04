@@ -11,6 +11,7 @@
             margin: 0;
             padding: 0;
             position: relative;
+            opacity: 1 !important;
         }
     
         body::before {
