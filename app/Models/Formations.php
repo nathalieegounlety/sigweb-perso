@@ -57,7 +57,7 @@ class Formations extends Model
 
     public function getparticipant()
     {
-        return $this->belongsTo(Participation::class);
+        return $this->belongsTo(Participants::class);
     }
 
     public function getTypeformation()
@@ -91,6 +91,14 @@ class Formations extends Model
                 'tarificationsformations.code_formation'
             )
             ->orderBy('tarificationsformations.id', 'DESC');
+    }
+
+    public function reductions()
+    {
+        return $this->hasMany(ReductionsFormations::class, 'formation_id', 'id') 
+            ->select(
+                ['reductions_formations.formation_id','reductions_formations.reduction_id as get_idReduction'] 
+            );
     }
 
     public function tarificationById($tarif_id)

@@ -41,6 +41,34 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+
+    
+
+    public function listeCommandesOuvrages(Request $request){
+        // récupérer la liste
+        try {
+            $resultat = $this->comptabiliteService->getCommandesOuvrages($request);
+            $data = $resultat['pagination'];
+            $montant_total = $resultat['montant_total'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
+                'montant_total'   => $montant_total
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+
     public function detailCommandeFormation(Request $request){
         try {
             //
@@ -242,6 +270,30 @@ class ComptabilitesController extends Controller
 
         try {
             $resultat = $this->comptabiliteService->getPaiementsvalides($request);
+            $data = $resultat['pagination'];
+            $montant_total = $resultat['montant_total'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
+                'montant_total'   => $montant_total
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    public function listePaiementsOuvragesValide(Request $request){
+
+        try {
+            $resultat = $this->comptabiliteService->getPaiementsOuvragesvalides($request);
             $data = $resultat['pagination'];
             $montant_total = $resultat['montant_total'];
             // Transformer pour enlever le bloc 'links'

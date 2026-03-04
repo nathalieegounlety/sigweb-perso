@@ -122,6 +122,92 @@ class ComptabilitesService implements ComptabilitesInterface
         // return $paginated;
     }
 
+    public function getCommandesOuvrages(Request $request) //: LengthAwarePaginator
+    {
+        $date_now = now()->subDays(90)->format('Y-m-d'); // Plus propre que date() + strtotime
+        $get_date = now()->format('Y-m-d');
+
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $filterUpdatedAt = $request->input('filter_updated_at');
+
+        // Construire la requête avec le Query Builder (pas de get() trop tôt)
+        $query = DB::table('paiements')
+            ->leftJoin('auditeurs', 'auditeurs.email', '=', 'paiements.email')
+            ->leftJoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
+            ->select(
+                'auditeurs.nom',
+                'auditeurs.prenoms',
+                'paiements.telephone',
+                'paiements.email',
+                'paiements.reference',
+                'paiements.montant_restant',
+                'paiements.num_transaction',
+                'paiements.updated_at',
+                'paiements.type',
+                'paiements.id',
+                'modepaiements.libelle',
+                'paiements.id_modepaiement'
+            )
+            ->whereNull('paiements.num_transaction')
+            ->whereDate('paiements.created_at', '>=', $date_now)
+            ->whereDate('paiements.created_at', '<=', $get_date)
+            ->where('paiements.declasse', false)
+            ->where('paiements.is_paiement_partiel', false)
+            ->where('paiements.type', 'OUVRAGE')
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('paiements_tranches')
+                    ->whereRaw('paiements_tranches.reference LIKE CONCAT("%", paiements.reference, "%")');
+            });
+
+        // Recherche globale
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('auditeurs.nom', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('paiements.telephone', 'like', "%{$search}%")
+                    ->orWhere('paiements.reference', 'like', "%{$search}%")
+                    ->orWhere('paiements.email', 'like', "%{$search}%")
+                    ->orWhere('paiements.type', 'like', "%{$search}%");
+
+                    if (is_numeric(str_replace([' ', ','], '', $search))) {
+                        $numericValue = (float)str_replace([' ', ','], '', $search);
+                        $q->orWhere('paiements.montant_restant', '=', $numericValue);
+                    }
+            });
+        }
+
+        // Filtre par date de mise à jour
+        if ($filterUpdatedAt) {
+            $query->whereDate('paiements.updated_at', $filterUpdatedAt);
+        }
+
+        // Tri dynamique (sécurise $sortField pour éviter injection SQL !)
+        $allowedSortFields = ['id', 'reference', 'montant_restant', 'updated_at', 'type'];
+        $sortField = in_array($sortField, $allowedSortFields) ? $sortField : 'id';
+        $sortOrder = $sortOrder === 'asc' ? 'asc' : 'desc';
+
+        $query->orderBy("paiements.{$sortField}", $sortOrder);
+
+        // Pagination correcte
+        $paginated = $query->paginate($perPage);
+
+        // Calcul de la somme totale sur les éléments paginés (ou sur toute la requête filtrée)
+        $somme_totale = $query->sum('paiements.montant_restant');
+
+        // Ajouter la somme dans les meta de la pagination
+        //$paginated->additional(['montant_total' => $somme_totale]);
+        return [
+            'pagination' => $paginated,
+            'montant_total' => $somme_totale
+        ];
+        // return $paginated;
+    }
+
     public function getPaiementsattente(Request $request) //: LengthAwarePaginator
     {
         // TODO: Implement getPaiementsattente() method.
@@ -132,11 +218,12 @@ class ComptabilitesService implements ComptabilitesInterface
         $filterDate = $request->input('filter_date');
 
         /** PAIEMENTS CLASSIQUES */
-        $classiques = DB::table('paiements')
+        /*$classiques = DB::table('paiements')
             ->leftJoin('auditeurs', 'auditeurs.email', '=', 'paiements.email')
             ->leftJoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
-            ->where('paiements.statut_traitement', 'ATTENTE')
-            ->where('paiements.montant_restant', '!=', 0)
+            ->leftJoin('detailspaiements', 'detailspaiements.reference_paiement', '=', 'paiements.reference')
+            ->leftJoin('reductions','reductions.id','=','detailspaiements.id_reduction')
+            ->where('paiements.statut_paiement', 'EN ATTENTE') 
             ->where('paiements.type', '!=', 'dsc')
             ->where('paiements.is_paiement_partiel', false)
             ->whereNotNull('paiements.num_transaction')
@@ -145,8 +232,8 @@ class ComptabilitesService implements ComptabilitesInterface
             auditeurs.nom,
             auditeurs.prenoms,
             auditeurs.email,
-            paiements.reference,
-            paiements.montant_restant AS montant,
+            paiements.reference, 
+            detailspaiements.montant_restant as montant,
             paiements.num_transaction,
             paiements.type,
             paiements.updated_at AS date,
@@ -154,8 +241,8 @@ class ComptabilitesService implements ComptabilitesInterface
             'classique' AS route_type,
             modepaiements.id AS id_modepaiement,
             modepaiements.libelle AS libelle_modepaiement,
-            0 AS id_reduction,
-            0 AS pourcentage,
+            reductions.id AS id_reduction,
+            reductions.pourcentage AS pourcentage,
             0 AS have_reduction
             ")
             ->selectRaw("
@@ -178,7 +265,40 @@ class ComptabilitesService implements ComptabilitesInterface
                     )
                     LIMIT 1
                 ) AS theme
-            ");
+            ");*/
+
+            
+        $classiques = DB::table('detailspaiements')
+            ->leftJoin('paiements', 'paiements.reference', '=', 'detailspaiements.reference_paiement')
+            ->leftJoin('auditeurs', 'auditeurs.email', '=', 'detailspaiements.email')
+            ->leftJoin('reductions','reductions.id','=','detailspaiements.id_reduction')
+            ->leftJoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
+            ->leftJoin('formations', 'formations.code_formation', '=', 'detailspaiements.code_formation')
+            ->where('paiements.statut_paiement', 'EN ATTENTE')
+            ->where('detailspaiements.statut_traitement', 'ATTENTE')
+            ->where('detailspaiements.montant_restant', '>',0)
+            ->where('detailspaiements.is_paiement_partiel', false)
+            ->where('paiements.type', '!=', 'dsc')
+            ->selectRaw("
+            detailspaiements.id,
+            auditeurs.nom,
+            auditeurs.prenoms,
+            auditeurs.email,
+            detailspaiements.reference_paiement as reference,
+            detailspaiements.montant_restant as montant,
+            paiements.num_transaction,
+            paiements.type as type,
+            detailspaiements.updated_at as date,
+            detailspaiements.id as action_ref,
+            'classique' as route_type,
+            modepaiements.id as id_modepaiement,
+            modepaiements.libelle as libelle_modepaiement,
+            reductions.id as id_reduction,
+            reductions.pourcentage,
+            0 as have_reduction,
+            formations.code_formation,
+            formations.theme
+        ");
 
         /** PAIEMENTS PARTIELS */
         $partiels = DB::table('detailspaiements')
@@ -416,6 +536,113 @@ class ComptabilitesService implements ComptabilitesInterface
         $unionQuery = $classiques
             ->unionAll($partiels)
             ->unionAll($dsc);
+
+        /** PAGINATION */
+        $query = DB::query()->fromSub($unionQuery, 't');
+        //->orderBy('date', 'desc')
+        //->paginate($perPage);
+
+        /* ==============================
+     |  SEARCH GLOBAL
+     ============================== */
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('t.nom', 'like', "%{$search}%")
+                    ->orWhere('t.prenoms', 'like', "%{$search}%")
+                    ->orWhere('t.reference', 'like', "%{$search}%")
+                    ->orWhere('t.num_transaction', 'like', "%{$search}%")
+                    ->orWhere('t.type', 'like', "%{$search}%")
+                    ->orWhere('t.libelle_modepaiement', 'like', "%{$search}%");
+
+                $clean = str_replace([' ', ','], '', $search);
+                if (is_numeric($clean)) {
+                    $q->orWhere('t.montant', (float) $clean);
+                }
+            });
+        }
+
+        if ($filterDate) {
+            $query->whereDate('t.date', $filterDate);
+        }
+
+
+        $allowedSortFields = [
+            'id',
+            'nom',
+            'prenoms',
+            'reference',
+            'email',
+            'montant',
+            'num_transaction',
+            'type',
+            'date',
+            'id_modepaiement',
+            'libelle_modepaiement',
+            'pourcentage',
+            'have_reduction'
+        ];
+
+        $sortField = in_array($sortField, $allowedSortFields) ? $sortField : 'date';
+        $sortOrder = $sortOrder === 'asc' ? 'asc' : 'desc';
+
+        $query->orderBy("t.$sortField", $sortOrder);
+
+
+        /* ==============================
+         |  PAGINATION
+         ============================== */
+        $paiements = $query->paginate($perPage);
+
+        /** TOTAL GLOBAL */
+        $total = (clone $query)->sum('montant'); // collect($paiements->items())->sum('montant');
+
+        return [
+            'pagination' => $paiements,
+            'montant_total' => $total
+        ];
+
+    }
+
+    public function getPaiementsOuvragesvalides(Request $request) //: LengthAwarePaginator
+    {
+        // TODO: Implement getPaiementsvalides() method.
+        $perPage   = $request->input('per_page', 50);
+        $search    = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $filterDate = $request->input('filter_date');
+
+        /** PAIEMENTS CLASSIQUES */
+        $classiques = DB::table('paiements')
+            ->leftJoin('auditeurs', 'auditeurs.email', '=', 'paiements.email')
+            ->leftJoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
+            ->where('statut_traitement', 'VALIDER')
+            ->where('paiements.type', '=', 'OUVRAGE')
+            ->where('is_paiement_partiel', false)
+            ->whereNotNull('num_transaction')
+            ->selectRaw("
+            paiements.id,
+            auditeurs.nom,
+            auditeurs.prenoms,
+            auditeurs.email,
+            paiements.reference,
+            paiements.montant_paye as montant,
+            paiements.num_transaction,
+            paiements.type,
+            paiements.updated_at as date,
+            paiements.reference as action_ref,
+            'classique' as route_type,
+            modepaiements.id as id_modepaiement,
+            modepaiements.libelle as libelle_modepaiement,
+            0 as id_reduction,
+            0 as pourcentage,
+            0 as have_reduction,
+            '' as code_formation,
+            '' as theme
+        "); 
+
+        /** UNION GLOBAL */
+        $unionQuery = $classiques;
 
         /** PAGINATION */
         $query = DB::query()->fromSub($unionQuery, 't');
@@ -1096,6 +1323,7 @@ class ComptabilitesService implements ComptabilitesInterface
                 $paiement->setAttribute("statut_paiement","PAYE");
                 $paiement->setAttribute("montant_paye",$paiement->montant_restant);
                 $paiement->setAttribute("montant_restant",0);
+                $paiement->setAttribute('modepaiement_id', $request->modepaiement_id); 
                 $paiement->setAttribute("commentaire",$request->commentaire);
                 $paiement->setAttribute("statut_traitement",trim($request->statut_traitement));
                 $paiement->setAttribute('agent_traiteur', $user->id);
@@ -1114,6 +1342,8 @@ class ComptabilitesService implements ComptabilitesInterface
                         $detail->setAttribute('statut_paiement', "PAYE");
                         $detail->setAttribute("montant_paye",$detail->montant_restant);
                         $detail->setAttribute("montant_restant",0);
+                        $detail->setAttribute('modepaiement_id', $request->modepaiement_id);
+                        $detail->setAttribute('commentaire', $request->commentaire);
                         $detail->update();
                     }
 
@@ -1131,7 +1361,7 @@ class ComptabilitesService implements ComptabilitesInterface
         }
         //######################################## montant supérieur à 0 ################
 
-        if ($request->statut_traitement == "VALIDER") {
+        if ($request->statut_traitement == "VALIDER") { // si statut VALIDER et pas de réduction
             $request->validate([
                 'modepaiement_id'=>'required',
                 'num_transaction'=>'required',
@@ -1140,18 +1370,69 @@ class ComptabilitesService implements ComptabilitesInterface
             # code...
             $paiement->setAttribute("num_transaction",trim($request->num_transaction));
             $paiement->setAttribute("statut_transaction",trim($request->num_transaction));
-            $paiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+            $paiement->setAttribute("id_modepaiement",$request->modepaiement_id); 
+            $paiement->setAttribute('commentaire', $request->commentaire);
             $paiement->setAttribute("statut_paiement","PAYE");
-            $paiement->setAttribute("montant_paye",$paiement->montant_restant);
-            $paiement->setAttribute("montant_restant",0);
             $paiement->setAttribute("statut_traitement",trim($request->statut_traitement));
             $paiement->setAttribute('agent_traiteur', $user->id);
             $paiement->setAttribute('date_traitement', new \DateTime());
+            // vérifier l'application de la réduction
+            if($request->has('reduction_id') && !empty($request->input('reduction_id'))){
+
+                    if($paiement->montant_total > 0){
+                        // check details paiements
+
+                        $chec_details_paiements = Detailspaiements::where("reference_paiement",$paiement->reference)
+                            ->exists();
+
+                        if($chec_details_paiements){
+                            
+                            $detail_paiement = Detailspaiements::where("reference_paiement",$paiement->reference)
+                                ->get();
+
+                            # code...
+                            $update_montant_paiement = $paiement->montant_total ;
+                            $reduction = Reductions::find($request->reduction_id);
+                            // application reduction au montant existant
+                            $montant_paiement_reduction = $update_montant_paiement - ($update_montant_paiement*($reduction->pourcentage/100));
+
+                            // update table details paiement
+                            foreach ($detail_paiement as $details) {
+                                # code...
+                                $get_detail = Detailspaiements::find($details->id);
+                                $get_detail->setAttribute("id_reduction",$request->reduction_id);
+                                $tarif_formation = Tarificationsformation::find($get_detail->id_tarification_formation);
+                                $montant = $tarif_formation->getGrilletarifaire->montant;
+                                $reduction = Reductions::find($request->reduction_id);
+                                $montant_reduction = ($montant*$reduction->pourcentage)/100; 
+                                    # code...
+                                $get_detail->setAttribute("montant_paye",$montant-$montant_reduction);
+                                $get_detail->setAttribute("montant_restant",0);  
+                                $get_detail->setAttribute('modepaiement_id', $request->modepaiement_id);
+                                $get_detail->setAttribute('commentaire', $request->commentaire);
+                                $get_detail->setAttribute('statut_traitement',trim($request->statut_traitement));
+                                $get_detail->setAttribute('statut_paiement', "PAYE");
+                                $get_detail->update();
+                            }
+                            // update table paiement
+                            $paiement->setAttribute("montant_total",$montant_paiement_reduction); 
+                                # code...
+                            $paiement->setAttribute("montant_paye",$montant_paiement_reduction);
+                            $paiement->setAttribute("montant_restant",0); 
+
+                            $paiement->update();
+
+                        }
+                    }
+                
+            } else {
+                # code...
+                
+            $paiement->setAttribute("montant_paye",$paiement->montant_restant);
+            $paiement->setAttribute("montant_restant",0);
             $paiement->update();
 
-            // send mail paiement validé
-
-            if ($paiement->type !== "OUVRAGE") {
+             if ($paiement->type !== "OUVRAGE") {
                 # code...
                 // update table details paiement
                 $details_paiement = Detailspaiements::where('reference_paiement',$request->reference)->get();
@@ -1161,10 +1442,17 @@ class ComptabilitesService implements ComptabilitesInterface
                     $detail->setAttribute('statut_paiement', "PAYE");
                     $detail->setAttribute("montant_paye",$detail->montant_restant);
                     $detail->setAttribute("montant_restant",0);
+                    $detail->setAttribute('modepaiement_id', $request->modepaiement_id);
+                    $detail->setAttribute('commentaire', $request->commentaire);
                     $detail->update();
                 }
 
             }
+
+            }
+            
+
+            // send mail paiement validé            
             $auditeur = Auditeurs::where("email",$paiement->email)->first();
             // envoie de mail pour la reférence de la facture
             $modepaiement = Modepaiements::find($request->modepaiement_id);
@@ -1200,11 +1488,9 @@ class ComptabilitesService implements ComptabilitesInterface
 
         } else {
             # code...
-
-            if(isset($_POST["reduction_id"]) && !empty($_POST["reduction_id"])){
+            if($request->has('reduction_id') && !empty($request->input('reduction_id'))){
 
             }else{
-
                 $paiement->setAttribute("num_transaction",$request->num_transaction);
                 $paiement->setAttribute("statut_transaction",$request->num_transaction);
             }
@@ -1219,7 +1505,7 @@ class ComptabilitesService implements ComptabilitesInterface
                 # code...
                 //################# mise à jour reduction #################
                 // mise à jour tarif formation
-                if(isset($_POST["reduction_id"]) && !empty($_POST["reduction_id"])){
+                if($request->has('reduction_id') && !empty($request->input('reduction_id'))){
 
                     if($paiement->montant_total > 0){
                         // check details paiements
@@ -1228,6 +1514,7 @@ class ComptabilitesService implements ComptabilitesInterface
                             ->exists();
 
                         if($chec_details_paiements){
+                            
                             $detail_paiement = Detailspaiements::where("reference_paiement",$paiement->reference)
                                 ->get();
 
@@ -1249,23 +1536,21 @@ class ComptabilitesService implements ComptabilitesInterface
                                 if ($get_detail->statut_traitement == "VALIDER") {
                                     # code...
                                     $get_detail->setAttribute("montant_paye",$montant-$montant_reduction);
+                                    $get_detail->setAttribute("montant_restant",0);
 
                                 } else {
                                     # code...
+                                    $get_detail->setAttribute("montant_paye",0);
                                     $get_detail->setAttribute("montant_restant",$montant-$montant_reduction);
                                 }
 
                                 $get_detail->update();
                             }
                             // update table paiement
-                            $paiement->setAttribute("montant_total",$montant_paiement_reduction);
-                            if ($paiement->statut_traitement == "ATTENTE") {
+                            $paiement->setAttribute("montant_total",$montant_paiement_reduction); 
                                 # code...
-                                $paiement->setAttribute("montant_restant",$montant_paiement_reduction);
-                            } else {
-                                # code...
-                                $paiement->setAttribute("montant_paye",$montant_paiement_reduction);
-                            }
+                                $paiement->setAttribute("montant_paye",0);
+                                $paiement->setAttribute("montant_restant",$montant_paiement_reduction); 
 
                             $paiement->update();
 

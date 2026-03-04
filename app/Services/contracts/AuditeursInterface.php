@@ -10,6 +10,8 @@ interface AuditeursInterface
 {
     // déclaration des interfaces à utiliser
     public function saveAuditeur(Request $data): \Illuminate\Http\JsonResponse;
+    
+    public function saveUpdateEmailAuditeur(Request $data): \Illuminate\Http\JsonResponse;
 
     public function getAuditeur(int $id): Auditeurs;
 

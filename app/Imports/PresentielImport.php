@@ -63,6 +63,8 @@ class PresentielImport implements ToCollection
         // insertion des données dans la table inscrits
         for($i = 1; $i < $nbr_data_presentiel; $i++){
 
+        if (!empty($rows[$i][$column_nom]) && !empty($rows[$i][$column_prenoms]) && !empty($rows[$i][$column_code])) {
+            # code... 
             if(!empty($rows[$i][$column_email])){
                 $email = $rows[$i][$column_email];
             }else{
@@ -168,31 +170,7 @@ class PresentielImport implements ToCollection
                     $insert_inscription->setAttribute("code_formation",$this->code_formation);
                     $insert_inscription->setAttribute("presentiel",1);
                     $insert_inscription->setAttribute("type_formation",'PRESENTIEL');
-                    $insert_inscription->save();
-                    /*
-                    ModelsInscription::create( [
-                        //'nom' => $rows[$i][$column_nom],
-                        //'prenoms' => $rows[$i][$column_prenoms],
-                        'email' => trim($email),
-                        //'pays' => $pays,
-                       // 'ville' => $rows[$i][3],
-                        //'code_pays' => $rows[$i][$column_code_pays],
-                        //'telephone' => $rows[$i][$column_telephone],
-                       // 'secteur_activite' => $rows[$i][6],
-                        //'organisation' => $rows[$i][7],
-                        //'intitule_poste' => $rows[$i][$column_profession_fonction],
-                       // 'heure_inscription' => $rows[$i][9],
-                       // 'etat_approbation' => $rows[$i][10],
-                        'id_webinaire' => $this->code_formation,
-                        'code_formation' => $this->code_formation,
-                        'presentiel' => 1,
-                        'type_formation' => 'PRESENTIEL',
-                        //'genre' => $rows[$i][$column_genre],
-                        //'nationalite' => $rows[$i][$column_nationalite],
-                    ]);
-                    */
-
-
+                    $insert_inscription->save(); 
 
                 }
 
@@ -285,6 +263,7 @@ class PresentielImport implements ToCollection
             $formation = Formations::where('code_formation',$this->code_formation)->first();
             $formation->setAttribute('presentiel', 1);
             $formation->update();
+        }
 
         }
 

@@ -93,20 +93,38 @@ class FormationsService implements FormationsInterface
                 $formation->setAttribute('titre_evenement', $request->titre_evenement);
             }
             $formation->save();
+            
+            if ($request->has('idReductions') && !empty($request->input('idReductions'))) {
+                    
+                    $idReductionsJson = $request->input('idReductions');
+                    $idReductions = json_decode($idReductionsJson, true); 
+                    // Vérifier si c'est bien un tableau et qu'il n'est pas vide
+                    if (is_array($idReductions) && count($idReductions) > 0) {
+                        // delete all existing reduction
+                        $deleteReduction = ReductionsFormations::where('formation_id',$formation->id)->delete();
+                        // Parcourir chaque réduction
+                        foreach ($idReductions as $reduction) {
+                            $newReduction = new ReductionsFormations();
+                            $newReduction->setAttribute('formation_id',$formation->id);
+                            $newReduction->setAttribute('reduction_id',$reduction);
+                            $newReduction->save(); 
+                        } 
+                    } 
+                } 
 
             // update duree enregistrement
             if ($request->filled('id_webinaire') && $request->filled('duree_enregistrement') && $request->duree_enregistrement >= 0) {
                 # code...
                 $update_duree_formation = Dureeformations::where("code_formation",$formation->code_formation)->first();
                 if ($update_duree_formation) {
-                    $update_duree_formation->setAttribute("duree_enregistrement",$_POST["duree_enregistrement"]);
+                    $update_duree_formation->setAttribute("duree_enregistrement",$request->duree_enregistrement);
                     $update_duree_formation->update();
                 } else {
                     # code... create durée
                     $update_duree_formation = new Dureeformations();
                     $update_duree_formation->setAttribute("code_formation",$formation->code_formation);
-                    $update_duree_formation->setAttribute("duree_enregistrement",$_POST["duree_enregistrement"]);
-                    $update_duree_formation->setAttribute("id_webinaire",$_POST["id_webinaire"]);
+                    $update_duree_formation->setAttribute("duree_enregistrement",$request->duree_enregistrement);
+                    $update_duree_formation->setAttribute("id_webinaire",$request->id_webinaire);
                     $update_duree_formation->setAttribute("duree",0);
                     $update_duree_formation->save();
                 }
@@ -370,19 +388,38 @@ class FormationsService implements FormationsInterface
             }
             $formation->save();
 
+            // update reduction if exists
+            Log::info($request->input('idReductions'));
+             if ($request->has('idReductions') && !empty($request->input('idReductions'))) {
+                    $idReductionsJson = $request->input('idReductions');
+                    $idReductions = json_decode($idReductionsJson, true); 
+                    // Vérifier si c'est bien un tableau et qu'il n'est pas vide
+                    if (is_array($idReductions) && count($idReductions) > 0) {
+                        // delete all existing reduction
+                        $deleteReduction = ReductionsFormations::where('formation_id',$formation->id)->delete();
+                        // Parcourir chaque réduction
+                        foreach ($idReductions as $reduction) {
+                            $newReduction = new ReductionsFormations();
+                            $newReduction->setAttribute('formation_id',$formation->id);
+                            $newReduction->setAttribute('reduction_id',$reduction);
+                            $newReduction->save(); 
+                        } 
+                    } 
+                } 
+
             // update duree enregistrement
             if ($request->filled('id_webinaire') && $request->filled('duree_enregistrement') && $request->duree_enregistrement >= 0) {
                 # code...
                 $update_duree_formation = Dureeformations::where("code_formation",$formation->code_formation)->first();
                 if ($update_duree_formation) {
-                    $update_duree_formation->setAttribute("duree_enregistrement",$_POST["duree_enregistrement"]);
+                    $update_duree_formation->setAttribute("duree_enregistrement",$request->duree_enregistrement);
                     $update_duree_formation->update();
                 } else {
                     # code... create durée
                     $update_duree_formation = new Dureeformations();
                     $update_duree_formation->setAttribute("code_formation",$formation->code_formation);
-                    $update_duree_formation->setAttribute("duree_enregistrement",$_POST["duree_enregistrement"]);
-                    $update_duree_formation->setAttribute("id_webinaire",$_POST["id_webinaire"]);
+                    $update_duree_formation->setAttribute("duree_enregistrement",$request->duree_enregistrement);
+                    $update_duree_formation->setAttribute("id_webinaire",$request->id_webinaire);
                     $update_duree_formation->setAttribute("duree",0);
                     $update_duree_formation->save();
                 }
@@ -514,6 +551,7 @@ class FormationsService implements FormationsInterface
         $queryFormations = Formations::select('formations.*')
             ->with('getTypeformation:id,libelle')
             ->with('tarifications')
+            ->with('reductions')
             ->where('formations.code_formation', $request->code_formation)
             ->get()->first();
         return ResponseHandler::success('ok', $queryFormations);
