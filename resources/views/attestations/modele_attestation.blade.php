@@ -137,75 +137,73 @@
 
                 <div>
                     <!-- div opacity -->
-                    <div style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
-
-                        <div
-                            style="z-index: 100;clear:both; display:block; margin: 20px 0 0px 0;text-align: center;line-height: 1.2;font-size: 30pt; color:#006fc0; font-weight:bold;">
-                            <div style="margin: 15px 0 10px 0;">
+                    <div style="margin-top: 5px; position: relative;">
+                        <!-- div opacity -->
+                        <div style="opacity: 1; margin: 0; font-size: 12pt;">
+                            @php
+                                $nbre_jour = 0;
+                                $get_nbre_jour = round((strtotime($participant->date_fin) - strtotime($participant->date_debut)) / 86400);
+                                $nbre_jour = $get_nbre_jour + 1;
+                            @endphp
+                    
+                            <div style="clear: both; display: block; margin: 20px 0; text-align: center; line-height: 1.2; font-size: 30pt; color: #006fc0; font-weight: bold;">
                                 @if ($typeformation_id == 1)
                                     ATTESTATION DE FORMATION
                                 @else
                                     ATTESTATION DE PARTICIPATION
                                 @endif
-
                             </div>
-                        </div>
-                        <div
-                            style="clear:both; display:block; width:100%; margin-top:5px; text-align:center; color : #000000; font-size: 20pt; font-weight:bold;">
-                            <div style="margin: 2px 0 7px 0;">
+                    
+                            <div style="clear: both; display: block; width: 100%; margin-top: 5px; text-align: center; color: #000000; font-size: 20pt; font-weight: bold;">
                                 LE DIRECTEUR GENERAL
                             </div>
-                        </div>
-                        <div style="clear:both; display:block; text-align:justify;">
-                            <div style="line-height: 1.4; ">
-                                <span style="font-size:11.6pt;">
-                                    <b>Vu</b> le Traité relatif à l’Harmonisation du droit des Affaires en Afrique signé
-                                    à Port-Louis le 17 octobre
-                                    1993, tel que révisé à Québec le 17 octobre 2008 notamment en son article 41 ; <br>
-                                    <b>Vu</b> le Statut de l’ERSUMA du 03 octobre 1995 révisé par les Règlements n°
-                                    004/2009/CM/OHADA du 19 décembre
-                                    2009, n° 003/2011/CM du 17 juin 2011 et n° 02/2016/CM/OHADA du 28 octobre 2016
-                                    portant Statut révisé
-                                    de l’ERSUMA ;
-                                </span><br>
-                                <div style="clear:both; display:block;text-align:center;font-size: 14pt;"> Atteste que :
+                    
+                            <div style="clear: both; display: block; text-align: justify; margin-top: 20px; line-height: 1.5;">
+                                <div style="font-size: 11.6pt;">
+                                    <span>
+                                        <b>Vu</b> le Traité relatif à l’Harmonisation du droit des Affaires en Afrique signé à Port-Louis le 17 octobre 1993, tel que révisé à Québec le 17 octobre 2008 notamment en son article 41 ; <br>
+                                        <b>Vu</b> le Statut de l’ERSUMA du 03 octobre 1995 révisé par les Règlements n° 004/2009/CM/OHADA du 19 décembre 2009, n° 003/2011/CM du 17 juin 2011 et n° 02/2016/CM/OHADA du 28 octobre 2016 portant Statut révisé de l’ERSUMA ;
+                                    </span>
+                    
+                                    <div style="text-align: center; font-size: 14pt; margin: 15px 0;">
+                                        @if ($participant->temps_presence == 0 && $participant->presentiel == 1)
+                                            Atteste que :
+                                        @else
+                                            Certifie que :
+                                        @endif
+                                    </div>
+                    
+                                    <div style="line-height: 1.5; font-size: 13pt; text-align: center; margin-bottom: 10px;">
+                                        <span style="font-weight: bold; font-size: 20pt;">
+                                            {{ trim($participant->prenoms) }} {{ trim($participant->nom) }}
+                                        </span> <br>
+                                        a pris part à la {{ $typeformation_id == 1 ? 'session de formation' : 'conférence' }}, sur le thème<br>
+                                        <span style="font-weight: bold; font-size: 16pt;">
+                                            <i>{{ $participant->theme }}</i>
+                                        </span><br>
+                                        qui s’est tenue
+                                        @if ($participant->lieu != '')
+                                            à {{ $participant->lieu }}
+                                        @endif
+                                        @if ($participant->date_debut == $participant->date_fin)
+                                            le {{ \Carbon\Carbon::parse($participant->date_debut)->isoFormat('DD MMM YYYY') }}
+                                        @else
+                                            du {{ \Carbon\Carbon::parse($participant->date_debut)->isoFormat('DD MMM') }}
+                                            au {{ \Carbon\Carbon::parse($participant->date_fin)->isoFormat('DD MMM YYYY') }}
+                                        @endif
+                                        @php
+                                            $masse_horaire = 8 * $nbre_jour;
+                                        @endphp
+                                        correspondant à {{ $nbre_jour == 1 ? '4 heures' : "$masse_horaire heures" }} de formation.
+                                    </div>
+                    
+                                    <p style="text-align: justify; margin-top: 15px;">
+                                        La présente attestation lui est délivrée pour en jouir avec les droits et prérogatives qui y sont attachés.
+                                    </p>
                                 </div>
-                                <div
-                                    style="line-height: 1.5;font-size: 13pt; display:block; text-align:center; margin-bottom:10px;">
-                                    <span style="font-weight:bold; font-size:20pt;">{{ trim($participant->prenoms) }}
-                                        {{ trim($participant->nom) }}</span> <br>a pris
-                                    part à la {{ $typeformation_id == 1 ? 'session de formation' : 'conférence' }}, sur
-                                    le thème<br>
-                                    <span style="font-weight:bold; font-size:16pt;">
-                                        <i>{{ $participant->theme }}</i></span>,<br>
-                                    qui s’est tenue
-                                    @if ($participant->lieu != '')
-                                        à {{ $participant->lieu }}
-                                    @endif
-                                    @if ($participant->date_debut == $participant->date_fin)
-                                        le
-                                        {{ \Carbon\Carbon::parse($participant->date_debut)->isoFormat('DD MMM YYYY') }}
-                                    @else
-                                        du
-                                        {{ \Carbon\Carbon::parse($participant->date_debut)->isoFormat('DD MMM') }}
-                                        au
-                                        {{ \Carbon\Carbon::parse($participant->date_fin)->isoFormat('DD MMM YYYY') }}
-                                    @endif
-                                    @php
-                                        $masse_horaire = 8 * $nbre_jour;
-                                    @endphp
-                                    correspondant à {{ $nbre_jour == 1 ? '4 heures' : "$masse_horaire heures" }} de
-                                    formation.
-                                </div>
-                                {{-- {{$nbre_jour}} --}}
-                                <p>
-                                    La présente attestation lui est délivrée pour en jouir avec les droits et
-                                    prérogatives qui y sont attachés.
-                                </p>
                             </div>
                         </div>
-
-                    </div>
+                    
                     <!-- end div opacity -->
 
                 </div><!-- fermeture div background-image -->
