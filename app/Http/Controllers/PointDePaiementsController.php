@@ -60,39 +60,37 @@ class PointDePaiementsController extends Controller
 
    
     public function store(Request $request)
-    {
-        try {
-            \Log::debug('Store called', ['payload' => $request->all()]);
+{
+    try {
+        \Log::debug('Store called', ['payload' => $request->all()]);
 
-            $validated = $request->validate([
-                'nom_organisme' => 'required|string|max:255|unique:point_de_paiements,nom_organisme',
-                'adresse' => 'required|string',
-                'ville' => 'required|string',
-                'pays' => 'nullable|string',
-                'telephone' => 'nullable|string',
-                'courriel' => 'required|email',
-                'contact1' => 'nullable|string',
-                'telephone1' => 'nullable|string',
-                'courriel1' => 'required|email',
-                'contact2' => 'nullable|string',
-                'telephone2' => 'nullable|string',
-                'courriel2' => 'required|email',
-                'description' => 'nullable|string',
-            ]);
-            \Log::debug('Validation OK', $validated);
+        $validated = $request->validate([
+            'nom_organisme' => 'required|string|max:255|unique:point_de_paiements,nom_organisme',
+            'adresse' => 'required|string|min:3',
+            'ville' => 'required|string',
+            'pays' => 'nullable|string',
+            'telephone' => 'nullable|string',
+            'courriel' => 'required|email',
+            'contact1' => 'nullable|string|min:3',
+            'telephone1' => 'nullable|string',
+            'courriel1' => 'nullable|email',
+            'contact2' => 'nullable|string|min:3',
+            'telephone2' => 'nullable|string',
+            'courriel2' => 'nullable|email',
+            'description' => 'nullable|string',
+        ]);
 
+        \Log::debug('Validation OK', $validated);
+        return $this->pointsdepaiementsService->savePointdepaiement($request);
 
-            return $this->pointsdepaiementsService->savePointdepaiement($request);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation error', $e->errors());
-            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
-        } catch (\Exception $e) {
-            \Log::error('Internal error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-
-            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
-        }
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        \Log::error('Validation error', $e->errors());
+        return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+    } catch (\Exception $e) {
+        \Log::error('Internal error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+        return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
     }
+}
 
    
     public function update(Request $request)
