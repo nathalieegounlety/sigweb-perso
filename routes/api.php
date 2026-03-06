@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ExcelPresentielController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\StatistiquesController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -438,6 +440,14 @@ Route::prefix('v1/autresparticipants')->controller(\App\Http\Controllers\Rapport
     Route::post('/search', 'searchAutresparticipants');
 
 });
+
+Route::prefix('v1/statistiques')->controller(StatistiquesController::class)->group(function () {
+    Route::get('/inscrits', 'statsEtatInscrits')->name('statistiques.inscrits');
+});
+
+Route::get('v1/exportation/inscrits/formations', [ExcelPresentielController::class, 'exportListeInscritFormation'])
+     ->name('exportation_inscrits_formations');
+
 
 
 
