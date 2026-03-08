@@ -125,7 +125,7 @@ class AuditeursContoller extends Controller
         } catch (\Exception $e) {
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
-    }
+    } 
 
     /**
      * Store a newly created resource in storage.

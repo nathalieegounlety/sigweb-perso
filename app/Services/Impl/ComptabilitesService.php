@@ -799,6 +799,11 @@ class ComptabilitesService implements ComptabilitesInterface
                 $paiement->update();
             }
 
+            
+            $action = 'DEPLACEMENT COMMANDE';
+            $description = "Déplacement comande : ".$request->reference." statut ".$request->statut_traitement." commentaire ".$request->commentaire;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+
             return  ResponseHandler::success("Commande déplacée avec succès");
 
         }
@@ -864,7 +869,9 @@ class ComptabilitesService implements ComptabilitesInterface
                 return  ResponseHandler::error("Erreur : le champ mode de paiement est obligatoire.");
             }
 
-
+            $action = 'VALIDATION COMMANDE';
+            $description = "Validation comande : ".$request->reference." statut ".$request->statut_traitement." commentaire ".$request->commentaire;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
 
         } else {
 

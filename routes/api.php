@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExcelPresentielController;
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ResetPasswordController;
@@ -208,6 +209,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('remove', 'remove');
     Route::post('get_user', 'getAuditeurById');
     Route::post('inscription/formation', 'inscriptionFormation');
+    Route::post('inscription/formation/by/admin', 'inscriptionFormationByAdmin');
     Route::post('formations', 'getListeFormations');
     Route::post('by/email', 'getAuditeurByEmail');
     Route::post('inscription/store/paiement', 'inscriptionPaiement');
@@ -218,6 +220,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('mespaiements', 'mesPaiements');
     Route::post('update/inscription', 'updateInscriptionInfo');
     Route::post('inscription/formation/dsc', 'inscriptionFormationDsc');
+    Route::post('inscription/formation/dsc/by/admin', 'inscriptionFormationDscByAdmin');
     Route::post('check/piece/dsc', 'checkPieceDsc');
     Route::get('liste/pieces', 'listePieces');
     Route::post('add/pieces', 'addPiece');
@@ -448,6 +451,9 @@ Route::prefix('v1/statistiques')->controller(StatistiquesController::class)->gro
 Route::get('v1/exportation/inscrits/formations', [ExcelPresentielController::class, 'exportListeInscritFormation'])
      ->name('exportation_inscrits_formations');
 
-
-
+Route::get('/v1/files/{path}', [FileController::class, 'show'])
+    ->where('path', '.*');
+    
+// updateCodeUser
+Route::get('/v1/update/liste', [HomeController::class, 'updateCodeUser']);
 

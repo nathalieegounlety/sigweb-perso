@@ -1,5 +1,7 @@
 <?php
 namespace App\Services\util;
+
+use App\Models\Historiqueactions;
 use App\Models\Paiements;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -199,4 +201,42 @@ class GenarateurCodeService {
 
         return $pdf;
     }
+
+    // save historique action
+    public function saveHistoriqueAction ($action, $description, $user_id = null){
+        $data = new Historiqueactions();
+        $data->setAttribute('action',$action);
+        $data->setAttribute('description',$description);
+        $data->setAttribute('ip_adresse', $this->getIpAdresse());
+        $data->setAttribute('mac_adresse', $this->getMacAdresse()); 
+        $data->setAttribute('created_by',$user_id);
+        $data->save();
+    }
+
+    private function getIpAdresse(): string
+{
+    $request = request();
+
+    // Gère les proxies / load balancers
+    return $request->header('X-Forwarded-For')
+        ?? $request->header('X-Real-IP')
+        ?? $request->ip()
+        ?? 'unknown';
+}
+
+private function getMacAdresse(): string
+{ 
+    if (PHP_OS_FAMILY === 'Windows') {
+        $output = shell_exec('getmac /fo csv /nh');
+        preg_match('/\"([0-9A-Fa-f\-]{17})\"/', $output, $matches);
+        return $matches[1] ?? 'unknown';
+    }
+
+    if (PHP_OS_FAMILY === 'Linux') {
+        $output = shell_exec("cat /sys/class/net/$(ip route show default | awk '/default/ {print $5}')/address");
+        return trim($output) ?: 'unknown';
+    }
+
+    return 'unknown';
+}
 }

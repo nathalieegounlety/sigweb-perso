@@ -92,6 +92,11 @@ class AuditeursService implements AuditeursInterface
         try {
             $auditeur->save();
 
+            // save historique action
+            $action = 'CREATION COMPTE AUDITEUR';
+            $description = "Création du compte de l'auditeur ".$user->code_user." ".$auditeur->nom." ".$auditeur->prenoms;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, $user->id);
+
             // send mail for user to inform that about acount
 
             // send identifiant to mail for user
@@ -175,9 +180,15 @@ class AuditeursService implements AuditeursInterface
 
     public function storeInscriptionFormation(Request $request): \Illuminate\Http\JsonResponse
     {
-        // TODO: Implement storeInscriptionFormation() method.
-        $user = auth('api')->user();
-        $auditeur = Auditeurs::where("email", $user->email)->first();
+        // TODO: Implement storeInscriptionFormation() method. 
+        if ($request->has('idAuditeur') && !empty($request->input('idAuditeur'))) {
+            $auditeur = Auditeurs::find($request->idAuditeur);
+            $user = User::where('email',$auditeur->email)->first();
+        }else{
+            $user = auth('api')->user();
+            $auditeur = Auditeurs::where("email", $user->email)->first();
+
+        }
 
         if ($auditeur) {
             # code...
@@ -324,6 +335,12 @@ class AuditeursService implements AuditeursInterface
                 'code_inscription' => $generateCode,
                 'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' =>$generateCode])
             ];
+
+            // save historique action
+            $action = 'INSCRIPTION FORMATION NON DSC';
+            $description = "Inscription de l'auditeur ".$auditeur->nom." ".$auditeur->prenoms." à la formation référence".$generateCode;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, $user->id);
+
             if ($check_exist == $total_formation) {
                 # code...
                 $ok = true;
@@ -443,7 +460,7 @@ class AuditeursService implements AuditeursInterface
             ];
             return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse,500);
         }
-    }
+    } 
 
     public function getAuditeurByEmail(string $email): \Illuminate\Http\JsonResponse
     {
@@ -793,6 +810,11 @@ class AuditeursService implements AuditeursInterface
 
         }
 
+        // save historique action
+            $action = 'MISE A JOUR INFORMATION AUDITEUR';
+            $description = "Mise à jour des informations de l'auditeur ".$auditeur->nom." ".$auditeur->prenoms;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, $user->id);
+
         return  ResponseHandler::success("Mise à jour effectuée avec succès");
     }
 
@@ -958,6 +980,12 @@ class AuditeursService implements AuditeursInterface
             $updUser->update();
         }
 
+         // save historique action
+            $action = 'MISE A JOUR INFORMATION AUDITEUR';
+            $description = "Mise à jour des informations de l'auditeur ".$auditeurs->nom." ".$auditeurs->prenoms;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, $user->id);
+
+
         return ResponseHandler::success("Modification effectuée avec succès",['success'=>true,'code_formation' => $inscrit->code_formation]);
 
     }
@@ -965,8 +993,14 @@ class AuditeursService implements AuditeursInterface
     public function storeInscriptionFormationDsc(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement storeInscriptionFormationDsc() method.
-        $user = auth('api')->user();
-        $auditeur = Auditeurs::where("email", $user->email)->first();
+         if ($request->has('idAuditeur') && !empty($request->input('idAuditeur'))) {
+            $auditeur = Auditeurs::find($request->idAuditeur);
+            $user = User::where('email',$auditeur->email)->first();
+        }else{
+            $user = auth('api')->user();
+            $auditeur = Auditeurs::where("email", $user->email)->first();
+
+        } 
 
         if ($auditeur) {
             # code...
@@ -1059,6 +1093,11 @@ class AuditeursService implements AuditeursInterface
                 'url_proforma' => $this->genarateurCodeService->generateUrlSigned('pro-forma-dsc',['reference' =>$generateCode])
             ];
 
+             // save historique action
+            $action = 'INSCRIPTION FORMATION DSC';
+            $description = "Inscription à la formation DSC de l'auditeur ".$auditeur->nom." ".$auditeur->prenoms." référence : ".$generateCode;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, $user->id);
+
             if ($check_exist == $total_formation) {
                 # code...
                 $ok = true;
@@ -1104,7 +1143,7 @@ class AuditeursService implements AuditeursInterface
                     $montant_total = $montant_total + $getGrille->montant;
 
                     // générer le numero de reference facture : ERS-2025-FAC-000001
-                    $reference_paiement =$this->genarateurCodeService->genererNumeroPaiement();
+                    $reference_paiement = $this->genarateurCodeService->genererNumeroPaiement();
 
                     // enregistrement du paiement
                     $statut_details_paiement = "IMPAYE";
@@ -1202,13 +1241,13 @@ class AuditeursService implements AuditeursInterface
         $inscrit = Inscriptions::where('code_inscription',$request->code_inscription)->first();
         $auditeur = Auditeurs::whereEmail($inscrit->email)->first();
         $countPiece = InscritsTypePieces::count();
-        $countPieceAuditeur = AuditeursPieces::where('auditeur_id',$auditeur->id)->count();
+        $countPieceAuditeur = AuditeursPieces::where('auditeur_id',$auditeur->id)->where('code_formation',$inscrit->code_formation)->count();
         $downUploadPiece = true;
         $dossier_valide = false;
 
         if ($countPieceAuditeur < $countPiece) {  $downUploadPiece = false; }
 
-        if ($inscrit->statut_dossier == 'VALIDEE') {  $dossier_valide = true; }
+        if ($inscrit->statut_dossier == 'VALIDEE') {  $dossier_valide = true; }else{ $dossier_valide = false; }
 
         $dataResponse = [
             'dossier_valide' => $dossier_valide,
@@ -1239,6 +1278,7 @@ class AuditeursService implements AuditeursInterface
                 'inscrits_type_pieces.is_etudiant',
                 'inscrits_type_pieces.libelle',
                 'auditeurs_pieces.piece_path',
+                'auditeurs_pieces.code_formation',
                 DB::raw('CASE WHEN auditeurs_pieces.id IS NOT NULL THEN true ELSE false END as checked')
             ]);
         $totalPieces = InscritsTypePieces::count();
@@ -1259,7 +1299,8 @@ class AuditeursService implements AuditeursInterface
         try {
             $user = auth('api')->user();
             $auditeur = Auditeurs::where("email", $user->email)->first();
-            $userFolder = 'pieces_auditeur/' . Str::slug($user->name);
+            // $userFolder = 'pieces_auditeur/' . Str::slug($user->name); 
+            $userFolder = $user->code_user.'/'.$request->code_formation;
 
             // Enregistrer les pièces jointes
             if ($request->hasFile('document')) {
@@ -1294,10 +1335,18 @@ class AuditeursService implements AuditeursInterface
                             $inscritspiece->piece_path = $piecePath;
                             $inscritspiece->created_by = $user->id;
                             $inscritspiece->updated_by = $user->id;
+                            $inscritspiece->code_formation = $request->code_formation;
                             $inscritspiece->save();
                         }
                     }
                 $message = "Enregistrement effectué avec succès!";
+
+                 // save historique action
+            $action = 'AJOUT DE PIECE';
+            $description = "Ajout de pièce ".$piecePath;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, $user->id);
+
+
                 return ResponseHandler::success("ok",$message);
             } else {
                 return ResponseHandler::error("La pièce n'existe pas","Veuillez renseigner toutes les pièces.");
@@ -1355,6 +1404,10 @@ class AuditeursService implements AuditeursInterface
             $rapport->setAttribute("id_webinaire",$formation->id_webinaire);
             $rapport->setAttribute("observation",$request->observation);
             $rapport->save();
+
+            $action = 'MISE A JOUT TEMPS DE PRESENCE';
+            $description = "Mise à jour temps de présence auditeur : ".$request->email." code formation : ".$formation->code_formation." temps de présence : ".$request->temps_presence." Observation : ".$request->observation;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
 
             // mise à jour tarif formation
             return ResponseHandler::success("Mise à jour effectuée avec succès",['success'=>true,'code_formation' => $request->code_formation]);
@@ -1465,8 +1518,12 @@ class AuditeursService implements AuditeursInterface
                         }
                         $anc_tarif_fm->update();
 
+                        $action = 'CHANGEMENT MODE FORMATION';
+                        $description = "Changement mode de formation : ".$request->code_formation;
+                        $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+
                         // return success msg 
-                        return  ResponseHandler::success("Mise à jour effectuée avec succèsok");
+                        return  ResponseHandler::success("Mise à jour effectuée avec succès ok");
                     }
  
                 }
@@ -2147,6 +2204,10 @@ class AuditeursService implements AuditeursInterface
             }
             // Réactiver la vérification des clés étrangères
             DB::statement('SET FOREIGN_KEY_CHECKS=1'); 
+
+            $action = 'CHANGEMENT MAIL AUDITEUR';
+            $description = "Changement auditeur, anc_mail : ".$request->anc_email." new_mail ".$request->new_email;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
         return  ResponseHandler::success("Mise à jour effectuée avec succès");
         }
         

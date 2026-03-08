@@ -32,6 +32,7 @@ class AuditeursPieces extends Model
         'updated_by',
         'created_at',
         'updated_at',
+        'code_formation'
     ];
 
     public function getUserCreated()

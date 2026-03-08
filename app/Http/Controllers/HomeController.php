@@ -2,15 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHandler;
 use App\Models\Formations;
 use App\Models\FormationsDsc;
 use App\Models\PointDePaiements;
 use App\Models\points_de_paiements;
+use App\Models\User;
+use App\Services\util\GenarateurCodeService;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    //
+    private GenarateurCodeService $genarateurCodeService;
+
+    public function __construct(GenarateurCodeService $genarateurCodeService)
+    {
+        $this->genarateurCodeService = $genarateurCodeService; 
+    }
+
+    public function updateCodeUser()  {
+        $users = User::query()->update(['code_user' => null]);
+        $listeUsers = User::orderBy('id','asc')->get();
+
+        foreach ($listeUsers as $key => $value) {
+            # code...
+            $data = User::find($value->id);
+            $data->setAttribute('code_user',$this->genarateurCodeService->genererCodeUser());
+            $data->update();
+        }
+
+        return ResponseHandler::success("ok");
+    }
+
     // Récupérer les 6 dernières formations (accueil)
     public function FormationsRecentes()
     {
@@ -26,7 +49,7 @@ class HomeController extends Controller
             ]);
         return response()->json($formations);
     }
-
+ 
     // Récupérer toutes les formations (catalogue, avec pagination)
     public function catalogue(Request $request)
     {

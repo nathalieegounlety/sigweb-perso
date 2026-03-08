@@ -21,7 +21,7 @@ interface AuditeursInterface
 
     public function remove(int $id): \Illuminate\Http\JsonResponse;
 
-    public function storeInscriptionFormation(Request $data): \Illuminate\Http\JsonResponse;
+    public function storeInscriptionFormation(Request $data): \Illuminate\Http\JsonResponse; 
 
     public function storeInscriptionFormationDsc(Request $data): \Illuminate\Http\JsonResponse;
 
