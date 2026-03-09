@@ -327,7 +327,7 @@ class AuditeursContoller extends Controller
 
     public function listePieces(Request $request){
         try {
-            return $data = $this->auditeurService->mesPieces();
+            return $data = $this->auditeurService->mesPieces($request);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

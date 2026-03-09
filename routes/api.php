@@ -222,7 +222,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('inscription/formation/dsc', 'inscriptionFormationDsc');
     Route::post('inscription/formation/dsc/by/admin', 'inscriptionFormationDscByAdmin');
     Route::post('check/piece/dsc', 'checkPieceDsc');
-    Route::get('liste/pieces', 'listePieces');
+    Route::post('liste/pieces', 'listePieces');
     Route::post('add/pieces', 'addPiece');
     Route::post('update/temps/presence', 'updateTempsPresence');
     Route::post('info/indicateurs', 'indicateursAuditeur');

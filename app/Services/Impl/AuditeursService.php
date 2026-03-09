@@ -1257,7 +1257,7 @@ class AuditeursService implements AuditeursInterface
         return ResponseHandler::success("ok",$dataResponse);
     }
 
-    public function mesPieces(): \Illuminate\Http\JsonResponse
+    public function mesPieces(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement mesPieces() method.
         $user = auth('api')->user();
@@ -1269,7 +1269,8 @@ class AuditeursService implements AuditeursInterface
                         '=',
                         'inscrits_type_pieces.id'
                     )
-                        ->where('auditeurs_pieces.created_by', $user->id);
+                        ->where('auditeurs_pieces.created_by', $user->id)
+                        ->where('auditeurs_pieces.code_formation', $request->code_formation);
                 }
             )
             ->get([
@@ -1284,6 +1285,7 @@ class AuditeursService implements AuditeursInterface
         $totalPieces = InscritsTypePieces::count();
         $totalPiecesFournies = DB::table('auditeurs_pieces')
             ->where('created_by', $user->id)
+            ->where('code_formation', $request->code_formation)
             ->count();
         $dataResponse = [
             'totalPiecesFournies' => $totalPiecesFournies,
