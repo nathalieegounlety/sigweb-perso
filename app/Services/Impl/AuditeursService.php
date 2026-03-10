@@ -1261,16 +1261,17 @@ class AuditeursService implements AuditeursInterface
     {
         // TODO: Implement mesPieces() method.
         $user = auth('api')->user();
+        $code_formation = $request->code_formation;
         $listePieces = InscritsTypePieces::leftJoin(
             'auditeurs_pieces',
-            function ($join) use ($user) {
+            function ($join) use ($user,$code_formation) {
                     $join->on(
                         'auditeurs_pieces.inscrits_typespieces_id',
                         '=',
                         'inscrits_type_pieces.id'
                     )
                         ->where('auditeurs_pieces.created_by', $user->id)
-                        ->where('auditeurs_pieces.code_formation', $request->code_formation);
+                        ->where('auditeurs_pieces.code_formation', $code_formation);
                 }
             )
             ->get([
@@ -1295,7 +1296,7 @@ class AuditeursService implements AuditeursInterface
         return ResponseHandler::success("ok",$dataResponse);
     }
 
-    public function ajouterPiece(Request $request): \Illuminate\Http\JsonResponse
+    public function ajouterPiece(Request $request)
     {
         // TODO: Implement ajouterPiece() method.
         try {
@@ -1303,7 +1304,7 @@ class AuditeursService implements AuditeursInterface
             $auditeur = Auditeurs::where("email", $user->email)->first();
             // $userFolder = 'pieces_auditeur/' . Str::slug($user->name); 
             $userFolder = $user->code_user.'/'.$request->code_formation;
-
+            $piecePath = "";
             // Enregistrer les pièces jointes
             if ($request->hasFile('document')) {
 
@@ -1339,6 +1340,18 @@ class AuditeursService implements AuditeursInterface
                             $inscritspiece->updated_by = $user->id;
                             $inscritspiece->code_formation = $request->code_formation;
                             $inscritspiece->save();
+                        }else{
+                            // update
+                            $piece = AuditeursPieces::where('inscrits_typespieces_id', $request->get('idPiece'))
+                            ->where('auditeur_id', $auditeur->id)
+                            ->first();
+                            $updatePiece = AuditeursPieces::find($piece->id); 
+                            $updatePiece->piece_path = $piecePath;
+                            $updatePiece->created_by = $user->id;
+                            $updatePiece->updated_by = $user->id;
+                            $updatePiece->code_formation = $request->code_formation;
+                            $updatePiece->update();
+
                         }
                     }
                 $message = "Enregistrement effectué avec succès!";

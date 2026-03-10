@@ -4,10 +4,13 @@ namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
 use App\Models\Formateurs;
+use App\Models\Formations;
 use App\Models\Formationsformateurs;
+use App\Models\Roleformateurs;
 use App\Services\contracts\FormateursInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FormateursService implements FormateursInterface
 {
@@ -180,4 +183,97 @@ class FormateursService implements FormateursInterface
         }
         return ResponseHandler::success("ok", $data);
     }
+
+    public function getFormateurByFormation(string $code_formation) 
+    { 
+        $data = Formationsformateurs::join('formations','formations.id','=','formationsformateurs.formation_id')
+        ->join('formateurs','formateurs.id','=','formationsformateurs.formateur_id')
+        ->leftJoin('roleformateurs','roleformateurs.id','=','formationsformateurs.roleformateur_id')
+        ->select('formations.theme','formations.code_formation','formations.date_debut','formations.date_fin','formateurs.nom','formateurs.titre',
+        'formateurs.prenoms','formateurs.telephone','formateurs.email','formateurs.genre','formationsformateurs.role','roleformateurs.libelle','formationsformateurs.id','formationsformateurs.roleformateur_id')
+        ->where('formations.code_formation',$code_formation)
+        ->get();
+        if (!$data) {
+            return ResponseHandler::error("La données n'existe pas", 409);
+        }
+        return ResponseHandler::success("ok", $data);
+    }
+
+    
+
+    public function getObjRoles(Request $request): \Illuminate\Http\JsonResponse
+    { 
+        $liste_formations = Roleformateurs::query()
+            //->where('statut', 'ACTIF')
+            ->select([
+                'id as code',
+                'libelle as name'
+            ]) 
+            ->where('is_enable', true)
+            ->get();
+        return ResponseHandler::success('ok', $liste_formations);
+    }
+
+    public function getObjFormateurs(Request $request): \Illuminate\Http\JsonResponse
+    { 
+        $liste_formations = Formateurs::query() 
+            ->select([
+                'id as code',
+                DB::raw("CONCAT(formateurs.nom, ' ', formateurs.prenoms) AS name")
+            ]) 
+            ->where('enable', true)
+            ->get();
+        return ResponseHandler::success('ok', $liste_formations);
+    }
+
+    public function saveAddFormateur(Request $request): \Illuminate\Http\JsonResponse
+    {
+       $codeFormation = $request->input('code_formation');
+        $roleFormateur = $request->input('roleformateur');
+        $formateurs = $request->input('formateurs');
+
+        $formation = Formations::where("code_formation",$codeFormation)->first();
+
+            foreach ($formateurs as $key => $formateur) {
+                # code...
+                // vérifier si la données existe déjà
+                $checkData = Formationsformateurs::where('formation_id',$formation->id)
+                ->where('formation_id',$formateur)
+                ->where('roleformateur_id',$roleFormateur)
+                ->exists();
+
+                if (!$checkData) {
+                    # code...
+                    $formateur_formation = new Formationsformateurs();
+                    $formateur_formation->setAttribute("formation_id",$formation->id);
+                    $formateur_formation->setAttribute("formateur_id",$formateur);
+                    $formateur_formation->setAttribute("roleformateur_id",$roleFormateur); 
+                     if (auth('api')->user()) {
+                        $user = auth('api')->user();
+                        $formateur_formation->setAttribute('created_by', $user->id);
+                        $formateur_formation->setAttribute('updated_by', $user->id);
+                    }
+                    $formateur_formation->save();
+                }
+            }
+ 
+        return ResponseHandler::success("Création efféctuée");
+    } 
+
+    public function saveEditRoleFormateur(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $roleformateur = Formationsformateurs::find($request->identifiant); 
+        $roleformateur->setAttribute('roleformateur_id', $request->idRole); 
+        $roleformateur->update();  
+ 
+        return ResponseHandler::success("Mise à jour efféctuée");
+    } 
+
+    public function saveDeleteFormateur(Request $request): \Illuminate\Http\JsonResponse
+    { 
+        $roleformateur = Formationsformateurs::find($request->identifiant);  
+        $roleformateur->delete();  
+ 
+        return ResponseHandler::success("Suppression efféctuée");
+    } 
 }

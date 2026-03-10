@@ -414,10 +414,16 @@ Route::prefix('v1/formateurs')->controller(\App\Http\Controllers\FormateursContr
     Route::post('remove', 'remove'); 
     Route::post('get/details', 'getDetails'); 
     Route::post('get/formations', 'getFormations'); 
+    Route::post('get/by/formation', 'getFormateursFormation'); 
+    Route::get('obj/roles', 'objRoles');
+    Route::get('obj', 'objFormateurs');
+    Route::post('store/for/formation','storeAddFormateur');
+    Route::post('store/edit/role','storeEditRoleFormateur');
+    Route::post('store/delete/formateur','storeDeleteFormateur');
 });
 
 // routes/api.php
-Route::prefix('v1/zoom-records')->controller(\App\Http\Controllers\ZoomRecordController::class)->group(function () {
+Route::prefix('v1/zoom-records')->controller(\App\Http\Controllers\ZoomRecordsController::class)->group(function () {
     Route::post('get/details', 'getDetails');         
     Route::get('get/sessions/{formationId}', 'getSessions'); 
     Route::post('store', 'store');

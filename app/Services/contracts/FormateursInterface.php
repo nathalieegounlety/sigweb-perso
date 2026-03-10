@@ -21,4 +21,16 @@ interface FormateursInterface
 
     public function getFormateurFormations(int $id);
 
+    public function getFormateurByFormation(string $code_formation);
+
+    public function getObjRoles(Request $request): \Illuminate\Http\JsonResponse;
+
+    public function getObjFormateurs(Request $request): \Illuminate\Http\JsonResponse;
+
+    public function saveAddFormateur(Request $data): \Illuminate\Http\JsonResponse; 
+
+    public function saveEditRoleFormateur(Request $data): \Illuminate\Http\JsonResponse; 
+
+    public function saveDeleteFormateur(Request $data): \Illuminate\Http\JsonResponse; 
+
 }

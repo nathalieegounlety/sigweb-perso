@@ -165,4 +165,119 @@ class FormateursController extends Controller
         }
 
     }
+
+    public function getFormateursFormation(Request $request)
+    {
+
+        try {
+
+            // validation des données du formulaire
+            $validated = $request->validate([
+                'code_formation' => 'required'
+            ]);
+
+            // procéder à l'enregistrement
+            return $processSave = $this->formateurService->getFormateurByFormation($request->code_formation);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    
+    public function objRoles(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $data = $this->formateurService->getObjRoles($request);
+            return ResponseHandler::success('ok',$data);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    
+    public function objFormateurs(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $data = $this->formateurService->getObjFormateurs($request);
+            return ResponseHandler::success('ok',$data);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+
+    
+
+    public function storeAddFormateur(Request $request)
+    {
+
+        try {
+
+            // validation des données du formulaire
+            $validated = $request->validate([
+                'code_formation' => 'required',
+                'roleformateur' => 'required',
+                'formateurs' => 'required', 
+            ]);
+
+            // procéder à l'enregistrement
+            return $processSave = $this->formateurService->saveAddFormateur($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+    // 
+    public function storeEditRoleFormateur(Request $request)
+    {
+
+        try {
+
+            // validation des données du formulaire
+            $validated = $request->validate([
+                'identifiant' => 'required',
+                'idRole' => 'required'
+            ]);
+
+            // procéder à l'enregistrement
+            return $processSave = $this->formateurService->saveEditRoleFormateur($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    
+    public function storeDeleteFormateur(Request $request)
+    {
+
+        try {
+
+            // validation des données du formulaire
+            $validated = $request->validate([
+                'identifiant' => 'required', 
+            ]);
+
+            // procéder à l'enregistrement
+            return $processSave = $this->formateurService->saveDeleteFormateur($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
 }
