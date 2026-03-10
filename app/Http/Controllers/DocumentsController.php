@@ -208,7 +208,9 @@ class DocumentsController extends Controller
                 'per_page'       => $data->perPage(),
                 'total'          => $data->total(),
                 'nbr_duree_enregistrement' => $resp['nbr_duree_enregistrement'],
-                'duree_formation' => $resp['duree_formation']
+                'duree_formation' => $resp['duree_formation'],
+                'nbrePresentiel' => $resp['nbrePresentiel'],
+                'nbreVisio' => $resp['nbreVisio']
             ];
             return ResponseHandler::success('ok',$response);
 
@@ -387,7 +389,8 @@ class DocumentsController extends Controller
                 'next_page_url'  => $data->nextPageUrl(),
                 'prev_page_url'  => $data->previousPageUrl(),
                 'per_page'       => $data->perPage(),
-                'total'          => $data->total()
+                'total'          => $data->total(),
+                'nbreFormateur' => $resp['nbreFormateur']
             ];
             return ResponseHandler::success('ok',$response);
 

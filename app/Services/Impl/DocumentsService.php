@@ -280,6 +280,20 @@ class DocumentsService implements DocumentsInterface
         $sortField = $request->input('sort_field', 'id');
         $sortOrder = $request->input('sort_order', 'desc');
 
+        $nbrePresentiel = DB::table('rapports')
+            ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+            ->where('rapports.code_formation', $code_formation)
+            ->where('inscriptions.code_formation', $code_formation)
+            ->where('rapports.temps_presence', 0)
+            ->count();
+
+        $nbreVisio = DB::table('rapports')
+            ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+            ->where('rapports.code_formation', $code_formation)
+            ->where('inscriptions.code_formation', $code_formation)
+            ->where('rapports.temps_presence', '>=', $scoring)
+            ->count();
+
         $query = DB::table('rapports')
             ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
             ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
@@ -316,17 +330,51 @@ class DocumentsService implements DocumentsInterface
                     ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
                     ->orWhere('rapports.email', 'like', "%{$search}%")
                     ->orWhere('rapports.temps_presence', 'like', "%{$search}%")
-                    ->orWhere('auditeurs.pays', 'like', "%{$search}%"); // Recherche sur auteur
+                    ->orWhere('auditeurs.pays', 'like', "%{$search}%")
+                    ->orWhere('detailspaiements.statut_paiement', 'like', "%{$search}%"); 
             });
         }
+
+        switch ($sortField) {
+            case 'nom':
+                # code...
+            $query->orderBy("auditeurs.{$sortField}", $sortOrder);
+                break;
+            case 'prenoms':
+                # code...
+        $query->orderBy("auditeurs.{$sortField}", $sortOrder);
+                break;
+            case 'email':
+                # code...
         $query->orderBy("rapports.{$sortField}", $sortOrder);
+                break;
+            case 'temps_presence':
+                # code...
+        $query->orderBy("rapports.{$sortField}", $sortOrder);
+                break; 
+            case 'statut_paiement':
+                # code...
+        $query->orderBy("detailspaiements.{$sortField}", $sortOrder);
+                break; 
+            case 'attestation_send':
+                # code...
+        $query->orderBy("rapports.{$sortField}", $sortOrder);
+                break; 
+            
+            default:
+                # code...
+                $query->orderBy("rapports.{$sortField}", $sortOrder);
+                break;
+        }
 
         $data = $query->paginate($perPage);
 
         return [
             'pagination' => $data,
             'nbr_duree_enregistrement' => $nbr_duree_enregistrement,
-            'duree_formation' => $duree_formation
+            'duree_formation' => $duree_formation,
+            'nbreVisio' => $nbreVisio,
+            'nbrePresentiel' => $nbrePresentiel,
         ];
     }
 
@@ -834,6 +882,12 @@ class DocumentsService implements DocumentsInterface
         $sortField = $request->input('sort_field', 'nom');
         $sortOrder = $request->input('sort_order', 'asc');
 
+        $nbreFormateur =  DB::table('formationsformateurs')
+            ->join('formations', 'formations.id', '=', 'formationsformateurs.formation_id')
+            ->join('formateurs', 'formateurs.id', '=', 'formationsformateurs.formateur_id')
+            ->where('formations.code_formation', $code_formation)
+            ->count();
+
         // récupérer la liste des panélistes
         $query =  DB::table('formationsformateurs')
             ->join('formations', 'formations.id', '=', 'formationsformateurs.formation_id')
@@ -856,12 +910,43 @@ class DocumentsService implements DocumentsInterface
                     ->orWhere('pays.nationalite', 'like', "%{$search}%"); // Recherche sur auteur
             });
         }
+        switch ($sortField) {
+            case 'nom':
+                # code...
         $query->orderBy("formateurs.{$sortField}", $sortOrder);
+                break;
+            case 'prenoms':
+                # code...
+        $query->orderBy("formateurs.{$sortField}", $sortOrder);
+                break;
+            case 'telephone':
+                # code...
+        $query->orderBy("formateurs.{$sortField}", $sortOrder);
+                break;
+            case 'role':
+                # code...
+        $query->orderBy("formationsformateurs.{$sortField}", $sortOrder);
+                break;
+            case 'role_formateur':
+                # code...
+        $query->orderBy("roleformateurs.libelle", $sortOrder);
+                break;
+            case 'nationalite':
+                # code...
+        $query->orderBy("pays.{$sortField}", $sortOrder);
+                break;
+            
+            default:
+                # code...
+        $query->orderBy("formateurs.{$sortField}", $sortOrder);
+                break;
+        }
 
         $data = $query->paginate($perPage);
 
         return [
             'pagination' => $data,
+            'nbreFormateur' => $nbreFormateur
         ];
     }
 
