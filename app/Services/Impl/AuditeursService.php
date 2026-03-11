@@ -1321,6 +1321,7 @@ class AuditeursService implements AuditeursInterface
                         // vérifier si la pièce existe déjà
                         $checkPiece = AuditeursPieces::where('inscrits_typespieces_id', $request->get('idPiece'))
                             ->where('auditeur_id', $auditeur->id)
+                            ->where('code_formation', $request->code_formation)
                             ->exists();
 
                         if (!$checkPiece) {
@@ -1345,6 +1346,12 @@ class AuditeursService implements AuditeursInterface
                             $piece = AuditeursPieces::where('inscrits_typespieces_id', $request->get('idPiece'))
                             ->where('auditeur_id', $auditeur->id)
                             ->first();
+                            $originalName = $pieceJointe->getClientOriginalName();
+                            $pieceName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+                            $filnalePieceName = $pieceName . '.' . $pieceJointe->extension();
+                            $piecePath = $userFolder . '/' . $filnalePieceName;
+                            Storage::disk('pieces_auditeur')->putFileAs($userFolder, $pieceJointe, $filnalePieceName);
+                            
                             $updatePiece = AuditeursPieces::find($piece->id); 
                             $updatePiece->piece_path = $piecePath;
                             $updatePiece->created_by = $user->id;
