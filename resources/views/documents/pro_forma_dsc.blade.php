@@ -383,7 +383,7 @@
             </table>
         </div>
 
-        <p><span style="text-decoration: underline;">Montant en lettres</span> : <b>{{ $formatter->format($montant_total) }} francs CFA</b> (XOF).</p>
+        <p><span style="text-decoration: underline;">Montant en lettres</span> : <b>{{ $formatter->format($frais_inscription+$frais_scolarite) }} francs CFA</b> (XOF).</p>
 
         <div class="signature-section">
             @php $signataire = getSignataireByDate(\Carbon\Carbon::parse(date('Y-m-d'))->format('Y-m-d')); @endphp
