@@ -137,16 +137,16 @@
                 </tbody>
             </table>
 
-            <div style="z-index: 10; background: none; margin-top: 115px; margin-bottom: 0;">
+            <div style="z-index: 10; background: none; margin-top:115px; margin-bottom: 0;">
                 @php
                     $nbre_jour =
                         round((strtotime($participant->date_fin) - strtotime($participant->date_debut)) / 86400) + 1;
                     $masse_horaire = 8 * $nbre_jour;
                 @endphp
 
-                <div style="z-index: 300; opacity: 0; margin: 0; font-size: 12pt;">
+                <div style="z-index: 300; opacity: 1; margin: 0; font-size: 12pt;">
                     <div
-                        style="z-index: 3; display: block; text-align: center; margin: 8px 0; font-size: 20pt; font-weight: bold; color: #1a0642;">
+                        style="z-index: 3; display: block; text-align: center; margin: 15px 0 0px 0; font-size: 20pt; font-weight: bold; color: #1a0642;">
                         3ème édition du Forum International des Professionnels du Droit et du Chiffre
                     </div>
 
@@ -339,7 +339,7 @@
 
                     <div style="z-index: 300; opacity: 1; margin: 0; font-size: 12pt;">
                         <div
-                            style="z-index: 3; display: block; text-align: center; margin: 8px 0; font-size: 20pt; font-weight: bold; color: #1a0642;">
+                            style="z-index: 3; display: block; text-align: center; margin: 15px 0 0px 0; font-size: 20pt; font-weight: bold; color: #1a0642;">
                             3ème édition du Forum International des Professionnels du Droit et du Chiffre
                         </div>
 

@@ -89,7 +89,7 @@ body::before {
                 <td style="vertical-align:top;">
                     <header>
                         <table style="width: 100%; padding: 0; margin: 0 ; text-align:center;">
-                            <tr style=" border-bottom:4px solid #1a0642;">
+                            <tr style=" border-bottom:4px solid #1a0642; ">
                                 <td style="width:15%;">
                                     <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo" height="95px" style="height: 95px;">
                                 </td>
@@ -126,7 +126,7 @@ body::before {
 
             <div >
                 <!-- div opacity -->
-                <div style="z-index: 300; opacity:0; margin:0;font-size:12pt;">
+                <div style="z-index: 300; opacity:1; margin:0;font-size:12pt;">
                     
                     <div style="z-index: 3; display:block; text-align:center; margin: 5px 0 0px 0; font-size: 27pt; font-weight:bold; color:#1a0642;">
                         Colloque international du trentenaire de l'OHADA

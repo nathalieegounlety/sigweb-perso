@@ -109,7 +109,7 @@
                     
                     <div style="z-index: 3; display:block; text-align:center; font-size: 27pt; font-weight:bold; font-family:'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:#1a0642;">Journées africaines de l'arbitrage et de la médiation</div>
                     <div
-                        style="z-index: 100;clear:both; display:block; margin: 5px 0 0px 0;text-align: center;line-height: 1.2;font-size: 30pt; color:#006fc0; font-weight:bold;">
+                        style="z-index: 100;clear:both; display:block; margin: 15px 0 0px 0;text-align: center;line-height: 1.2;font-size: 30pt; color:#006fc0; font-weight:bold;">
                         <div style="margin: 10px 0 10px 0;">  
                             {{$nbre_jour >= 5 ? "CERTIFICAT DE FORMATION" : "ATTESTATION DE PARTICIPATION"}}    
                         </div>

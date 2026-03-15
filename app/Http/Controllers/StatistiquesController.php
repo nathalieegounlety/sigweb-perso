@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use App\Models\Formations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StatistiquesController extends Controller
 {
@@ -30,5 +32,7 @@ class StatistiquesController extends Controller
     
         return response()->json($stat_formation);
     }
+
+    
     
 }
