@@ -26,7 +26,7 @@ class DocumentsController extends Controller
         $this->documentService = $documentService;
         $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
             'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc','listeFormateurs',
-            'exportAllAttestationParticipant','telechargerAttestationFormateur','consulterAttestationFormateur','proformaOuvrage',
+            'exportAllAttestationParticipant','exportAllAttestationPresentielParticipant','telechargerAttestationFormateur','consulterAttestationFormateur','proformaOuvrage',
             'exportAllAttestationFormateur','recuPaiementOuvrage','exportEtatRecapitulatif','exportListeGlobaleToPDF','exportListeParticipantAttestationPDF']]);
     }
 
@@ -346,10 +346,37 @@ class DocumentsController extends Controller
         }
     }
 
+    public function urlAllAttestationPresentielParticipant(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required',
+            ]);
+
+            return $this->documentService->getUrlAllAttestationPresentielParticipant($request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
     public function exportAllAttestationParticipant($code_formation)
     {
         try {
             return $data = $this->documentService->downloadAllAttestationParticipant($code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function exportAllAttestationPresentielParticipant($code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadAllAttestationPresentielParticipant($code_formation);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

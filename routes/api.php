@@ -128,7 +128,9 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('get/url/liste/participant/presentiel', 'urlListeParticipantPresentiel');
     Route::post('get/url/liste/participant/visio', 'urlListeParticipantVisio');
     Route::get('export/all/attestation/participant/{code_formation}', 'exportAllAttestationParticipant')->name('export.all.attestattion.participant')->middleware('signed');
+    Route::get('export/all/attestation/presentiel/participant/{code_formation}', 'exportAllAttestationPresentielParticipant')->name('export.all.attestation.presentiel.participant')->middleware('signed');
     Route::post('get/url/all/attestation/participant', 'urlAllAttestationParticipant');
+    Route::post('get/url/all/attestation/presentiel/participant', 'urlAllAttestationPresentielParticipant');
     Route::post('send/all/attestation/participant', 'sendAllAttestationParticipant');
     // ####### ATTESTATION POUR LES FORMATEURS #####################
     Route::get('attestations/formateurs', 'listeAttestationFormateurs');

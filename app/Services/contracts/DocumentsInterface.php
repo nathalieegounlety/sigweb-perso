@@ -30,7 +30,9 @@ interface DocumentsInterface
     public function getUrlListeParticipantPresentiel($code_formation);
     public function getUrlListeParticipantVisio($code_formation);
     public function getUrlAllAttestationParticipant($code_formation);
+    public function getUrlAllAttestationPresentielParticipant($code_formation);
     public function downloadAllAttestationParticipant($code_formation);
+    public function downloadAllAttestationPresentielParticipant($code_formation);
     public function sendAllMailAttestationParticipant(Request $request): \Illuminate\Http\JsonResponse;
     public function getListeAttestationFormateur(Request $request, string $code_formation);
     public function downloadAttestationFormateur($id);

@@ -736,6 +736,13 @@ class DocumentsService implements DocumentsInterface
         return  ResponseHandler::success("ok",$data,200);
     }
 
+    public function getUrlAllAttestationPresentielParticipant($code_formation)
+    { 
+        $url = $this->genarateurCodeService->generateUrlSigned('export.all.attestation.presentiel.participant',['code_formation' => $code_formation]);
+        $data = ['url'=>$url];
+        return  ResponseHandler::success("ok",$data,200);
+    }
+
     public function downloadAllAttestationParticipant($code_formation)
     {
         // TODO: Implement downloadAllAttestationParticipant() method.
@@ -756,6 +763,63 @@ class DocumentsService implements DocumentsInterface
             ->where('rapports.code_formation', $code_formation)
             ->where('inscriptions.code_formation', $code_formation)
             ->where('rapports.temps_presence', '>' ,0)
+            ->orderBy('auditeurs.nom', 'ASC')
+            ->get();
+
+        $duree_formation = Dureeformations::all()->where('code_formation', $code_formation)->sortByDesc("id");
+
+        $temps_latence = 90;
+        $duree_session = DB::table('sessionformations')
+            ->select(DB::raw('sum(duree_reel - ' . $temps_latence . ') as duree_session'))
+            ->where('code_formation', $code_formation)
+            ->get();
+
+        // formation
+        $formation = Formations::where("code_formation", $code_formation)->first();
+        $logo_partenaires = Logopartenaires::where('code_formation',$code_formation)->get();
+        //dd($formation->typeformation_id);
+        if ($formation->typeformation_id != null) {
+            # code...
+            $typeformation_id = $formation->typeformation_id;
+        } else {
+            # code...
+            $typeformation_id = 1;
+        }
+
+
+        // share data to view
+        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session,'typeformation_id' =>$typeformation_id, 'logo_partenaires' => $logo_partenaires,'formation' => $formation]);
+
+        // service permettant de retourner la vue sur condition
+        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event,$formation);
+
+        $pdf->setPaper('A4', 'landscape');
+
+
+        // download PDF file with download method
+        return $pdf->download($code_formation . '_ATTESTATION_' . $date . '.pdf');
+    }
+
+    public function downloadAllAttestationPresentielParticipant($code_formation)
+    {
+        // TODO: Implement downloadAllAttestationParticipant() method.
+
+        set_time_limit(0);
+        $fichier = "";
+        // ******************************************* //
+
+        $date = date('d-m-YH:i:s');
+        $date_jour = date('d-m-Y');
+        $date_jour = Carbon::now()->locale('fr_FR');
+        $date_jour = $date_jour->isoFormat('DD MMM YYYY');
+        $liste_participants = DB::table('rapports')
+            ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+            ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->join('formations', 'formations.code_formation', '=', 'rapports.code_formation')
+            ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays','formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation', 'inscriptions.presentiel')
+            ->where('rapports.code_formation', $code_formation)
+            ->where('inscriptions.code_formation', $code_formation)
+            ->where('rapports.temps_presence' ,0)
             ->orderBy('auditeurs.nom', 'ASC')
             ->get();
 
