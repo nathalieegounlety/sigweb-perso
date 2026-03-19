@@ -21,6 +21,7 @@
             width: 100%;
             height: 100%;
             background: url('img/logo/logo-ohada-new500.png') no-repeat fixed center 100px / contain;
+            background-size: 500px;
             opacity: 0.1;
             z-index: -1;
         }
@@ -265,7 +266,7 @@
                             <b>Vu</b> le Statut de l’ERSUMA du 03 octobre 1995 révisé par les Règlements n° 004/2009/CM/OHADA du 19 décembre 2009, n° 003/2011/CM du 17 juin 2011 et n° 02/2016/CM/OHADA du 28 octobre 2016 portant Statut révisé de l’ERSUMA ;
                         </span><br>
 
-                        <div style="text-align: center; font-size: 14pt; margin: 10px 0;">
+                        <div style="text-align: center; font-size: 14pt;">
                             Atteste que :
                         </div>
 

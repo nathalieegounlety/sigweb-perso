@@ -21,6 +21,7 @@
             width: 100%;
             height: 100%;
             background: url('img/logo/logo-ohada-new500.png') no-repeat fixed center 100px / contain;
+            background-size: 500px;
             opacity: 0.1;
             z-index: -1;
         }
@@ -197,7 +198,7 @@
             </tbody>
         </table>
 
-        <div style="z-index: 10; background:none; margin-top:115px; margin-bottom:0;">
+        <div style="z-index: 10; background:none; margin-top:135px; margin-bottom:0;">
             @php
                 $nbre_jour = 0;
                 $get_nbre_jour = round((strtotime($participant->date_fin) - strtotime($participant->date_debut)) / 86400);
@@ -206,7 +207,7 @@
 
             <!-- Suppression de la div avec opacity -->
             @if ($formation->titre_evenement)
-                <div style="z-index: 3; display:block; text-align:center; font-size: 20px; font-weight:bold; color:#1a0642;">{{$formation->titre_evenement}}</div>
+                <div style="z-index: 3; display:block; text-align:center; font-size: 20px; font-weight:bold; color:#1a0642; ">{{$formation->titre_evenement}}</div>
             @endif
 
             <div style="z-index: 100; clear:both; display:block; margin: 5px 0 0px 0; text-align: center; line-height: 1.2; font-size: 36px; color:#006fc0; font-weight:bold;">
@@ -361,7 +362,7 @@
             </tbody>
         </table>
 
-        <div style="z-index: 10; background:none; margin-top:115px; margin-bottom:0;">
+        <div style="z-index: 10; background:none; margin-top:135px; margin-bottom:0;">
             @php
                 $nbre_jour = 0;
                 $get_nbre_jour = round((strtotime($participant->date_fin) - strtotime($participant->date_debut)) / 86400);
