@@ -141,8 +141,9 @@
                     </tr>
                     <tr>
                         <td style="text-align:center;">
-                            <b>ERS-{{ date('Y') }}-PF-{{ \Carbon\Carbon::parse($paiement->created_at)->format('mdhs') }}</b>
-                        </td>
+                            
+                            <b>{{ getRefProformaOuvrage($inscrit->code_inscription) }}</b> 
+                         </td>
                         <td style="">
                             &nbsp;
                         </td>

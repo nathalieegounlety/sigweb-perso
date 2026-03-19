@@ -3,6 +3,7 @@
 namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
+use App\Models\Detailspaiements;
 use App\Models\Dureeformations;
 use App\Models\Formations;
 use App\Models\FormationsDsc;
@@ -10,6 +11,7 @@ use App\Models\FormationsTranches;
 use App\Models\Grilletarifaires;
 use App\Models\Inscriptions;
 use App\Models\Logopartenaires;
+use App\Models\Paiements;
 use App\Models\Reductions;
 use App\Models\ReductionsFormations;
 use App\Models\Tarificationsformation;
@@ -336,7 +338,7 @@ class FormationsService implements FormationsInterface
         // procéder à l'enregistrement des données
         // traitement des données liées à la tarification
         //1- extration des données liés au cout de la formation
-        $cout_formation = $request->cout_formation;
+        $cout_formation = json_decode($request->cout_formation, true);
         // vérifier le nom d'élément dans la table cout_formation (maximum 4)
         $nbr_cout = count($cout_formation);
         $check_attestation = false;
@@ -423,9 +425,8 @@ class FormationsService implements FormationsInterface
                     $update_duree_formation->setAttribute("duree",0);
                     $update_duree_formation->save();
                 }
-
-
             }
+
             // vérifier si la formation est gratuite pour insérer le montant attestation dynamiquement
             $check_details_paiement = DB::table('detailspaiements')
                 ->join('paiements', 'paiements.reference', '=', 'detailspaiements.reference_paiement')
@@ -435,16 +436,149 @@ class FormationsService implements FormationsInterface
                 ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
                 ->select('formations.code_formation', 'formations.theme', 'formations.date_debut','grilletarifaires.montant','reductions.pourcentage','detailspaiements.preuve_path')
                 ->where('tarificationsformations.code_formation',$request->get('code_formation'))
-                ->get();
+                ->whereNotNull('paiements.num_transaction')
+                ->exists();
 
-            if(count($check_details_paiement) != 0){
-
+            if($check_details_paiement){
+                // vérifier si un paiement existe
                 return ResponseHandler::success("Modification effectuée mais le coût de cette formation ne pourra pas être mise à jour car un paiement est déjà enregistré");
-
             }else{
 
-                for($i = 0; $i<$nbr_cout;$i++){
+            // filtrer les tarifs reçus pour retirer les nouveaux
+            $sentTarifsIds = collect($cout_formation)
+            ->pluck('id_tarif')
+            ->filter() // enlève null
+            ->toArray();
+
+            // récupérer les tarifs existants
+            $existingTarifsIds = Tarificationsformation::where('code_formation', $request->code_formation)
+            ->pluck('id')
+            ->toArray();
+
+            
+            // vérifier les tarifs supprimés
+            $toDeleteTarif = array_diff($existingTarifsIds, $sentTarifsIds);
+
+            // vérifier si la suppression de tarif est possible
+
+            foreach ($toDeleteTarif as $tarifId) {
+                $hasPaiement = Detailspaiements::where('id_tarification_formation', $tarifId)->exists();
+                $hasInscription = Inscriptions::where('tarif_formation_id', $tarifId)->exists();
+                if ($hasInscription && $hasPaiement) {
+                    //throw new Exception("Impossible de supprimer un tarif déjà utilisé");
+                }else{
+                    Tarificationsformation::where('id', $tarifId)->delete();
+                }
+            }
+
+            // mise à jour des tarifs
+            foreach ($cout_formation as $item) {
+
+                if ($item['id_tarif']) {
+
+                    // UPDATE
+                    Tarificationsformation::where('id', $item['id_tarif'])
+                        ->update([
+                            'id_grilletarifaire' => $item['id_grille']
+                        ]);
+
+                    // vérifier s'il y a des inscriptions pour faire la mise à jour
+                    // 1- récupérer la liste des inscriptions
+                    $listeInscriptions = Inscriptions::where('code_formation',$request->code_formation)->get();
+                    foreach ($listeInscriptions as $key => $data) {
+                        # code...
+                        // 1- mise à jour details paiement
+                        $getDetailsPaiements = Detailspaiements::where('code_inscription',$data->code_inscription)->get();
+                        foreach ($getDetailsPaiements as $key => $value) {
+                            # code...
+                            $updDetailPaiement = Detailspaiements::find($value->id);
+                            $red = 0; // mis pour réduction %
+
+                            // vérifier si réduction existe
+                            if ($updDetailPaiement->id_reduction) {
+                                # code...
+                                $reduction = Reductions::find($updDetailPaiement->id_reduction);
+                                $red = $reduction->pourcentage;
+                            } 
+
+                            // mise à jour montant restant
+                            $tarif = Tarificationsformation::find($item['id_tarif']);
+                            $montant = $tarif->getGrilletarifaire->montant;
+                            $montantOk = $montant - ($montant * ($red/100));
+                            $updDetailPaiement->setAttribute('montant_restant',$montantOk);
+                            $updDetailPaiement->update();
+                            
+                        }
+
+                        // update billing
+                        $getOneDetailPaiement = Detailspaiements::where('code_inscription',$data->code_inscription)->first();
+                        $getMontantTotalDetailPaiement = Detailspaiements::where('code_inscription',$data->code_inscription)->sum('montant_restant');
+                        $paiement = Paiements::whereReference($getOneDetailPaiement->reference_paiement)->first();
+                        $updPaiement = Paiements::find($paiement->id);
+                        $updPaiement->setAttribute('montant_total',$getMontantTotalDetailPaiement);
+                        $updPaiement->setAttribute('montant_restant',$getMontantTotalDetailPaiement);
+                        $updPaiement->update();
+
+                        // send mail for auditeur to notify for price change
+                    }
+
+                } else {
+
+                    // CREATE  
+                    $tarification_formation = new Tarificationsformation();
+                    $tarification_formation->setAttribute('code_formation',$request->get('code_formation')) ;
+                    $tarification_formation->setAttribute('id_grilletarifaire',$item['id_grille']) ;
+                    $tarification_formation->setAttribute('created_by', auth('api')->id());
+                    $tarification_formation->setAttribute('created_at', new \DateTime());
+                    $tarification_formation->save();
+
+                    if ($formation->is_formation_dsc) {
+
+                                $grille = Grilletarifaires::find($item['id_grille']);
+
+                                //dd( $type_tarif);
+
+                                if ($grille->type_tarif != "INSCRIPTION")  {
+
+                                    $formation_tranche = new FormationsTranches();
+                                    $formation_tranche->setAttribute('formation_id',$formation->id) ;
+                                    $formation_tranche->setAttribute('grilletarifaire_id', $item['id_grille']) ;
+                                    $formation_tranche->setAttribute('tranche', 'tranche 1') ;
+                                    $formation_tranche->setAttribute('taux_1', 100) ;
+                                    $formation_tranche->setAttribute('taux_2', 0) ;
+                                    $formation_tranche->setAttribute('echeance_1', '2024-06-30') ;
+                                    $formation_tranche->setAttribute('echeance_2', null) ;
+                                    $formation_tranche->setAttribute('categorie_auditeur',$grille->libelle) ;
+                                    $formation_tranche->setAttribute('reduction',5);
+                                    $formation_tranche->setAttribute('created_at', new \DateTime());
+                                    $formation_tranche->save();
+
+
+                                    $formation_tranche = new FormationsTranches();
+                                    $formation_tranche->setAttribute('formation_id',$formation->id) ;
+                                    $formation_tranche->setAttribute('grilletarifaire_id', $item['id_grille']) ;
+                                    $formation_tranche->setAttribute('tranche', 'tranche 2') ;
+                                    $formation_tranche->setAttribute('taux_1', 50) ;
+                                    $formation_tranche->setAttribute('taux_2', 50) ;
+                                    $formation_tranche->setAttribute('echeance_1', '2024-06-30') ;
+                                    $formation_tranche->setAttribute('echeance_2', '2024-10-30') ;
+                                    $formation_tranche->setAttribute('categorie_auditeur', $grille->libelle) ;
+                                    $formation_tranche->setAttribute('reduction',0) ;
+                                    $formation_tranche->setAttribute('created_at', new \DateTime());
+                                    $formation_tranche->save();
+
+                                    # code...
+
+                                }
+
+                            }
+
+                }
+            }
+
+                /*for($i = 0; $i<$nbr_cout;$i++){
                     $get_cout = $cout_formation[$i];
+                    
                     if (!empty($get_cout)) {
                         # code...
                         $id_grille = $get_cout ;
@@ -464,6 +598,7 @@ class FormationsService implements FormationsInterface
                             $tarification_formation->setAttribute('created_by', auth('api')->id());
                             $tarification_formation->setAttribute('created_at', new \DateTime());
                             $tarification_formation->save();
+
                             if ($formation->is_formation_dsc) {
 
                                 $type_tarif = Grilletarifaires::where('type_tarif', 'INSCRIPTION')
@@ -512,7 +647,7 @@ class FormationsService implements FormationsInterface
                         }
                     }
 
-                }
+                }*/
             }
         }
         // return

@@ -854,4 +854,31 @@ if (!function_exists('checkDsc2024')) {
         }
     }
 
+    if (!function_exists('getRefProforma')) {
+        # code...
+        function getRefProforma($code_inscription){
+
+        $paiement = Paiements::whereCodeInscription($code_inscription)->first();
+        if ($paiement) {
+            # code...
+            $tab = explode("-",$paiement->reference);
+            $codePf = $tab[0]."-".$tab[1]."-PF-".$tab[3];
+        } else {
+            # code...
+            $inscrit = Inscriptions::whereCodeInscription($code_inscription)->first();
+            $codePf = "ERS-".date('Y')."-PF-".date('mhs',strtotime($inscrit->created_at));
+        }
+        return $codePf; 
+        }
+    }
+
+    if (!function_exists('getRefProformaOuvrage')) {
+        # code...
+        function getRefProformaOuvrage($reference){ 
+            $tab = explode("-",$reference);
+            $codePf = $tab[0]."-".$tab[1]."-PF-".$tab[3];
+            return $codePf;  
+        }
+    }
+
 }

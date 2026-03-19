@@ -224,7 +224,7 @@
                     </tr>
                     <tr>
                         <td style="text-align:center;">
-                            <b>ERS-{{ date('Y') }}-PF-{{ \Carbon\Carbon::parse($inscrit->created_at)->format('mdhs') }}</b>
+                            <b>{{ getRefProforma($inscrit->code_inscription) }}</b> 
                         </td>
                         <td style="">
                             &nbsp;
