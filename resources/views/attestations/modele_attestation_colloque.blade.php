@@ -21,6 +21,7 @@
             width: 100%;
             height: 100%;
             background: url('img/logo/logo-ohada-new500.png') no-repeat fixed center 100px / contain;
+            background-size: 500px;
             opacity: 0.1;
             z-index: -1;
         }
