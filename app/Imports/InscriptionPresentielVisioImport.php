@@ -13,6 +13,7 @@ use App\Models\Rapports;
 use App\Models\Tarificationsformation;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -30,6 +31,35 @@ class InscriptionPresentielVisioImport implements ToCollection
         $this->cout_presentiel = $cout_presentiel;
         $this->cout_visio = $cout_visio;
         //print($this->code_formation);
+    }
+
+    public function genererCodeUserService(): string {
+        // Process de génération du code utilisateur au format SW-COUNTER-YEAR => SW000000125
+        $annee_actuelle = date('y'); // récupérer l'année courante sur 2 positions
+        $prefixe = "SW";
+
+        return DB::transaction(function () use ($prefixe, $annee_actuelle){
+             // récupère le dernier codeUser de l'année en cours
+            $lastUser = User::where('code_user', 'like', $prefixe.'%'.$annee_actuelle)
+                ->orderByDesc('id')
+                ->lockForUpdate() // permet de bloquer la lecture de la table courante avant la fin du traitement
+                ->first();
+
+            // calcule le prochain compteur
+            if ($lastUser) {
+                $lastCode = $lastUser->code_user; // ex: SW0000124yy
+                $counter = (int) substr($lastCode, 2, 7); // extrait les 7 chiffres
+                $counter++;
+            } else {
+                $counter = 1; // premier utilisateur de l'année
+            }
+
+            // génère le codeUser
+            $codeUser = 'SW' . str_pad($counter, 7, '0', STR_PAD_LEFT) . $annee_actuelle;
+
+            return $codeUser;
+        });
+        return "";
     }
 
     public function genererPassword($length = 25) {
@@ -115,8 +145,11 @@ class InscriptionPresentielVisioImport implements ToCollection
                     // if user not exist, create user acount
                     // generator password
                     $generate_password = $this->genererPassword(8);
+                    $codeUtilisateur = $this->genererCodeUserService();
                     $hash_generate_password= Hash::make($generate_password);
+                    //
                     $user = new User();
+                    $user->setAttribute("code_user",$codeUtilisateur);
                     $user->setAttribute("name",trim($rows[$i][$column_prenoms])." ".trim($rows[$i][$column_nom]));
                     $user->setAttribute("email",$email);
                     $user->setAttribute("email_verified_at",date('Y-m-d H:i:s'));
@@ -304,7 +337,9 @@ class InscriptionPresentielVisioImport implements ToCollection
                     // generator password
                     $generate_password = $this->genererPassword(8);
                     $hash_generate_password= Hash::make($generate_password);
+                    $codeUtilisateur = $this->genererCodeUserService();
                     $user = new User();
+                    $user->setAttribute("code_user",$codeUtilisateur);
                     $user->setAttribute("name",trim($rows[$i][$column_prenoms])." ".trim($rows[$i][$column_nom]));
                     $user->setAttribute("email",$email);
                     $user->setAttribute("email_verified_at",date('Y-m-d H:i:s'));

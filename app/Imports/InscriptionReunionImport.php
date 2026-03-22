@@ -8,6 +8,7 @@ use App\Models\Dureeformations;
 use App\Models\Inscriptions;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -42,6 +43,35 @@ class InscriptionReunionImport implements ToCollection, WithCustomCsvSettings
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
+    }
+
+    public function genererCodeUserService(): string {
+        // Process de génération du code utilisateur au format SW-COUNTER-YEAR => SW000000125
+        $annee_actuelle = date('y'); // récupérer l'année courante sur 2 positions
+        $prefixe = "SW";
+
+        return DB::transaction(function () use ($prefixe, $annee_actuelle){
+             // récupère le dernier codeUser de l'année en cours
+            $lastUser = User::where('code_user', 'like', $prefixe.'%'.$annee_actuelle)
+                ->orderByDesc('id')
+                ->lockForUpdate() // permet de bloquer la lecture de la table courante avant la fin du traitement
+                ->first();
+
+            // calcule le prochain compteur
+            if ($lastUser) {
+                $lastCode = $lastUser->code_user; // ex: SW0000124yy
+                $counter = (int) substr($lastCode, 2, 7); // extrait les 7 chiffres
+                $counter++;
+            } else {
+                $counter = 1; // premier utilisateur de l'année
+            }
+
+            // génère le codeUser
+            $codeUser = 'SW' . str_pad($counter, 7, '0', STR_PAD_LEFT) . $annee_actuelle;
+
+            return $codeUser;
+        });
+        return "";
     }
 
 
@@ -111,7 +141,9 @@ class InscriptionReunionImport implements ToCollection, WithCustomCsvSettings
                         // generator password
                         $generate_password = $this->genererPassword(8);
                         $hash_generate_password= Hash::make($generate_password);
+                        $codeUtilisateur = $this->genererCodeUserService();
                         $user = new User();
+                        $user->setAttribute("code_user",$codeUtilisateur);
                         $user->setAttribute("name",trim($rows[$i][0])." ".trim($rows[$i][1]));
                         $user->setAttribute("email",$email);
                         $user->setAttribute("email_verified_at",date('Y-m-d H:i:s'));
