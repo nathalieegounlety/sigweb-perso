@@ -1260,7 +1260,16 @@ class AuditeursService implements AuditeursInterface
     public function mesPieces(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement mesPieces() method.
-        $user = auth('api')->user();
+        if ($request->has('auditeur_id') && !empty($request->input('auditeur_id'))) {
+            # code...
+            $auditeur = Auditeurs::find($request->auditeur_id);
+            $getUser = User::whereEmail($auditeur->email)->first();
+            $user = User::find($getUser->id);
+        } else {
+            # code...
+            $user = auth('api')->user();
+        }
+        
         $code_formation = $request->code_formation;
         $listePieces = InscritsTypePieces::leftJoin(
             'auditeurs_pieces',
@@ -1300,7 +1309,16 @@ class AuditeursService implements AuditeursInterface
     {
         // TODO: Implement ajouterPiece() method.
         try {
-            $user = auth('api')->user();
+            if ($request->has('auditeur_id') && !empty($request->input('auditeur_id'))) {
+            # code...
+            $auditeur = Auditeurs::find($request->auditeur_id);
+            $getUser = User::whereEmail($auditeur->email)->first();
+            $user = User::find($getUser->id);
+            } else {
+                # code...
+                $user = auth('api')->user();
+            } 
+            
             $auditeur = Auditeurs::where("email", $user->email)->first();
             // $userFolder = 'pieces_auditeur/' . Str::slug($user->name); 
             $userFolder = $user->code_user.'/'.$request->code_formation;
