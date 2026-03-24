@@ -331,6 +331,7 @@ Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController:
     Route::post('store/paiement/partiel', 'savePaiementPartiel');
     Route::post('store/paiement/ouvrage', 'savePaiementOuvrage');
     Route::post('store/paiement/dsc', 'savePaiementDsc');
+    Route::post('webhook', 'webhook'); 
 });
 
 // gestion de la comptabilité
@@ -399,7 +400,10 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     Route::post('reunions', 'importReunion');
     Route::post('notes', 'importNotes');
     Route::post('candidats', 'importCandidats');
-    //
+
+    // liste des auditeurs 
+    Route::get('auditeurs', 'AuditeursExportListe');
+    Route::get('formateurs', 'FormateursExportListe'); 
 });
 
 // gestion des tarifs

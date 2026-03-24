@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\Mail;
 class FedapayService implements  FedapayInterfarce
 {
 
-    private GenarateurCodeService $genarateurCodeService;
+    private GenarateurCodeService $genarateurCodeService; 
 
     public function __construct(GenarateurCodeService $genarateurCodeService)
     {
@@ -449,7 +449,7 @@ class FedapayService implements  FedapayInterfarce
                     $paiement->setAttribute('agent_traiteur', $userValidateur->id);
                     $paiement->setAttribute('commentaire', 'Validation automatique webhook Fedapay');
                 }
-                $paiement->setAttribute('id_modepaiement', 2);
+                $paiement->setAttribute('id_modepaiement', 2); 
                 $paiement->update();
                 // 2- update details paiement
                 $getPTranche = PaiementsTranche::where("reference","like","%$paiement->reference%")->latest()->first();
@@ -573,6 +573,7 @@ class FedapayService implements  FedapayInterfarce
 
                             // vérifier si la tranche existe pour update
                             $checkTranche = Tranches::whereCodeInscription($paiement->code_inscription)->exists();
+
                             if($checkTranche){
                                 $getTranche = Tranches::whereCodeInscription($paiement->code_inscription)->first();
                                 $tranche = Tranches::find($getTranche->id);

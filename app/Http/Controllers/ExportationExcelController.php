@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AuditeursExport;
 use App\Exports\ExportEtatRecapitulatifOuvrage;
 use App\Exports\ExportListePresence;
 use App\Exports\ExportsInscritsDsc;
 use App\Exports\ExportsInscritsExcel;
 use App\Exports\ExportsInscritsPresentielVisioExcel;
 use App\Exports\ExportsInscritsVisioExcel;
+use App\Exports\ListeFormateur;
 use App\Helpers\ResponseHandler;
 use App\Imports\ImportCandidatsMoodle;
 use App\Imports\ImportNoteCandidatMoodle;
@@ -414,5 +416,16 @@ class ExportationExcelController extends Controller
             # code...
             return ResponseHandler::success("Echec lors de l'importation des données",['success' => false]);
         }
+    }
+
+    // export liste auditeur
+    public function AuditeursExportListe() {
+        return Excel::download(new AuditeursExport(),"LISTE_DES_AUDITEURS_".date("Ymdhis").".xlsx");
+    }
+
+    // export list formateur
+        public function FormateursExportListe() 
+    {   
+        return Excel::download(new ListeFormateur() ,"SIGWEB_Liste_Formateurs_".date("Ymd").'_'.date("His").".xlsx"); 
     }
 }

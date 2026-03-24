@@ -12,6 +12,7 @@ use App\Models\Paiements;
 use App\Models\PaiementsTranche;
 use App\Models\User;
 use App\Services\contracts\FedapayInterfarce;
+use App\Services\util\GenarateurCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -20,10 +21,12 @@ use FedaPay\FedaPay;
 class FedapayController extends Controller
 {
     private FedapayInterfarce $fedapayInterferce;
+    private GenarateurCodeService $genarateurCodeService;
 
-    public function __construct(FedapayInterfarce $fedapayInterferce)
+    public function __construct(FedapayInterfarce $fedapayInterferce, GenarateurCodeService $genarateurCodeService)
     {
         $this->fedapayInterferce = $fedapayInterferce;
+        $this->genarateurCodeService = $genarateurCodeService;
     }
 
     public function savePaiement(Request $request){
@@ -195,10 +198,14 @@ class FedapayController extends Controller
                                 $paiementTranche->setAttribute('traiter_par', $user->id);
                                 $paiementTranche->update();
                                 // update details paiements
-                                $detailPaiementTranche->setAttribute('statut_traitement',"VALIDER");
-                                $detailPaiementTranche->setAttribute('statut_paiement', "PAYE"); 
-                                $detailPaiementTranche->setAttribute("commentaire","Validation automatique webhook FedaPay");
-                                $detailPaiementTranche->update();
+                                // if rest amount equal to 0, do update
+                                if ($detailPaiementTranche->montant_restant == 0) {
+                                    # code...
+                                    $detailPaiementTranche->setAttribute('statut_traitement',"VALIDER");
+                                    $detailPaiementTranche->setAttribute('statut_paiement', "PAYE"); 
+                                    $detailPaiementTranche->setAttribute("commentaire","Validation automatique webhook FedaPay");
+                                    $detailPaiementTranche->update();
+                                }
                                 // update etat 
                                 $checkValidation = false;
 
@@ -227,7 +234,8 @@ class FedapayController extends Controller
                             'mode_paiement'=>$modepaiement->libelle,
                             'montant'=>$event->entity->amount, 
                             'montant_restant'=>$paiement->montant_restant, 
-                            'type'=>$paiement->type
+                            'type'=>$paiement->type,
+                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$get_reference])
                         ];
 
                         try {
@@ -300,7 +308,8 @@ class FedapayController extends Controller
                                 'email'=>$paiement->email,
                                 'mode_paiement'=>$modepaiement->libelle,
                                 'montant'=>$montant_paye, 
-                                'type'=>$paiement->type
+                                'type'=>$paiement->type,
+                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$request->reference])
                             ];
 
                             try {
@@ -354,6 +363,11 @@ class FedapayController extends Controller
                                 $modepaiement = Modepaiements::find($paiement->id_modepaiement);
                                 $nom = $auditeur->nom ?? '';
                                 $prenoms = $auditeur->prenoms ?? '';
+                                if($paiement->type !== "OUVRAGE"){
+                                        $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$paiement->reference]);
+                                    }else{
+                                        $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu-ouvrage',['reference'=>$paiement->reference]);
+                                    }
                                 
                                 $contenu = [
                                     'nom' => $nom,
@@ -364,7 +378,8 @@ class FedapayController extends Controller
                                     'email'=>$paiement->email,
                                     'mode_paiement'=>$modepaiement->libelle,
                                     'montant'=>$paiement->montant_total, 
-                                    'type'=>$paiement->type
+                                    'type'=>$paiement->type,
+                                    'url_recu'=> $url
                                 ];
 
                                 try {
@@ -397,7 +412,6 @@ class FedapayController extends Controller
         }
 
         return response()->json(["data" => null, "statut" => "invalide statut"], 200);
-
 
     }
 
