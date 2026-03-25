@@ -404,6 +404,11 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     // liste des auditeurs 
     Route::get('auditeurs', 'AuditeursExportListe');
     Route::get('formateurs', 'FormateursExportListe'); 
+    // export brute excel
+    Route::get('all/liste/attestation/formateurs', 'ExportAllAttestationFormateurExcel'); 
+    Route::get('all/liste/attestation/participants', 'ExportAllAttestationParticipantExcel'); 
+    Route::get('all/liste/rapports', 'ExportAllRapportExcel'); 
+    Route::get('all/liste/participants', 'ExportAllParticipantExcel'); 
 });
 
 // gestion des tarifs

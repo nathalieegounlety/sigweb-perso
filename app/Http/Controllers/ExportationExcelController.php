@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AllAttestationsFormateursExport;
+use App\Exports\AllAttestationsParticipantsExport;
+use App\Exports\AllParticipantsExport;
+use App\Exports\AllRapportsExport;
 use App\Exports\AuditeursExport;
 use App\Exports\ExportEtatRecapitulatifOuvrage;
 use App\Exports\ExportListePresence;
@@ -427,5 +431,21 @@ class ExportationExcelController extends Controller
         public function FormateursExportListe() 
     {   
         return Excel::download(new ListeFormateur() ,"SIGWEB_Liste_Formateurs_".date("Ymd").'_'.date("His").".xlsx"); 
+    }
+    // export all participant by code formation
+    public function ExportAllParticipantExcel(Request $request) {
+        return Excel::download(new AllParticipantsExport($request->code_formation),"LISTE_PARTICIPANTS_".date("Ymdhis").".xlsx");
+    }
+    // export all rapport by code formation
+    public function ExportAllRapportExcel(Request $request) {
+        return Excel::download(new AllRapportsExport($request->code_formation),"LISTE_RAPPORTS_".date("Ymdhis").".xlsx");
+    }
+    // export all attestation participant by code formation
+    public function ExportAllAttestationParticipantExcel(Request $request) {
+        return Excel::download(new AllAttestationsParticipantsExport($request->code_formation),"LISTE_PARTICIPANTS_ATTESTATIONS_".date("Ymdhis").".xlsx");
+    }
+    // export all attestation formateur by code formation
+    public function ExportAllAttestationFormateurExcel(Request $request) {
+        return Excel::download(new AllAttestationsFormateursExport($request->code_formation),"LISTE_FORMATEURS_ATTESTATIONS_".date("Ymdhis").".xlsx");
     }
 }
