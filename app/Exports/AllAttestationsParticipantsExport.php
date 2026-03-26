@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Dureeformations;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -47,7 +48,7 @@ class AllAttestationsParticipantsExport implements FromQuery, WithHeadings, With
         $scoring = intval(($getDuree*2)/3);
         //####################### end calcul scoring ####################################################
 
-        return DB::table('rapports')
+        $data =  DB::table('rapports')
             ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
             ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->leftJoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
@@ -71,11 +72,15 @@ class AllAttestationsParticipantsExport implements FromQuery, WithHeadings, With
                 $q->where('rapports.temps_presence', 0)
                     ->orWhere('rapports.temps_presence', '>=', $scoring);
             })->orderBy('rapports.email');
+
+            Log::info($this->code_formation);
+
+            return $data;
     }
 
     public function headings(): array
     {
-        return ['Code formation','Username','Email','Heure arrivée','Heure départ','Temps présence','Pays'];
+        return ['Code formation','Nom','Prénoms','Email','Temps présence','Attestation envoyée','Statut paiement'];
     }
 
     

@@ -23,7 +23,7 @@ class AllAttestationsFormateursExport implements FromQuery, WithHeadings, WithCh
             ->join('formateurs', 'formateurs.id', '=', 'formationsformateurs.formateur_id')
             ->leftjoin('pays', 'pays.id', '=', 'formateurs.nationalite')
             ->leftjoin('roleformateurs', 'formationsformateurs.roleformateur_id', '=', 'roleformateurs.id')
-            ->select('formationsformateurs.id', 
+            ->select('formations.code_formation', 
             'formateurs.nom', 'formateurs.prenoms', 'formateurs.email','formateurs.telephone',
                 'formationsformateurs.role',  'roleformateurs.libelle as role_formateur', 'pays.nationalite')
             ->where('formations.code_formation', $this->code_formation)->orderBy('formationsformateurs.id');
