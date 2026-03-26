@@ -79,6 +79,7 @@
         max-width: 30%;
         padding:0;
         margin:0;
+        margin-bottom: 20px;
     }
     .bloc-texte .doc {
         text-align: center;
@@ -318,7 +319,7 @@
     <div class="nav-left">
         <img src="img/logo/logo-ohada-new500.png" alt="" height="75px" style="height: 75px;">
     </div>
-    <div class="nav-right" style="text-align: center;padding:5px 10px;">
+    <div class="nav-right" style="text-align: center;padding:5px 20px;">
         <h6 style="color:#1979D7;text-align: center;">{{ $formation->theme }} ( {{ $code_formation }} )</h6>
         <h6 style="text-align: center;">LISTE DES PARTICIPANTS ({{$nbre_participant}})</h6>
     </div>

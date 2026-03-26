@@ -60,16 +60,14 @@ class DocumentsService implements DocumentsInterface
                 //return ResponseHandler::error('Fichier non trouvé : ' . $doc->visuel, 404);
                 $checkImg = false;
             }
-            if($checkImg){
+            if ($checkImg) {
                 return Storage::disk('public')->response($path);
-            }else{
+            } else {
                 return Storage::disk('public')->response($default_path);
-
             }
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return Storage::disk('public')->response($default_path);
         }
-
     }
 
     public function downloadRecuPaiement(string $reference)
@@ -77,16 +75,16 @@ class DocumentsService implements DocumentsInterface
         // TODO: Implement downloadRecuPaiement() method.
         // vérifier si la référence existe dans la table paiement tranche
         // récupérer la référence de la table paiement
-        $getOneTranchePaiement = PaiementsTranche::where('reference','like','%'.$reference.'%')->first();
+        $getOneTranchePaiement = PaiementsTranche::where('reference', 'like', '%' . $reference . '%')->first();
 
         if ($getOneTranchePaiement) {
             # code... it is dsc
             $getOneDtPaiement = Detailspaiements::find($getOneTranchePaiement->details_paiements_id);
-            $getPaiement = Paiements::where('reference',$getOneDtPaiement->reference_paiement)->first();
+            $getPaiement = Paiements::where('reference', $getOneDtPaiement->reference_paiement)->first();
 
             $paiement = Paiements::find($getPaiement->id);
 
-            $auditeur = Auditeurs::where("email",$paiement->email)->first();
+            $auditeur = Auditeurs::where("email", $paiement->email)->first();
             # code...
             $details_paiement = DB::table('detailspaiements')
                 ->leftjoin('paiements_tranches', 'paiements_tranches.details_paiements_id', '=', 'detailspaiements.id')
@@ -94,11 +92,22 @@ class DocumentsService implements DocumentsInterface
                 ->join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
                 ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
                 ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
-                ->select('formations.code_formation', 'formations.theme', 'formations.date_debut','paiements_tranches.montant_paye',
-                    'detailspaiements.montant_restant','paiements.montant_total','paiements.montant_restant as recap_montant_restant',
-                    'detailspaiements.have_reduction_dsc','detailspaiements.statut_paiement','detailspaiements.preuve_path',
-                    'grilletarifaires.type_tarif','paiements_tranches.num_transaction','paiements_tranches.statut_traitement as statut_tranche')
-                ->where('detailspaiements.reference_paiement',$paiement->reference)
+                ->select(
+                    'formations.code_formation',
+                    'formations.theme',
+                    'formations.date_debut',
+                    'paiements_tranches.montant_paye',
+                    'detailspaiements.montant_restant',
+                    'paiements.montant_total',
+                    'paiements.montant_restant as recap_montant_restant',
+                    'detailspaiements.have_reduction_dsc',
+                    'detailspaiements.statut_paiement',
+                    'detailspaiements.preuve_path',
+                    'grilletarifaires.type_tarif',
+                    'paiements_tranches.num_transaction',
+                    'paiements_tranches.statut_traitement as statut_tranche'
+                )
+                ->where('detailspaiements.reference_paiement', $paiement->reference)
                 ->orderBy('detailspaiements.id', 'DESC')
                 ->get();
 
@@ -108,32 +117,31 @@ class DocumentsService implements DocumentsInterface
             $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
 
             // share data to view
-            view()->share(['formatter'=>$formatter,'paiement'=>$paiement, 'auditeur'=>$auditeur, 'details_paiement'=>$details_paiement]);
+            view()->share(['formatter' => $formatter, 'paiement' => $paiement, 'auditeur' => $auditeur, 'details_paiement' => $details_paiement]);
             $pdf = Pdf::loadView('documents.recu_paiement_dsc');
-            $customPaper = array(0,0,720,1440);
+            $customPaper = array(0, 0, 720, 1440);
             $pdf->setPaper($customPaper, 'landscape');
 
             $date = date('d_m_Y_His');
             // download PDF file with download method
-            return $pdf->download('recu_'.$reference.'_'.$date.'.pdf');
-
+            return $pdf->download('recu_' . $reference . '_' . $date . '.pdf');
         } else {
             # code...
 
-            $paiement = Paiements::where('reference',$reference)->get()->first();
+            $paiement = Paiements::where('reference', $reference)->get()->first();
             // vérifier si l'objet paiement n'est pas null
-            if ( $paiement) {
+            if ($paiement) {
                 # code...
 
-                $auditeur = Auditeurs::where("email",$paiement->email)->first();
+                $auditeur = Auditeurs::where("email", $paiement->email)->first();
                 $details_paiement = DB::table('detailspaiements')
                     ->join('paiements', 'paiements.reference', '=', 'detailspaiements.reference_paiement')
                     ->leftjoin('reductions', 'reductions.id', '=', 'detailspaiements.id_reduction')
                     ->join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
                     ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
                     ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
-                    ->select('formations.code_formation', 'formations.theme', 'formations.date_debut','grilletarifaires.montant','grilletarifaires.libelle','reductions.pourcentage','detailspaiements.statut_paiement','detailspaiements.preuve_path','paiements.num_transaction')
-                    ->where('detailspaiements.reference_paiement',$reference)
+                    ->select('formations.code_formation', 'formations.theme', 'formations.date_debut', 'grilletarifaires.montant', 'grilletarifaires.libelle', 'reductions.pourcentage', 'detailspaiements.statut_paiement', 'detailspaiements.preuve_path', 'paiements.num_transaction')
+                    ->where('detailspaiements.reference_paiement', $reference)
                     ->orderBy('detailspaiements.id', 'DESC')
                     ->get();
                 // Detailspaiement::where('reference_paiement','ERS-2021-FACT-000001');
@@ -142,81 +150,77 @@ class DocumentsService implements DocumentsInterface
                 $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
 
                 // share data to view
-                view()->share(['formatter'=>$formatter,'paiement'=>$paiement, 'auditeur'=>$auditeur, 'details_paiement'=>$details_paiement]);
+                view()->share(['formatter' => $formatter, 'paiement' => $paiement, 'auditeur' => $auditeur, 'details_paiement' => $details_paiement]);
                 $pdf = Pdf::loadView('documents.recu_paiement');
-                $customPaper = array(0,0,720,1440);
+                $customPaper = array(0, 0, 720, 1440);
                 $pdf->setPaper($customPaper, 'landscape');
 
                 $date = date('d_m_Y_His');
                 // download PDF file with download method
-                return $pdf->download('recu_'.$reference.'_'.$date.'.pdf');
-
+                return $pdf->download('recu_' . $reference . '_' . $date . '.pdf');
             } else {
                 # code...
                 return  ResponseHandler::success("ok");
             }
-
-
         }
-
     }
 
     public function getUrlSignedRecuPaiement(string $reference): \Illuminate\Http\JsonResponse
     {
-        $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference' => $reference]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu', ['reference' => $reference]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function getUrlSignedRecuPaiementDsc(string $reference): \Illuminate\Http\JsonResponse
     {
-        $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference' => $reference]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu', ['reference' => $reference]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function getUrlSignedRecuPaiementOuvrage(string $reference): \Illuminate\Http\JsonResponse
     {
-        $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu-ouvrage',['reference' => $reference]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu-ouvrage', ['reference' => $reference]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function downloadProforma(string $reference)
     {
         // TODO: Implement downloadProforma() method.
-        $inscrit = Inscriptions::where("code_inscription",$reference)->orderBy("id","DESC")->get()->first();
-        $auditeur = Auditeurs::where("email",$inscrit->email)->first();
-        $liste_formation = Inscriptions::where("code_inscription",$reference)->orderBy("id","DESC")->get();
+        $inscrit = Inscriptions::where("code_inscription", $reference)->orderBy("id", "DESC")->get()->first();
+        $auditeur = Auditeurs::where("email", $inscrit->email)->first();
+        $liste_formation = Inscriptions::where("code_inscription", $reference)->orderBy("id", "DESC")->get();
 
         $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
         $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
 
         // share data to view
-        view()->share(['formatter'=>$formatter,'inscrit'=>$inscrit,'auditeur'=>$auditeur,'liste_formation'=>$liste_formation]);
+        view()->share(['formatter' => $formatter, 'inscrit' => $inscrit, 'auditeur' => $auditeur, 'liste_formation' => $liste_formation]);
         $pdf = PDF::loadView('documents.pro_forma');
-        $customPaper = array(0,0,720,1440);
+        $customPaper = array(0, 0, 720, 1440);
         $pdf->setPaper($customPaper, 'landscape');
 
         $date = date('d_m_Y_His');
         // download PDF file with download method
-        return $pdf->download('proforma_'.$reference.'_'.$date.'.pdf');
+        return $pdf->download('proforma_' . $reference . '_' . $date . '.pdf');
     }
 
     public function getUrlProformaSigned(string $reference): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getUrlProformaSigned() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('pro-forma',['reference' => $reference]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('pro-forma', ['reference' => $reference]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function getUrlProformaDscSigned(string $reference): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getUrlProformaDscSigned() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('pro-forma-dsc',['reference' => $reference]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('pro-forma-dsc', ['reference' => $reference]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function downloadProformaDsc(string $reference)
@@ -246,7 +250,7 @@ class DocumentsService implements DocumentsInterface
         // TODO: Implement getListeAttestationParticipant() method.
         // ##################### calcul scoring ###########################################
         $getDuree = 0;
-        $check_duree_formation = Dureeformations::where("code_formation",$code_formation)->first();
+        $check_duree_formation = Dureeformations::where("code_formation", $code_formation)->first();
 
         if ($check_duree_formation) {
             $nbr_duree_enregistrement = $check_duree_formation->duree_enregistrement;
@@ -265,13 +269,13 @@ class DocumentsService implements DocumentsInterface
             ->where('code_formation', $code_formation)
             ->get();
 
-        if($nbr_duree_enregistrement > 0){
+        if ($nbr_duree_enregistrement > 0) {
             $getDuree = $nbr_duree_enregistrement;
-        }else{
+        } else {
             $getDuree = $duree_formation[0]->duree_session;
         }
 
-        $scoring = intval(($getDuree*2)/3);
+        $scoring = intval(($getDuree * 2) / 3);
         //####################### end calcul scoring ####################################################
 
 
@@ -331,36 +335,36 @@ class DocumentsService implements DocumentsInterface
                     ->orWhere('rapports.email', 'like', "%{$search}%")
                     ->orWhere('rapports.temps_presence', 'like', "%{$search}%")
                     ->orWhere('auditeurs.pays', 'like', "%{$search}%")
-                    ->orWhere('detailspaiements.statut_paiement', 'like', "%{$search}%"); 
+                    ->orWhere('detailspaiements.statut_paiement', 'like', "%{$search}%");
             });
         }
 
         switch ($sortField) {
             case 'nom':
                 # code...
-            $query->orderBy("auditeurs.{$sortField}", $sortOrder);
+                $query->orderBy("auditeurs.{$sortField}", $sortOrder);
                 break;
             case 'prenoms':
                 # code...
-        $query->orderBy("auditeurs.{$sortField}", $sortOrder);
+                $query->orderBy("auditeurs.{$sortField}", $sortOrder);
                 break;
             case 'email':
                 # code...
-        $query->orderBy("rapports.{$sortField}", $sortOrder);
+                $query->orderBy("rapports.{$sortField}", $sortOrder);
                 break;
             case 'temps_presence':
                 # code...
-        $query->orderBy("rapports.{$sortField}", $sortOrder);
-                break; 
+                $query->orderBy("rapports.{$sortField}", $sortOrder);
+                break;
             case 'statut_paiement':
                 # code...
-        $query->orderBy("detailspaiements.{$sortField}", $sortOrder);
-                break; 
+                $query->orderBy("detailspaiements.{$sortField}", $sortOrder);
+                break;
             case 'attestation_send':
                 # code...
-        $query->orderBy("rapports.{$sortField}", $sortOrder);
-                break; 
-            
+                $query->orderBy("rapports.{$sortField}", $sortOrder);
+                break;
+
             default:
                 # code...
                 $query->orderBy("rapports.{$sortField}", $sortOrder);
@@ -386,7 +390,7 @@ class DocumentsService implements DocumentsInterface
         // ******************************************* //
 
         $rapport = DB::table('rapports')
-            ->select('rapports.code_formation','temps_presence')
+            ->select('rapports.code_formation', 'temps_presence')
             ->where('rapports.id', $rapport_id)
             ->get()
             ->first();
@@ -398,25 +402,25 @@ class DocumentsService implements DocumentsInterface
         $date_jour = date('d-m-Y');
         $date_jour = Carbon::now()->locale('fr_FR');
         $date_jour = $date_jour->isoFormat('DD MMM YYYY');
-        if($rapport->temps_presence > 0){
+        if ($rapport->temps_presence > 0) {
             // il s'agit de visio
             $liste_participants = DB::table('rapports')
                 ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
                 ->join('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
                 ->join('formations', 'formations.code_formation', '=', 'rapports.code_formation')
-                ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays','formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'inscriptions.presentiel', 'formations.code_formation')
+                ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays', 'formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'inscriptions.presentiel', 'formations.code_formation')
                 ->where('rapports.id', $rapport_id)
                 ->where('rapports.code_formation', $code_formation)
                 ->where('inscriptions.code_formation', $code_formation)
                 ->orderBy('auditeurs.nom', 'ASC')
                 ->get();
-        }else{
+        } else {
             // il s'agit de presentiel
             $liste_participants = DB::table('rapports')
                 ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
                 ->join('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
                 ->join('formations', 'formations.code_formation', '=', 'rapports.code_formation')
-                ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays','formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'inscriptions.presentiel', 'formations.code_formation')
+                ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays', 'formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'inscriptions.presentiel', 'formations.code_formation')
                 ->where('rapports.id', $rapport_id)
                 ->where('rapports.code_formation', $code_formation)
                 ->where('inscriptions.code_formation', $code_formation)
@@ -433,7 +437,7 @@ class DocumentsService implements DocumentsInterface
             ->get();
         // formation
         $formation = Formations::where("code_formation", $code_formation)->first();
-        $logo_partenaires = Logopartenaires::where('code_formation',$code_formation)->get();
+        $logo_partenaires = Logopartenaires::where('code_formation', $code_formation)->get();
 
         //dd($formation->typeformation_id);
         if ($formation->typeformation_id != null) {
@@ -445,10 +449,10 @@ class DocumentsService implements DocumentsInterface
         }
 
         // share data to view
-        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session, "typeformation_id" => $typeformation_id,'logo_partenaires' => $logo_partenaires,'formation' => $formation]);
+        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session, "typeformation_id" => $typeformation_id, 'logo_partenaires' => $logo_partenaires, 'formation' => $formation]);
 
         // service permettant de retourner la vue sur condition
-        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event,$formation);
+        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event, $formation);
 
         $pdf->setPaper('A4', 'landscape');
 
@@ -459,9 +463,9 @@ class DocumentsService implements DocumentsInterface
     public function getUrlConsultationAttestation($rapport_id)
     {
         // TODO: Implement getUrlConsultationAttestationVisio() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('consultation.attestation.participant',['rapport_id' => $rapport_id]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('consultation.attestation.participant', ['rapport_id' => $rapport_id]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function sendMailAttestationParticipant($rapport_id): \Illuminate\Http\JsonResponse
@@ -481,25 +485,25 @@ class DocumentsService implements DocumentsInterface
         $date_jour = date('d-m-Y');
         $date_jour = Carbon::now()->locale('fr_FR');
         $date_jour = $date_jour->isoFormat('DD MMM YYYY');
-        if($rapport->temps_presence > 0){
+        if ($rapport->temps_presence > 0) {
             $checkvisio = 'oui';
             $liste_participant = DB::table('rapports')
                 ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
                 ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
                 ->join('formations', 'formations.code_formation', '=', 'rapports.code_formation')
-                ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays','formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation')
+                ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays', 'formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation')
                 ->where('rapports.id', $rapport_id)
                 ->where('rapports.code_formation', $code_formation)
                 ->where('inscriptions.code_formation', $code_formation)
                 ->orderBy('auditeurs.nom', 'ASC')
                 ->get()->first();
-        }else{
+        } else {
             $checkvisio = 'non';
             $liste_participant = DB::table('rapports')
                 ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
                 ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
                 ->join('formations', 'formations.code_formation', '=', 'rapports.code_formation')
-                ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays','formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation')
+                ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays', 'formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation')
                 ->where('rapports.id', $rapport_id)
                 ->where('rapports.code_formation', $code_formation)
                 ->where('inscriptions.code_formation', $code_formation)
@@ -510,7 +514,7 @@ class DocumentsService implements DocumentsInterface
 
 
         // $fichier_name = Crypt::encrypt($rapport_id);
-        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_participant',['rapport_id' => $rapport_id]);
+        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_participant', ['rapport_id' => $rapport_id]);
 
         // enregistrer les infos dans une table pour passer la views
         $contenu = [
@@ -530,13 +534,13 @@ class DocumentsService implements DocumentsInterface
             # code...
             Mail::to(trim($rapport->email))->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new SendAttestation($contenu));
             $up_rapport = Rapports::find($rapport->id);
-            $up_rapport->setAttribute('attestation_send',true);
+            $up_rapport->setAttribute('attestation_send', true);
             $up_rapport->update();
-            return ResponseHandler::success('Mail envoyé avec succès',['success' => true,'code_formation'=>$rapport->code_formation]);
+            return ResponseHandler::success('Mail envoyé avec succès', ['success' => true, 'code_formation' => $rapport->code_formation]);
         } catch (\Exception $e) {
             // Get error here
             Log::info('echec de l\'envoi du mail');
-            return ResponseHandler::success('Mail non envoyé ',['success' => false, 'error' => $e->getMessage()]);
+            return ResponseHandler::success('Mail non envoyé ', ['success' => false, 'error' => $e->getMessage()]);
         }
     }
 
@@ -557,7 +561,7 @@ class DocumentsService implements DocumentsInterface
         $date_jour = date('d-m-Y');
         $date_jour = Carbon::now()->locale('fr_FR');
         $date_jour = $date_jour->isoFormat('DD MMM YYYY');
-        if($rapport->temps_presence > 0){
+        if ($rapport->temps_presence > 0) {
             $liste_participants = DB::table('rapports')
                 ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
                 ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
@@ -568,7 +572,7 @@ class DocumentsService implements DocumentsInterface
                 ->where('inscriptions.code_formation', $code_formation)
                 ->orderBy('auditeurs.nom', 'ASC')
                 ->get();
-        }else{
+        } else {
             $liste_participants = DB::table('rapports')
                 ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
                 ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
@@ -577,7 +581,7 @@ class DocumentsService implements DocumentsInterface
                 ->where('rapports.id', $rapport_id)
                 ->where('rapports.code_formation', $code_formation)
                 ->where('inscriptions.code_formation', $code_formation)
-                ->where('rapports.temps_presence',0)
+                ->where('rapports.temps_presence', 0)
                 ->orderBy('auditeurs.nom', 'ASC')
                 ->get();
         }
@@ -593,7 +597,7 @@ class DocumentsService implements DocumentsInterface
 
         // formation
         $formation = Formations::where("code_formation", $code_formation)->first();
-        $logo_partenaires = Logopartenaires::where('code_formation',$code_formation)->get();
+        $logo_partenaires = Logopartenaires::where('code_formation', $code_formation)->get();
         //dd($formation->typeformation_id);
         if ($formation->typeformation_id != null) {
             # code...
@@ -605,18 +609,18 @@ class DocumentsService implements DocumentsInterface
 
 
         // share data to view
-        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'typeformation_id' => $typeformation_id, 'duree_session' => $duree_session, 'durees' => $duree_formation,'logo_partenaires' => $logo_partenaires,'formation' => $formation]);
+        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'typeformation_id' => $typeformation_id, 'duree_session' => $duree_session, 'durees' => $duree_formation, 'logo_partenaires' => $logo_partenaires, 'formation' => $formation]);
         // service permettant de retourner la vue sur condition
-        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event,$formation);
+        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event, $formation);
 
         $password = substr(md5($code_formation . '' . $rapport->email), 0, 8);
         $pdf->setPaper('A4', 'landscape');
         $pdf->setEncryption($password);
         $date = date('d_m_Y_His');
         $auditeur = Auditeurs::whereEmail($rapport->email)->first();
-        $participant_name = $auditeur->nom.' '.$auditeur->prenoms;
+        $participant_name = $auditeur->nom . ' ' . $auditeur->prenoms;
         $fichier_name = Str::slug($participant_name);
-        $file_name = $formation->code_formation.'_'. $fichier_name.'_'.$date;
+        $file_name = $formation->code_formation . '_' . $fichier_name . '_' . $date;
 
         //$file_name = md5($file);
         // download PDF file with download method
@@ -655,10 +659,11 @@ class DocumentsService implements DocumentsInterface
         // ############ personalisation de l'exportation des données ######################
         // ########### end personalisationd de l'exportation des données ##################
         $pdf = PDF::loadView('documents.liste_participant_attestation_pdf');
-        $pdf->output();
         $pdf->setPaper('A4', 'landscape');
-        // ##### a considerer pour pagination ###############
-        // $pdf->output();
+
+        //  $pdf->output() 
+
+        // 
         $dom_pdf = $pdf->getDomPDF();
         $canvas = $dom_pdf->get_canvas();
         $footer = $canvas->open_object();
@@ -697,10 +702,11 @@ class DocumentsService implements DocumentsInterface
         // ########### end personalisation de l'exportation des données ##################
 
         $pdf = PDF::loadView('documents.liste_participant_presentiel_attestation_pdf');
-        $pdf->output();
         $pdf->setPaper('A4', 'landscape');
-        // ##### a considerer pour pagination ###############
-        // $pdf->output();
+
+        //$pdf->output()
+
+        // Optionnel : Ajoute un pied de page
         $dom_pdf = $pdf->getDomPDF();
         $canvas = $dom_pdf->get_canvas();
         $footer = $canvas->open_object();
@@ -715,32 +721,32 @@ class DocumentsService implements DocumentsInterface
     public function getUrlListeParticipantPresentiel($code_formation)
     {
         // TODO: Implement getUrlListeParticipantPresentiel() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('liste.participant.presentiel',['code_formation' => $code_formation]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('liste.participant.presentiel', ['code_formation' => $code_formation]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function getUrlListeParticipantVisio($code_formation)
     {
         // TODO: Implement getUrlListeParticipantVisio() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('liste.participant.visio',['code_formation' => $code_formation]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('liste.participant.visio', ['code_formation' => $code_formation]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function getUrlAllAttestationParticipant($code_formation)
     {
         // TODO: Implement getUrlAllAttestationParticipant() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('export.all.attestattion.participant',['code_formation' => $code_formation]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('export.all.attestattion.participant', ['code_formation' => $code_formation]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function getUrlAllAttestationPresentielParticipant($code_formation)
-    { 
-        $url = $this->genarateurCodeService->generateUrlSigned('export.all.attestation.presentiel.participant',['code_formation' => $code_formation]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+    {
+        $url = $this->genarateurCodeService->generateUrlSigned('export.all.attestation.presentiel.participant', ['code_formation' => $code_formation]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function downloadAllAttestationParticipant($code_formation)
@@ -759,10 +765,10 @@ class DocumentsService implements DocumentsInterface
             ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
             ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->join('formations', 'formations.code_formation', '=', 'rapports.code_formation')
-            ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays','formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation', 'inscriptions.presentiel')
+            ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays', 'formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation', 'inscriptions.presentiel')
             ->where('rapports.code_formation', $code_formation)
             ->where('inscriptions.code_formation', $code_formation)
-            ->where('rapports.temps_presence', '>' ,0)
+            ->where('rapports.temps_presence', '>', 0)
             ->orderBy('auditeurs.nom', 'ASC')
             ->get();
 
@@ -776,7 +782,7 @@ class DocumentsService implements DocumentsInterface
 
         // formation
         $formation = Formations::where("code_formation", $code_formation)->first();
-        $logo_partenaires = Logopartenaires::where('code_formation',$code_formation)->get();
+        $logo_partenaires = Logopartenaires::where('code_formation', $code_formation)->get();
         //dd($formation->typeformation_id);
         if ($formation->typeformation_id != null) {
             # code...
@@ -788,10 +794,10 @@ class DocumentsService implements DocumentsInterface
 
 
         // share data to view
-        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session,'typeformation_id' =>$typeformation_id, 'logo_partenaires' => $logo_partenaires,'formation' => $formation]);
+        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session, 'typeformation_id' => $typeformation_id, 'logo_partenaires' => $logo_partenaires, 'formation' => $formation]);
 
         // service permettant de retourner la vue sur condition
-        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event,$formation);
+        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event, $formation);
 
         $pdf->setPaper('A4', 'landscape');
 
@@ -816,10 +822,10 @@ class DocumentsService implements DocumentsInterface
             ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
             ->leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->join('formations', 'formations.code_formation', '=', 'rapports.code_formation')
-            ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays','formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation', 'inscriptions.presentiel')
+            ->select('rapports.*', 'auditeurs.nom as nom', 'auditeurs.prenoms as prenoms', 'auditeurs.pays as pays', 'formations.lieu', 'formations.theme', 'formations.date_debut', 'formations.date_fin', 'formations.code_formation', 'inscriptions.presentiel')
             ->where('rapports.code_formation', $code_formation)
             ->where('inscriptions.code_formation', $code_formation)
-            ->where('rapports.temps_presence' ,0)
+            ->where('rapports.temps_presence', 0)
             ->orderBy('auditeurs.nom', 'ASC')
             ->get();
 
@@ -833,7 +839,7 @@ class DocumentsService implements DocumentsInterface
 
         // formation
         $formation = Formations::where("code_formation", $code_formation)->first();
-        $logo_partenaires = Logopartenaires::where('code_formation',$code_formation)->get();
+        $logo_partenaires = Logopartenaires::where('code_formation', $code_formation)->get();
         //dd($formation->typeformation_id);
         if ($formation->typeformation_id != null) {
             # code...
@@ -845,10 +851,10 @@ class DocumentsService implements DocumentsInterface
 
 
         // share data to view
-        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session,'typeformation_id' =>$typeformation_id, 'logo_partenaires' => $logo_partenaires,'formation' => $formation]);
+        view()->share(['liste_participants' => $liste_participants, 'date' => $date_jour, 'code_formation' => $code_formation, 'durees' => $duree_formation, 'duree_session' => $duree_session, 'typeformation_id' => $typeformation_id, 'logo_partenaires' => $logo_partenaires, 'formation' => $formation]);
 
         // service permettant de retourner la vue sur condition
-        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event,$formation);
+        $pdf = $this->genarateurCodeService->getBladeAttestationParticipant($formation->is_event, $formation);
 
         $pdf->setPaper('A4', 'landscape');
 
@@ -885,7 +891,7 @@ class DocumentsService implements DocumentsInterface
 
                     if ($inscrit->presentiel == "1") {
 
-                        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_participant',['rapport_id' => $rapport->id]);
+                        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_participant', ['rapport_id' => $rapport->id]);
 
                         // enregistrer les infos dans une table pour passer la views
                         $contenu = [
@@ -904,13 +910,13 @@ class DocumentsService implements DocumentsInterface
                         Mail::to(trim($inscrit->email))->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new SendAttestation($contenu));
                         // update column attestattion_send in rapport table
                         $up_rapport = Rapports::find($rapport->id);
-                        $up_rapport->setAttribute('attestation_send',true);
+                        $up_rapport->setAttribute('attestation_send', true);
                         $up_rapport->update();
                     } else {
 
 
                         //$fichier_name = Crypt::encrypt($rapport->id);
-                        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_participant',['rapport_id' => $rapport->id]);
+                        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_participant', ['rapport_id' => $rapport->id]);
 
                         // enregistrer les infos dans une table pour passer la views
                         $contenu = [
@@ -927,13 +933,13 @@ class DocumentsService implements DocumentsInterface
                         // send mail
 
                         Mail::to(trim($inscrit->email))->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new SendAttestation($contenu));
-                        $rapport->setAttribute('attestation_send',true);
+                        $rapport->setAttribute('attestation_send', true);
                         $rapport->update();
                     }
                 }
             }
         }
-        return  ResponseHandler::success('E-mail envoyé avec succès',['success'=> true, 'code_formation'=>$request->code_formation]);
+        return  ResponseHandler::success('E-mail envoyé avec succès', ['success' => true, 'code_formation' => $request->code_formation]);
     }
 
     public function getListeAttestationFormateur(Request $request, string $code_formation)
@@ -958,9 +964,16 @@ class DocumentsService implements DocumentsInterface
             ->join('formateurs', 'formateurs.id', '=', 'formationsformateurs.formateur_id')
             ->leftjoin('pays', 'pays.id', '=', 'formateurs.nationalite')
             ->leftjoin('roleformateurs', 'formationsformateurs.roleformateur_id', '=', 'roleformateurs.id')
-            ->select('formationsformateurs.id', 'formateurs.nom', 'formateurs.prenoms',
-                'formateurs.telephone', 'formateurs.email',
-                'formationsformateurs.role',  'pays.nationalite','roleformateurs.libelle as role_formateur')
+            ->select(
+                'formationsformateurs.id',
+                'formateurs.nom',
+                'formateurs.prenoms',
+                'formateurs.telephone',
+                'formateurs.email',
+                'formationsformateurs.role',
+                'pays.nationalite',
+                'roleformateurs.libelle as role_formateur'
+            )
             ->where('formations.code_formation', $code_formation);
 
         // Recherche globale sur plusieurs champs
@@ -977,32 +990,32 @@ class DocumentsService implements DocumentsInterface
         switch ($sortField) {
             case 'nom':
                 # code...
-        $query->orderBy("formateurs.{$sortField}", $sortOrder);
+                $query->orderBy("formateurs.{$sortField}", $sortOrder);
                 break;
             case 'prenoms':
                 # code...
-        $query->orderBy("formateurs.{$sortField}", $sortOrder);
+                $query->orderBy("formateurs.{$sortField}", $sortOrder);
                 break;
             case 'telephone':
                 # code...
-        $query->orderBy("formateurs.{$sortField}", $sortOrder);
+                $query->orderBy("formateurs.{$sortField}", $sortOrder);
                 break;
             case 'role':
                 # code...
-        $query->orderBy("formationsformateurs.{$sortField}", $sortOrder);
+                $query->orderBy("formationsformateurs.{$sortField}", $sortOrder);
                 break;
             case 'role_formateur':
                 # code...
-        $query->orderBy("roleformateurs.libelle", $sortOrder);
+                $query->orderBy("roleformateurs.libelle", $sortOrder);
                 break;
             case 'nationalite':
                 # code...
-        $query->orderBy("pays.{$sortField}", $sortOrder);
+                $query->orderBy("pays.{$sortField}", $sortOrder);
                 break;
-            
+
             default:
                 # code...
-        $query->orderBy("formateurs.{$sortField}", $sortOrder);
+                $query->orderBy("formateurs.{$sortField}", $sortOrder);
                 break;
         }
 
@@ -1018,7 +1031,7 @@ class DocumentsService implements DocumentsInterface
     {
         // TODO: Implement downloadAttestationFormateur() method.
 
-        $formateur = Formationsformateurs::where('id',$id)->get();
+        $formateur = Formationsformateurs::where('id', $id)->get();
 
         $getFormateur = Formationsformateurs::find($id);
         //
@@ -1027,65 +1040,63 @@ class DocumentsService implements DocumentsInterface
         $date_jour = Carbon::now()->locale('fr_FR');
         $date_jour = $date_jour->isoFormat('DD MMM YYYY');
         $formation = Formations::find($getFormateur->formation_id);
-        $logo_partenaires = Logopartenaires::where('code_formation',$formation->code_formation)->get();
+        $logo_partenaires = Logopartenaires::where('code_formation', $formation->code_formation)->get();
         // share data to view
-        view()->share(['formateur'=>$formateur,'date'=>$date_jour,'logo_partenaires' => $logo_partenaires]);
+        view()->share(['formateur' => $formateur, 'date' => $date_jour, 'logo_partenaires' => $logo_partenaires]);
 
         // service permettant de retourner la vue sur condition
-        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event,$formation->typeformation_id);
+        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event, $formation->typeformation_id);
 
-        $password = substr(md5($getFormateur->getFormation->code_formation.''.$getFormateur->getFormateur->email), 0, 8);
+        $password = substr(md5($getFormateur->getFormation->code_formation . '' . $getFormateur->getFormateur->email), 0, 8);
         $pdf->setPaper('A4', 'landscape');
         $pdf->setEncryption($password);
         $date = date('d_m_Y_His');
-        $formateur_name = $getFormateur->getFormateur->nom.' '.$getFormateur->getFormateur->prenoms;
+        $formateur_name = $getFormateur->getFormateur->nom . ' ' . $getFormateur->getFormateur->prenoms;
         $fichier_name = Str::slug($formateur_name);
-        $file_name = $formation->code_formation.'_'. $fichier_name.'_'.$date;
+        $file_name = $formation->code_formation . '_' . $fichier_name . '_' . $date;
         //$file_name = md5($file);
         // download PDF file with download method
-        return $pdf->download($file_name.'.pdf');
-
+        return $pdf->download($file_name . '.pdf');
     }
 
     public function getUrlAttestationFormateur($id)
     {
         // TODO: Implement getUrlAttestationFormateur() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur',['id' => $id]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur', ['id' => $id]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function downloadConsultationAttestationFormateur($id)
     {
         // TODO: Implement downloadConsultationAttestationFormateur() method.
 
-        $formateur = Formationsformateurs::where('id',$id)->get();
+        $formateur = Formationsformateurs::where('id', $id)->get();
         $getOneformateur = Formationsformateurs::find($id);
-        $nom_formateur = Str::slug($getOneformateur->getFormateur->nom. '_' .$getOneformateur->getFormateur->prenoms) ;
+        $nom_formateur = Str::slug($getOneformateur->getFormateur->nom . '_' . $getOneformateur->getFormateur->prenoms);
 
         $date_pdf = date('Y-m-d');
         $date_jour = Carbon::now()->locale('fr_FR');
         $date_jour = $date_jour->isoFormat('DD MMM YYYY');
         $formation = Formations::find($getOneformateur->formation_id);
-        $logo_partenaires = Logopartenaires::where('code_formation',$formation->code_formation)->get();
+        $logo_partenaires = Logopartenaires::where('code_formation', $formation->code_formation)->get();
         // share data to view
-        view()->share(['formateur'=>$formateur,'date'=>$date_jour,'logo_partenaires' => $logo_partenaires]);
+        view()->share(['formateur' => $formateur, 'date' => $date_jour, 'logo_partenaires' => $logo_partenaires]);
 
         // service permettant de retourner la vue sur condition
-        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event,$formation->typeformation_id);
+        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event, $formation->typeformation_id);
         $pdf->setPaper('A4', 'landscape');
 
         // download PDF file with download method
-        return $pdf->download($formation->code_formation.'_ATTESTATION_FORMATEUR_' .$nom_formateur. '_' .$date_pdf.'.pdf');
-
+        return $pdf->download($formation->code_formation . '_ATTESTATION_FORMATEUR_' . $nom_formateur . '_' . $date_pdf . '.pdf');
     }
 
     public function getUrlConsultationAttestationFormateur($id)
     {
         // TODO: Implement getUrlConsultationAttestationFormateur() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('consultation.attestation_formateur',['id' => $id]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('consultation.attestation_formateur', ['id' => $id]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function sendMailAttestationFormateur($id): \Illuminate\Http\JsonResponse
@@ -1098,28 +1109,28 @@ class DocumentsService implements DocumentsInterface
         $date_jour = Carbon::now()->locale('fr_FR');
         $date_jour = $date_jour->isoFormat('DD MMM YYYY');
 
-        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur',['id' => $id]);
+        $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur', ['id' => $id]);
 
         // enregistrer les infos dans une table pour passer la views
         $contenu = [
-            'nom_prenoms' => $formateur->getFormateur->prenoms.' '.$formateur->getFormateur->nom,
-            'email' => $formateur->getFormateur->email ,
+            'nom_prenoms' => $formateur->getFormateur->prenoms . ' ' . $formateur->getFormateur->nom,
+            'email' => $formateur->getFormateur->email,
             'signedUrl' => $signedUrl,
             'code_formation' => $formateur->getFormation->code_formation,
             'theme' => $formateur->getFormation->theme,
-            'password' => substr(md5($formateur->getFormation->code_formation.''.$formateur->getFormateur->email), 0, 8),
-            'subject'=>'ATTESTATION '.$formateur->getFormation->code_formation.' '.$formateur->getFormateur->nom
+            'password' => substr(md5($formateur->getFormation->code_formation . '' . $formateur->getFormateur->email), 0, 8),
+            'subject' => 'ATTESTATION ' . $formateur->getFormation->code_formation . ' ' . $formateur->getFormateur->nom
         ];
         // send mail
         try {
             # code...
             Mail::to(trim($formateur->getFormateur->email))->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new SendAttestationFormateur($contenu));
 
-            return ResponseHandler::success('Mail envoyé avec succès',['success' => true,'code_formation'=>$formateur->getFormation->code_formation]);
+            return ResponseHandler::success('Mail envoyé avec succès', ['success' => true, 'code_formation' => $formateur->getFormation->code_formation]);
         } catch (\Exception $e) {
             // Get error here
             Log::info('echec de l\'envoi du mail');
-            return ResponseHandler::success('Mail non envoyé ',['success' => false, 'error' => $e->getMessage()]);
+            return ResponseHandler::success('Mail non envoyé ', ['success' => false, 'error' => $e->getMessage()]);
         }
     }
 
@@ -1130,10 +1141,10 @@ class DocumentsService implements DocumentsInterface
         //Log::info($listeFormateurs);
         if (!empty($listeFormateurs)) {
             foreach ($listeFormateurs as $key => $id) {
-                $formateurs = Formationsformateurs::join("formations","formationsformateurs.formation_id","=","formations.id")
-                    ->join("formateurs","formationsformateurs.formateur_id","=","formateurs.id")
-                    ->where("formationsformateurs.id",$id)
-                    ->get(["formateurs.email","formateurs.nom","formateurs.prenoms","formations.code_formation","formations.theme","formationsformateurs.id"])
+                $formateurs = Formationsformateurs::join("formations", "formationsformateurs.formation_id", "=", "formations.id")
+                    ->join("formateurs", "formationsformateurs.formateur_id", "=", "formateurs.id")
+                    ->where("formationsformateurs.id", $id)
+                    ->get(["formateurs.email", "formateurs.nom", "formateurs.prenoms", "formations.code_formation", "formations.theme", "formationsformateurs.id"])
                     ->first();
                 // récupérer les information du participant
                 if ($formateurs) {
@@ -1143,34 +1154,31 @@ class DocumentsService implements DocumentsInterface
                     $date_jour = Carbon::now()->locale('fr_FR');
                     $date_jour = $date_jour->isoFormat('DD MMM YYYY');
 
-                    $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur',['id' => $formateurs->id]);
+                    $signedUrl = $this->genarateurCodeService->generateUrlSigned('telecharger.attestation_formateur', ['id' => $formateurs->id]);
 
                     // enregistrer les infos dans une table pour passer la views
                     $contenu = [
-                        'nom_prenoms' => $formateurs->prenoms.' '.$formateurs->nom,
-                        'email' => $formateurs->email ,
+                        'nom_prenoms' => $formateurs->prenoms . ' ' . $formateurs->nom,
+                        'email' => $formateurs->email,
                         //'fichier_name' => $fichier_name,
                         'signedUrl' => $signedUrl,
                         'code_formation' => $formateurs->code_formation,
                         'theme' => $formateurs->theme,
-                        'password' => substr(md5($formateurs->code_formation.''.$formateurs->email), 0, 8),
-                        'subject'=>'ATTESTATION '.$formateurs->code_formation.' '.$formateurs->nom
+                        'password' => substr(md5($formateurs->code_formation . '' . $formateurs->email), 0, 8),
+                        'subject' => 'ATTESTATION ' . $formateurs->code_formation . ' ' . $formateurs->nom
                     ];
                     // send mail
                     try {
                         # code...
                         Mail::to(trim($formateurs->email))->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new SendAttestationFormateur($contenu));
-
                     } catch (\Exception $e) {
                         // Get error here
                         Log::info('echec de l\'envoi du mail');
-                        return ResponseHandler::success('Mail non envoyé ',['success' => false, 'error' => $e->getMessage()]);
+                        return ResponseHandler::success('Mail non envoyé ', ['success' => false, 'error' => $e->getMessage()]);
                     }
-
                 }
-
             }
-            return ResponseHandler::success('Mail envoyé avec succès',['success' => true,'code_formation'=>$request->code_formation]);
+            return ResponseHandler::success('Mail envoyé avec succès', ['success' => true, 'code_formation' => $request->code_formation]);
         }
     }
 
@@ -1179,11 +1187,11 @@ class DocumentsService implements DocumentsInterface
         // TODO: Implement downloadAllAttestationFormateur() method.
 
         set_time_limit(0);
-        $fichier="";
+        $fichier = "";
         // ******************************************* //
-        $formation = Formations::where('code_formation',$code_formation)->first();
-        $formateurs = Formationsformateurs::where('formation_id',$formation->id)->get();
-        $logo_partenaires = Logopartenaires::where('code_formation',$formation->code_formation)->get();
+        $formation = Formations::where('code_formation', $code_formation)->first();
+        $formateurs = Formationsformateurs::where('formation_id', $formation->id)->get();
+        $logo_partenaires = Logopartenaires::where('code_formation', $formation->code_formation)->get();
 
         $date = date('d-m-YH:i:s');
         $date_jour = date('d-m-Y');
@@ -1191,22 +1199,22 @@ class DocumentsService implements DocumentsInterface
         $date_jour = Carbon::now()->locale('fr_FR');
         $date_jour = $date_jour->isoFormat('DD MMM YYYY');
         // share data to view
-        view()->share(['formateur'=>$formateurs,'date'=>$date_jour,'logo_partenaires'=>$logo_partenaires]);
+        view()->share(['formateur' => $formateurs, 'date' => $date_jour, 'logo_partenaires' => $logo_partenaires]);
 
         // service permettant de retourner la vue sur condition
-        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event,$formation->typeformation_id);
+        $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event, $formation->typeformation_id);
         // $pdf = PDF::loadView('attestations.pdf_attestation_by_formateur');
         $pdf->setPaper('A4', 'landscape');
         // download PDF file with download method
-        return $pdf->download($formation->code_formation.'_ATTESTATION_FORMATEURS_'.$date_pdf.'.pdf');
+        return $pdf->download($formation->code_formation . '_ATTESTATION_FORMATEURS_' . $date_pdf . '.pdf');
     }
 
     public function getUrlAllAttestationFormateur($code_formation)
     {
         // TODO: Implement getUrlAllAttestationFormateur() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('export.all.attestattion.formateur',['code_formation' => $code_formation]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('export.all.attestattion.formateur', ['code_formation' => $code_formation]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function downloadListeFormateur($code_formation)
@@ -1218,18 +1226,18 @@ class DocumentsService implements DocumentsInterface
             ->join('formations', 'formations.id', '=', 'formationsformateurs.formation_id')
             ->join('formateurs', 'formateurs.id', '=', 'formationsformateurs.formateur_id')
             ->leftjoin('pays', 'pays.id', '=', 'formateurs.nationalite')
-            ->select('formateurs.id as id_formateur', 'formateurs.nom', 'formateurs.prenoms','formateurs.telephone','formateurs.email','pays.nationalite')
-            ->where('formations.code_formation',$code_formation)
+            ->select('formateurs.id as id_formateur', 'formateurs.nom', 'formateurs.prenoms', 'formateurs.telephone', 'formateurs.email', 'pays.nationalite')
+            ->where('formations.code_formation', $code_formation)
             //->where('inscriptions.code_formation',$code_formation)
             ->orderBy('formateurs.nom', 'ASC')
             ->get();
         $nbre_formateur = count($liste_formateurs);
         // récupérer l'objet de la formation
-        $formation =  Formations::where('code_formation',$code_formation)->get()->first();
+        $formation =  Formations::where('code_formation', $code_formation)->get()->first();
 
         $date = date('d-m-YH:i:s');
         // share data to view
-        view()->share(['liste_formateurs'=>$liste_formateurs,'code_formation'=>$code_formation,'formation'=>$formation,'nbre_formateur'=>$nbre_formateur]);
+        view()->share(['liste_formateurs' => $liste_formateurs, 'code_formation' => $code_formation, 'formation' => $formation, 'nbre_formateur' => $nbre_formateur]);
 
         $pdf = PDF::loadView('attestations.liste_formateur_pdf');
         $pdf->output();
@@ -1242,78 +1250,77 @@ class DocumentsService implements DocumentsInterface
         $w = $canvas->get_width();
         $h = $canvas->get_height();
         $canvas->close_object();
-        $canvas->add_object($footer,"all");
+        $canvas->add_object($footer, "all");
 
-        return $pdf->download($code_formation.'_LISTE_FORMATEUR_'.$date.'.pdf');
+        return $pdf->download($code_formation . '_LISTE_FORMATEUR_' . $date . '.pdf');
     }
 
     public function getUrlListeFormateur($code_formation)
     {
         // TODO: Implement getUrlListeFormateur() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('liste.formateurs',['code_formation' => $code_formation]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('liste.formateurs', ['code_formation' => $code_formation]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function downloadProformaOuvrage(string $reference)
     {
         // TODO: Implement downloadProformaOuvrage() method.
 
-        $paiement = Paiements::where('reference',$reference)->get()->first();
-        $auditeur = Auditeurs::where('email',$paiement->email)->first();
-        $details_paiement = Detailpaiementouvrages::where("paiementouvrage_id",$paiement->id)->get();
+        $paiement = Paiements::where('reference', $reference)->get()->first();
+        $auditeur = Auditeurs::where('email', $paiement->email)->first();
+        $details_paiement = Detailpaiementouvrages::where("paiementouvrage_id", $paiement->id)->get();
         // Detailspaiement::where('reference_paiement','ERS-2021-FACT-000001');
         // return view('public.recu',compact("paiement","details_paiement"));
         $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
         $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
 
         // share data to view
-        view()->share(['formatter'=>$formatter,'paiement'=>$paiement,'auditeur' => $auditeur, 'details_paiement'=>$details_paiement]);
+        view()->share(['formatter' => $formatter, 'paiement' => $paiement, 'auditeur' => $auditeur, 'details_paiement' => $details_paiement]);
         $pdf = PDF::loadView('documents.proforma_ouvrage');
-        $customPaper = array(0,0,720,1440);
+        $customPaper = array(0, 0, 720, 1440);
         $pdf->setPaper($customPaper, 'landscape');
 
         $date = date('d_m_Y_His');
         // download PDF file with download method
-        return $pdf->download('proforma_'.$reference.'_'.$date.'.pdf');
+        return $pdf->download('proforma_' . $reference . '_' . $date . '.pdf');
     }
 
     public function getUrlProformaOuvrageSigned(string $reference): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement
-        $url = $this->genarateurCodeService->generateUrlSigned('proforma-ouvrage',['reference' => $reference]);
-        $data = ['url'=>$url];
-        return  ResponseHandler::success("ok",$data,200);
+        $url = $this->genarateurCodeService->generateUrlSigned('proforma-ouvrage', ['reference' => $reference]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
     }
 
     public function downloadRecuPaiementOuvrage(string $reference)
     {
         // TODO: Implement downloadRecuPaiementOuvrage() method.
-        $paiement = Paiements::where('reference',$reference)->get()->first();
-        $auditeur = Auditeurs::where('email',$paiement->email)->first();
-        $details_paiement = Detailpaiementouvrages::where("paiementouvrage_id",$paiement->id)->get();
+        $paiement = Paiements::where('reference', $reference)->get()->first();
+        $auditeur = Auditeurs::where('email', $paiement->email)->first();
+        $details_paiement = Detailpaiementouvrages::where("paiementouvrage_id", $paiement->id)->get();
         // Detailspaiement::where('reference_paiement','ERS-2021-FACT-000001');
         // return view('public.recu',compact("paiement","details_paiement"));
         $formatter = new NumberFormatter('fr', NumberFormatter::SPELLOUT);
         $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, "%spellout-ordinal");
 
         // share data to view
-        view()->share(['formatter'=>$formatter,'paiement'=>$paiement,'auditeur' => $auditeur, 'details_paiement'=>$details_paiement]);
+        view()->share(['formatter' => $formatter, 'paiement' => $paiement, 'auditeur' => $auditeur, 'details_paiement' => $details_paiement]);
         $pdf = PDF::loadView('documents.recu_paiement_ouvrage');
-        $customPaper = array(0,0,720,1440);
+        $customPaper = array(0, 0, 720, 1440);
         $pdf->setPaper($customPaper, 'landscape');
 
         $date = date('d_m_Y_His');
         // download PDF file with download method
-        return $pdf->download('recu_'.$reference.'_'.$date.'.pdf');
-
+        return $pdf->download('recu_' . $reference . '_' . $date . '.pdf');
     }
 
-        public function getListeRapports(Request $request, string $code_formation) //: LengthAwarePaginator
-    { 
+    public function getListeRapports(Request $request, string $code_formation) //: LengthAwarePaginator
+    {
         // ##################### calcul scoring ###########################################
         $getDuree = 0;
-        $check_duree_formation = Dureeformations::where("code_formation",$code_formation)->first();
+        $check_duree_formation = Dureeformations::where("code_formation", $code_formation)->first();
 
         if ($check_duree_formation) {
             $nbr_duree_enregistrement = $check_duree_formation->duree_enregistrement;
@@ -1332,13 +1339,13 @@ class DocumentsService implements DocumentsInterface
             ->where('code_formation', $code_formation)
             ->get();
 
-        if($nbr_duree_enregistrement > 0){
+        if ($nbr_duree_enregistrement > 0) {
             $getDuree = $nbr_duree_enregistrement;
-        }else{
+        } else {
             $getDuree = $duree_formation[0]->duree_session;
         }
 
-        $scoring = intval(($getDuree*2)/3);
+        $scoring = intval(($getDuree * 2) / 3);
         //####################### end calcul scoring ####################################################
 
 
@@ -1349,7 +1356,7 @@ class DocumentsService implements DocumentsInterface
 
         $query = DB::table('rapports')
             ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
-            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email') 
+            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->select(
                 'rapports.id',
                 'rapports.email',
@@ -1365,7 +1372,7 @@ class DocumentsService implements DocumentsInterface
             )
             ->where('rapports.code_formation', $code_formation)
             ->where('inscriptions.code_formation', $code_formation);
-            /*->where(function ($q) use ($scoring) {
+        /*->where(function ($q) use ($scoring) {
                 $q->where('rapports.temps_presence', 0)
                     ->orWhere('rapports.temps_presence', '>=', $scoring);
             });*/
