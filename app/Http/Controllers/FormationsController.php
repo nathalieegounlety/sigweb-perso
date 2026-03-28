@@ -148,6 +148,19 @@ class FormationsController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+    
+    public function listeFormationDscObj(Request $request)
+    {
+        // récupérer la liste des rôles
+        try {
+            $data = $this->formationsService->getFormationsDscObj($request);
+            return ResponseHandler::success('ok',$data);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    
 
     public function formationsDsc(Request $request)
     {

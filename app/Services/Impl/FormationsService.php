@@ -710,6 +710,20 @@ class FormationsService implements FormationsInterface
         return ResponseHandler::success('ok', $liste_formations);
     }
 
+    public function getFormationsDscObj(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getFormationsDscObj() method.
+        $liste_formations = Formations::query()
+            ->where('is_formation_dsc', true) 
+            ->select([
+                'code_formation as code',
+                DB::raw("CONCAT(formations.code_formation, ' - ', formations.theme) AS name")
+            ])
+            ->orderBy('id', 'DESC')
+            ->get();
+        return ResponseHandler::success('ok', $liste_formations);
+    }
+
     public function getFormationsDsc(Request $request)
     {
         // TODO: Implement getFormationsDsc() method.
