@@ -19,5 +19,7 @@ interface FormationsdscInterface
 
     public function remove(int $id): \Illuminate\Http\JsonResponse;
     public function objFormationDsc(): \Illuminate\Http\JsonResponse;
+    public function getListeDossiersAttente(Request $request, string $code_formation);
+    public function validerDossiersCandidature(Request $request): \Illuminate\Http\JsonResponse;
 
 }

@@ -277,6 +277,8 @@ Route::prefix('v1/formationsdsc')->controller(\App\Http\Controllers\FormationsDs
     Route::post('unique', 'getFormationdsc');
     Route::post('update', 'update');
     Route::post('remove', 'remove');
+    Route::get('dossiers/attente', 'listeDossiersAttente');
+    Route::post('traitements/dossiers/candidature', 'traitementsDossier');
 });
 
 // gestion des signataires

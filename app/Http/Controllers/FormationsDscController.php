@@ -144,4 +144,52 @@ class FormationsDscController extends Controller
         }
     }
 
+    
+
+        public function listeDossiersAttente(Request $request)
+    {
+         
+        try {
+            $resp = $this->formationdscService->getListeDossiersAttente($request, $request->code_formation);
+            $data = $resp['pagination'];
+            $is_dsc = $resp['is_dsc'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
+                'is_dsc' => $is_dsc
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+
+    
+
+    public function traitementsDossier(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'listeAuditeurs' => 'required',
+                'code_formation' => 'required',
+                'decision' => 'required',
+                'motif' => 'required'
+            ]);
+
+            return $this->formationdscService->validerDossiersCandidature($request);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
 }
