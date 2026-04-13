@@ -13,6 +13,7 @@ use App\Exports\ExportsInscritsDsc;
 use App\Exports\ExportsInscritsExcel;
 use App\Exports\ExportsInscritsPresentielVisioExcel;
 use App\Exports\ExportsInscritsVisioExcel;
+use App\Exports\ExportsListeDossiersValidesDsc;
 use App\Exports\ListeFormateur;
 use App\Helpers\ResponseHandler;
 use App\Imports\ImportCandidatsMoodle;
@@ -447,5 +448,11 @@ class ExportationExcelController extends Controller
     // export all attestation formateur by code formation
     public function ExportAllAttestationFormateurExcel(Request $request) {
         return Excel::download(new AllAttestationsFormateursExport($request->code_formation),"LISTE_FORMATEURS_ATTESTATIONS_".date("Ymdhis").".xlsx");
+    }
+
+    
+    public function exportListeDossiersValidesDsc($code_formation) 
+    {
+        return Excel::download(new ExportsListeDossiersValidesDsc($code_formation), "SIGWEB_ERSUMA_liste_dossiers_valides_dsc_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
     }
 }
