@@ -195,7 +195,8 @@
                                         @php
                                             $masse_horaire = 8 * $nbre_jour;
                                         @endphp
-                                        correspondant à {{ $nbre_jour == 1 ? '4 heures' : "$masse_horaire heures" }} de formation.
+                                        {{-- correspondant à {{ $nbre_jour == 1 ? '4 heures' : "$masse_horaire heures" }} de formation. 15/04/2026--}}
+                                        correspondant à {{ $masse_horaire }} heures de formation.
                                     </div>
                     
                                     <p style="text-align: justify; margin-top: 15px;">
@@ -440,8 +441,8 @@
                                         @php
                                             $masse_horaire = 8 * $nbre_jour;
                                         @endphp
-                                        correspondant à {{ $nbre_jour == 1 ? '4 heures' : "$masse_horaire heures" }}
-                                        de formation.
+                                        {{-- correspondant à {{ $nbre_jour == 1 ? '4 heures' : "$masse_horaire heures" }} de formation. --}}
+                                        correspondant à {{ $masse_horaire }} heures de formation.
                                     </div>
                                     <p>
                                         La présente attestation lui est délivrée pour en jouir avec les droits et

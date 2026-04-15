@@ -696,7 +696,7 @@ class FormationsService implements FormationsInterface
     {
         // TODO: Implement getFormationsAttestation() method.
         $liste_formations = Formations::query()
-            ->where('statut', 'INACTIF')
+            //->where('statut', 'INACTIF')
             ->where(function ($q) {
                 $q->where('enable', true)
                     ->orWhere('presentiel', 1);
