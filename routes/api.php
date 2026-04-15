@@ -279,6 +279,7 @@ Route::prefix('v1/formationsdsc')->controller(\App\Http\Controllers\FormationsDs
     Route::post('remove', 'remove');
     Route::get('dossiers/attente', 'listeDossiersAttente');
     Route::post('traitements/dossiers/candidature', 'traitementsDossier');
+    Route::get('dossiers/valides', 'listeDossiersValides');
 });
 
 // gestion des signataires
@@ -412,6 +413,7 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     Route::get('all/liste/attestation/participants/{code_formation}', 'ExportAllAttestationParticipantExcel'); 
     Route::get('all/liste/rapports/{code_formation}', 'ExportAllRapportExcel'); 
     Route::get('all/liste/participants/{code_formation}', 'ExportAllParticipantExcel'); 
+    Route::get('dossiers/valides/dsc/{code_formation}', 'exportListeDossiersValidesDsc');
 });
 
 // gestion des tarifs
