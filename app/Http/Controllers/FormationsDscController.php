@@ -220,4 +220,55 @@ class FormationsDscController extends Controller
         }
     }
 
+     
+        public function listeDossierSousreserve(Request $request)
+    {
+         
+        try {
+            $resp = $this->formationdscService->getListeDossierSousreserve($request, $request->code_formation);
+            $data = $resp['pagination'];
+            $is_dsc = $resp['is_dsc'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
+                'is_dsc' => $is_dsc
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+        public function listeDossiersRejetes(Request $request)
+    {
+         
+        try {
+            $resp = $this->formationdscService->getListeDossiersRejetes($request, $request->code_formation);
+            $data = $resp['pagination'];
+            $is_dsc = $resp['is_dsc'];
+            // Transformer pour enlever le bloc 'links'
+            $response = [
+                'current_page' => $data->currentPage(),
+                'data'         => $data->items(),
+                'first_page_url' => $data->url(1),
+                'last_page_url'  => $data->url($data->lastPage()),
+                'next_page_url'  => $data->nextPageUrl(),
+                'prev_page_url'  => $data->previousPageUrl(),
+                'per_page'       => $data->perPage(),
+                'total'          => $data->total(),
+                'is_dsc' => $is_dsc
+            ];
+            return ResponseHandler::success('ok',$response);
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
 }

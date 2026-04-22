@@ -10,9 +10,11 @@ use App\Exports\AuditeursExport;
 use App\Exports\ExportEtatRecapitulatifOuvrage;
 use App\Exports\ExportListePresence;
 use App\Exports\ExportsInscritsDsc;
+use App\Exports\ExportsInscritsDscSR;
 use App\Exports\ExportsInscritsExcel;
 use App\Exports\ExportsInscritsPresentielVisioExcel;
 use App\Exports\ExportsInscritsVisioExcel;
+use App\Exports\ExportsListeDossiersRejetesDsc;
 use App\Exports\ExportsListeDossiersValidesDsc;
 use App\Exports\ListeFormateur;
 use App\Helpers\ResponseHandler;
@@ -44,6 +46,15 @@ class ExportationExcelController extends Controller
     public function exportListeInscritsDsc($code_formation) // ExportInscritsExcel
     {
         return Excel::download(new ExportsInscritsDsc($code_formation), "SIGWEB_ERSUMA_liste_inscrits_dsc_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
+    }
+
+    /**
+     * Export stats mode paiement
+     *
+     */
+    public function exportListeInscritsDscSR($code_formation) // ExportInscritsExcel
+    {
+        return Excel::download(new ExportsInscritsDscSR($code_formation), "SIGWEB_ERSUMA_liste_inscrits_dsc_sousreserve_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
     }
 
     /**
@@ -454,5 +465,10 @@ class ExportationExcelController extends Controller
     public function exportListeDossiersValidesDsc($code_formation) 
     {
         return Excel::download(new ExportsListeDossiersValidesDsc($code_formation), "SIGWEB_ERSUMA_liste_dossiers_valides_dsc_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
+    }
+    
+    public function exportListeDossiersRejetesDsc($code_formation) 
+    {
+        return Excel::download(new ExportsListeDossiersRejetesDsc($code_formation), "SIGWEB_ERSUMA_liste_dossiers_rejetes_dsc_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
     }
 }

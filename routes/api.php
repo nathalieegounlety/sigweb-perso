@@ -280,6 +280,8 @@ Route::prefix('v1/formationsdsc')->controller(\App\Http\Controllers\FormationsDs
     Route::get('dossiers/attente', 'listeDossiersAttente');
     Route::post('traitements/dossiers/candidature', 'traitementsDossier');
     Route::get('dossiers/valides', 'listeDossiersValides');
+    Route::get('dossiers/sousreserve', 'listeDossierSousreserve');
+    Route::get('dossiers/rejetes', 'listeDossiersRejetes');
 });
 
 // gestion des signataires
@@ -392,6 +394,7 @@ Route::get('v1/test-error-mail', function () {
 
 Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExcelController::class)->group(function () {
     Route::get('formation/dsc/{code_formation}', 'exportListeInscritsDsc');
+    Route::get('formation/dsc/sr/{code_formation}', 'exportListeInscritsDscSR');
     Route::get('formation/presentielle/{code_formation}', 'exportListeInscritPresentielleExcel');
     Route::get('formation/visio/{code_formation}', 'exportListeInscritVisioExcel');
     Route::get('formation/liste/presence/{code_formation}', 'exportListePresenceExcel');
@@ -414,6 +417,7 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     Route::get('all/liste/rapports/{code_formation}', 'ExportAllRapportExcel'); 
     Route::get('all/liste/participants/{code_formation}', 'ExportAllParticipantExcel'); 
     Route::get('dossiers/valides/dsc/{code_formation}', 'exportListeDossiersValidesDsc');
+    Route::get('dossiers/rejetes/dsc/{code_formation}', 'exportListeDossiersRejetesDsc');
 });
 
 // gestion des tarifs

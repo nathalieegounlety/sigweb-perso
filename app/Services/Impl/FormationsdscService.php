@@ -489,4 +489,198 @@ class FormationsdscService implements FormationsdscInterface
             'is_dsc' => $formation->is_formation_dsc
         ];
     }
+
+    public function getListeDossierSousreserve(Request $request, string $code_formation)
+    {$perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+        
+        $filterNom = $request->input('filter_nom');
+        $filterPrenoms = $request->input('filter_prenoms');
+        $filterCreatedAt = $request->input('filter_created_at');
+        
+
+        $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+            ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
+            ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+            ->leftjoin("detailspaiements", function ($leftjoin) {
+                $leftjoin->on('detailspaiements.email', '=', 'inscriptions.email');
+                $leftjoin->on('detailspaiements.id_tarification_formation', '=', 'inscriptions.tarif_formation_id');
+            })
+            ->where('inscriptions.code_formation', $code_formation)
+            ->where('inscriptions.is_delete', false) 
+            ->where('inscriptions.traiter', true)
+            ->where('inscriptions.statut_dossier','SOUS RESERVE')
+            ->select(['inscriptions.id','inscriptions.sync_zoom','inscriptions.code_inscription', 'inscriptions.created_at',
+                'auditeurs.nom', 'auditeurs.prenoms', 'formations.fm_presentielle', 'formations.fm_visio', 'auditeurs.email',
+                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode', 'inscriptions.type_formation as mode','grilletarifaires.montant',
+                'inscriptions.type_formation', 'detailspaiements.statut_paiement','detailspaiements.reference_paiement', 'auditeurs.id as id_auditeur',
+                'inscriptions.is_formation_dsc', 'inscriptions.is_delete','inscriptions.code_formation','formations.is_formation_dsc'])
+            ->selectRaw(
+                '(EXISTS (
+                SELECT 1 FROM auditeurs_pieces
+                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
+            )) as check_dossier'
+            )
+            ->selectRaw(
+          '(
+            SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
+          ) as nbre_dossier' 
+      );
+
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $liste_inscrits->where(function ($q) use ($search) {
+                $q->where('auditeurs.nom', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($filterNom) {
+            $liste_inscrits->whereDate('auditeurs.nom', $filterNom);
+        }
+
+        if ($filterPrenoms) {
+            $liste_inscrits->whereDate('auditeurs.prenoms', $filterPrenoms);
+        }
+
+        if ($filterCreatedAt) {
+            $liste_inscrits->whereDate('inscriptions.created_at', $filterCreatedAt);
+        }
+
+        if ($sortField == 'nom' || $sortField == 'prenoms' || $sortField == 'email') {
+            # code...
+        $liste_inscrits->orderBy("auditeurs.{$sortField}", $sortOrder);
+
+        }elseif ($sortField == 'mode') {
+            # code... 
+        $liste_inscrits->orderBy("grilletarifaires.type_tarif", $sortOrder);
+
+        }elseif ($sortField == 'montant') {
+            # code... 
+        $liste_inscrits->orderBy("grilletarifaires.{$sortField}", $sortOrder);
+
+        }elseif ($sortField == 'statut_paiement') {
+            # code... 
+        $liste_inscrits->orderBy("detailspaiements.{$sortField}", $sortOrder);
+
+        } 
+        
+        else{
+            
+        $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
+
+        }
+ 
+        //$liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
+
+        $data = $liste_inscrits->paginate($perPage);
+        $formation = Formations::where('code_formation', $code_formation)->first();
+
+        return [
+            'pagination' => $data,
+            'is_dsc' => $formation->is_formation_dsc
+        ];
+    }
+
+    public function getListeDossiersRejetes(Request $request, string $code_formation)
+    {$perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+        
+        $filterNom = $request->input('filter_nom');
+        $filterPrenoms = $request->input('filter_prenoms');
+        $filterCreatedAt = $request->input('filter_created_at');
+        
+
+        $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+            ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
+            ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+            ->leftjoin("detailspaiements", function ($leftjoin) {
+                $leftjoin->on('detailspaiements.email', '=', 'inscriptions.email');
+                $leftjoin->on('detailspaiements.id_tarification_formation', '=', 'inscriptions.tarif_formation_id');
+            })
+            ->where('inscriptions.code_formation', $code_formation)
+            ->where('inscriptions.is_delete', false) 
+            ->where('inscriptions.traiter', true) 
+            ->where('inscriptions.statut_dossier','REJETEE')
+            ->select(['inscriptions.id','inscriptions.sync_zoom','inscriptions.code_inscription', 'inscriptions.created_at',
+                'auditeurs.nom', 'auditeurs.prenoms', 'formations.fm_presentielle', 'formations.fm_visio', 'auditeurs.email','inscriptions.observations',
+                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode', 'inscriptions.type_formation as mode','grilletarifaires.montant',
+                'inscriptions.type_formation', 'detailspaiements.statut_paiement','detailspaiements.reference_paiement', 'auditeurs.id as id_auditeur',
+                'inscriptions.is_formation_dsc', 'inscriptions.is_delete','inscriptions.code_formation','formations.is_formation_dsc'])
+            ->selectRaw(
+                '(EXISTS (
+                SELECT 1 FROM auditeurs_pieces
+                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
+            )) as check_dossier'
+            )
+            ->selectRaw(
+          '(
+            SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
+          ) as nbre_dossier' 
+      );
+
+        // Recherche globale sur plusieurs champs
+        if ($search) {
+            $liste_inscrits->where(function ($q) use ($search) {
+                $q->where('auditeurs.nom', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                    ->orWhere('auditeurs.email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($filterNom) {
+            $liste_inscrits->whereDate('auditeurs.nom', $filterNom);
+        }
+
+        if ($filterPrenoms) {
+            $liste_inscrits->whereDate('auditeurs.prenoms', $filterPrenoms);
+        }
+
+        if ($filterCreatedAt) {
+            $liste_inscrits->whereDate('inscriptions.created_at', $filterCreatedAt);
+        }
+
+        if ($sortField == 'nom' || $sortField == 'prenoms' || $sortField == 'email') {
+            # code...
+        $liste_inscrits->orderBy("auditeurs.{$sortField}", $sortOrder);
+
+        }elseif ($sortField == 'mode') {
+            # code... 
+        $liste_inscrits->orderBy("grilletarifaires.type_tarif", $sortOrder);
+
+        }elseif ($sortField == 'montant') {
+            # code... 
+        $liste_inscrits->orderBy("grilletarifaires.{$sortField}", $sortOrder);
+
+        }elseif ($sortField == 'statut_paiement') {
+            # code... 
+        $liste_inscrits->orderBy("detailspaiements.{$sortField}", $sortOrder);
+
+        } 
+        
+        else{
+            
+        $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
+
+        }
+ 
+        //$liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
+
+        $data = $liste_inscrits->paginate($perPage);
+        $formation = Formations::where('code_formation', $code_formation)->first();
+
+        return [
+            'pagination' => $data,
+            'is_dsc' => $formation->is_formation_dsc
+        ];
+    }
 }
