@@ -19,6 +19,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/reset-password/info', [ResetPasswordController::class, 'infoResetPassword']);
     // Réinitialisation effective du mot de passe
     Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+    // check email
+    Route::post('/check-email', [AuthController::class, 'checkEmail']);
 
 });
 
