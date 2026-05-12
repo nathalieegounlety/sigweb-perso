@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CandidaturesController;
 use App\Http\Controllers\ExcelPresentielController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\ForgotPasswordController;
@@ -385,10 +386,7 @@ Route::prefix('v1/zoom')->controller(\App\Http\Controllers\ZoomController::class
     Route::get('inscription', 'inscription')->name('zoom.inscription')->middleware('auth');
     //
     Route::post('inscription/store', 'inscriptionStore')->name('zoom.sync-inscrit');
-});
-
-
-
+}); 
 
 Route::get('v1/test-error-mail', function () {
     throw new Exception('🔥 Test envoi mail erreur Laravel 12');
@@ -484,4 +482,11 @@ Route::get('/v1/files/{path}', [FileController::class, 'show'])
     
 // updateCodeUser
 Route::get('/v1/update/liste', [HomeController::class, 'updateCodeUser']);
+
+// Gestion de la scolarité
+Route::prefix('v1/scolarites')->controller(CandidaturesController::class)->group(function () {
+    Route::get('moodle/liste/candidats', 'listeCandidats')->name('listeCandidat.moodle'); 
+    Route::post('moodle/update/info/candidat', 'updateInfoCandidat');
+    Route::post('moodle/liste/formations/candidat', 'listeFormationsCandidat')->name('listeformation.moodle'); 
+});
 
