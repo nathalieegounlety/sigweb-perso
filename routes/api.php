@@ -156,6 +156,25 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::get('exportation/liste_globale_pdf/{code_formation}','exportListeGlobaleToPDF');
     Route::get('exportation_pdf/{code_formation}','exportListeParticipantAttestationPDF');
 
+    // ATTESTATION MOODLE CANDIDAT 
+    Route::post('get/url/attestation/moodle/candidat', 'urlAttestationMoodleCandidat');
+    Route::get('export/attestation/moodle/candidat/{id}/{code_formation}', 'attestationCandidat')->name('attestationCandidat.moodle')->middleware('signed');
+    
+    Route::post('get/url/releve/note/candidat', 'urlReleveNoteCandidat');
+    Route::get('export/releve/note/candidat/{id}/{code_formation}', 'releveNoteCandidat')->name('releveNoteCandidat.moodle')->middleware('signed');
+    
+    Route::post('get/url/all/attestation/moodle/candidat', 'urlAllAttestationMoodleCandidat');
+    Route::get('export/all/attestation/moodle/candidat/{code_formation}', 'allAttestationCandidat')->name('allAttestationCandidat.moodle')->middleware('signed');
+    
+    Route::post('get/url/all/releve/note/candidat', 'urlAllReleveNoteCandidat');
+    Route::get('export/all/releve/note/candidat/{code_formation}', 'allReleveNoteCandidat')->name('allReleveNoteCandidat.moodle')->middleware('signed');
+    
+    Route::post('get/url/all/registre/note/candidat', 'urlAllRegistreNoteCandidat');
+    Route::get('export/all/registre/note/candidat/{code_formation}', 'allRegistreNoteCandidat')->name('allRegistreNoteCandidat.moodle')->middleware('signed');
+
+    Route::post('get/url/all/registre/note/candidat/search', 'urlAllRegistreNoteCandidatSearch');
+    Route::get('export/all/registre/note/candidat/search/{code_formation}', 'allRegistreNoteCandidatSearch')->name('allRegistreNoteCandidatSearch.moodle')->middleware('signed');
+
 });
 
 
@@ -488,5 +507,9 @@ Route::prefix('v1/scolarites')->controller(CandidaturesController::class)->group
     Route::get('moodle/liste/candidats', 'listeCandidats')->name('listeCandidat.moodle'); 
     Route::post('moodle/update/info/candidat', 'updateInfoCandidat');
     Route::post('moodle/liste/formations/candidat', 'listeFormationsCandidat')->name('listeformation.moodle'); 
+    Route::get('moodle/liste/notesfinale/candidats', 'listeNoteFinaleCandidats')->name('listeNoteFinaleCandidats.moodle'); 
+    Route::post('moodle/liste/notes/brutes', 'listeNotesBrutes')->name('listenotesbrutes.moodle'); 
+    Route::post('moodle/calcul/mg', 'calculMg')->name('calculMg.moodle'); 
+    Route::get('moodle/registre/notes/candidats', 'registreNotesCandidats')->name('registreNotesCandidats.moodle'); 
 });
 

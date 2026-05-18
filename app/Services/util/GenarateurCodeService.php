@@ -1,11 +1,15 @@
 <?php
 namespace App\Services\util;
 
+use App\Models\Formations;
 use App\Models\Historiqueactions;
+use App\Models\Moodlemoyennegenerales;
+use App\Models\Moodlemoyennes;
 use App\Models\Paiements;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 
@@ -239,4 +243,89 @@ private function getMacAdresse(): string
 
     return 'unknown';
 }
+
+// calcul moyenne generale
+public function startCalculMg(String $code_formation){
+    
+        try {
+             $formations = Formations::whereCodeFormation($code_formation)->first();
+        $anne_academique = date("Y",strtotime($formations->date_debut));
+        $user = Auth('api')->user();
+        // récupérer la liste des modules pour la formation
+        $getModule = Moodlemoyennes::join("moodlemodules","moodlemodules.id","=","moodlemoyennes.moodlemodule_id")
+        ->whereCodeFormation($code_formation)
+        ->distinct("moodlemoyennes.moodlemodule_id")
+        ->pluck("moodlemodules.code");
+        
+        Log::info('calcul moyenne begin ', ['module' => $getModule]); 
+        // récupérer la sommes des crédits concernant les modules disponibles pour la formation
+        //$somme_credit = Moodlemodules::whereIn("code",$getModule)->sum("credit");
+        // 
+        $somme_module = count($getModule);
+
+        Log::info('calcul moyenne somme module ', ['module' => $somme_module]); 
+        // récupérer la liste des candidats
+        $getCandidat = Moodlemoyennes::whereCodeFormation($code_formation)
+        ->distinct("reference_candidat")
+        ->select("reference_candidat")
+        ->get();
+        // calcul la moyenne générale pour chaque candidat
+        foreach ($getCandidat as $candidat) {
+            # code...
+            // récupérer la somme des notes coeficiée par module
+            $somme_note = Moodlemoyennes::whereReferenceCandidat($candidat->reference_candidat)->whereCodeFormation($code_formation)->sum("note_totale");
+            // calcul moyenne générale
+            Log::info('calcul moyenne somme coef ', ['coef' => $somme_note]); 
+
+            if ($somme_note > 0) {
+                # code...
+                $mg = round($somme_note/$somme_module,2);
+
+                $checkData = Moodlemoyennegenerales::whereCodeFormation($code_formation)->whereReferenceCandidat($candidat->reference_candidat)->whereAnneeAcademique($anne_academique)->exists();
+                
+                if ($checkData) {
+                    # code...
+                    $moyenneGenerale = Moodlemoyennegenerales::whereCodeFormation($code_formation)->whereReferenceCandidat($candidat->reference_candidat)->whereAnneeAcademique($anne_academique)->first();
+                    $updMG = Moodlemoyennegenerales::find($moyenneGenerale->id);
+                    $updMG->setAttribute("code_formation",$code_formation);
+                    $updMG->setAttribute("reference_candidat",$candidat->reference_candidat);
+                    $updMG->setAttribute("moyenne",$mg);
+                    $updMG->setAttribute("annee_academique",$anne_academique);
+                    $updMG->setAttribute("created_by",$user->id);
+                    $updMG->setAttribute("updated_by",$user->id);
+                    $updMG->update();
+
+                } else {
+                    # code...
+                    $moyenneGenerale = new Moodlemoyennegenerales();
+                    $moyenneGenerale->setAttribute("code_formation",$code_formation);
+                    $moyenneGenerale->setAttribute("reference_candidat",$candidat->reference_candidat);
+                    $moyenneGenerale->setAttribute("moyenne",$mg);
+                    $moyenneGenerale->setAttribute("annee_academique",$anne_academique);
+                    $moyenneGenerale->setAttribute("created_by",$user->id);
+                    $moyenneGenerale->setAttribute("updated_by",$user->id);
+                    $moyenneGenerale->save();
+                }
+                
+                
+
+            }
+
+        }
+
+        return $result = [
+                'statut' => true,
+                'message' => "calcul effectué avec succès",   
+            ];
+            Log::info('calcul moyenne success ', ['request' => $result]); 
+        } catch (\Exception $e) {
+            //throw $th;
+            return $result = [
+                'statut' => false,
+                'message' => $e->getMessage(),   
+            ];
+            Log::info('calcul moyenne error ', ['request' => $result]); 
+        }
+}
+
 }

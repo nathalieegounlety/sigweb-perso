@@ -29,6 +29,7 @@ use App\Mail\ImportationPresentiel;
 use App\Mail\NotificationImportation;
 use App\Models\Documentwebinaires;
 use App\Models\Formations;
+use App\Models\Moodlemoyennes;
 use App\Models\Moodlenotes;
 use App\Models\Rapports;
 use App\Models\Tmpmoodlecandidats;
@@ -402,10 +403,11 @@ class ExportationExcelController extends Controller
         // vérifier si les notes sont importées
         $date = date('Y-m-d');
         $checkNote = Moodlenotes::where("created_at","like","%$date%")->count();
+        $checkNoteMoyenne = Moodlemoyennes::where("created_at","like","%$date%")->count();
 
-        if ($checkNote > 0) {
+        if ($checkNote > 0 || $checkNoteMoyenne > 0) {
             # code...
-            return ResponseHandler::success("Rapports importés avec succès", ['success' => true]);
+            return ResponseHandler::success("Notes importées avec succès", ['success' => true]);
 
         } else {
             # code...

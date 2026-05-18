@@ -1,0 +1,18 @@
+----------- PROCEDURE DE GENERATION DE TOKEN ZOOM ---------
+1- Aller dans le navigateur firefox
+2- Ouvrir un onglet et se connecter au compte zoom de l'ersuma avec les accès du compte formation
+3- Dans le pieds de page de l'interface zoom rechercher market place ou bien étant connecter 
+accéder dans un nouvel onglet à l'adresse : https://marketplace.zoom.us/user/build
+4- Cliquer sur l'application SIGWEB-PROD pour consulter juste les paramètres
+5- Ouvrer un nouvel onglet et exécuter l'url ci-dessous pour obtenir le code d'auhorisation zoom
+https://zoom.us/oauth/authorize?response_type=code&client_id=VrGE4WhNTwt_gWizDHLVg&redirect_uri=https://api-sigweb.ersuma.org/api/v1/zoom/auth/callback
+6- une fois le code obtenir, copier le code et ouvrez le fichier .env de l'application web sigweb depuis le gestionnaire de fichier dans plesk puis répérer 
+complètement vers le bas l'attribut "CODE_ZOOM" puis remplacer sa valeur par le code que vous avez copier
+
+7- Ouvrer un nouvel onglet et accéder à l'url ci-dessous pour générer les token : 
+https://api-sigweb.ersuma.org/api/v1/zoom/authorisation
+8- Copier les token "access_token" et "refresh_token" puis remplacer respectivement
+leur valeur dans le fichier .env en localisant les attributs concernés.
+
+######### NB: il faut de préférence avoir le fichier .env sous la mains avant d'exécuter l'étape 5
+car le "CODE_ZOOM" expire rapidement.#####################################@

@@ -24,10 +24,11 @@ class DocumentsController extends Controller
 
     public function __construct(DocumentsInterface $documentService){
         $this->documentService = $documentService;
-        $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant',
+        $this->middleware('auth:api',['except' => ['recuPaiement','proforma','consultationAttestationParticipant','attestationCandidat','releveNoteCandidat',
             'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc','listeFormateurs',
             'exportAllAttestationParticipant','exportAllAttestationPresentielParticipant','telechargerAttestationFormateur','consulterAttestationFormateur','proformaOuvrage',
-            'exportAllAttestationFormateur','recuPaiementOuvrage','exportEtatRecapitulatif','exportListeGlobaleToPDF','exportListeParticipantAttestationPDF']]);
+            'exportAllAttestationFormateur','recuPaiementOuvrage','exportEtatRecapitulatif','exportListeGlobaleToPDF','exportListeParticipantAttestationPDF',
+            'allAttestationCandidat','allReleveNoteCandidat','allRegistreNoteCandidat','allRegistreNoteCandidatSearch']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -831,5 +832,178 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
     return $pdf->download($code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
 }
 
+    public function attestationCandidat($id, $code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadAttestationMoodleCandidat($id, $code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+  
+
+    public function urlAttestationMoodleCandidat(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required',
+                'id' => 'required',
+            ]);
+
+            return $this->documentService->getUrlAttestationMoodleCandidat($request->id, $request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function releveNoteCandidat($id, $code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadReleveNoteCandidat($id, $code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function urlReleveNoteCandidat(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required',
+                'id' => 'required',
+            ]);
+
+            return $this->documentService->getUrlReleveNoteCandidat($request->id, $request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    // impression par lot
+    
+
+    public function urlAllAttestationParticipantttestationCandidat($id, $code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadAllAttestationMoodleCandidat($id, $code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+  
+
+    public function urlAllAttestationMoodleCandidat(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required',
+                'id' => 'required',
+            ]);
+
+            return $this->documentService->getUrlAllAttestationMoodleCandidat($request->id, $request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function allReleveNoteCandidat($id, $code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadAllReleveNoteCandidat($id, $code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function urlAllReleveNoteCandidat(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required'
+            ]);
+
+            return $this->documentService->getUrlAllReleveNoteCandidat($request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    
+
+    public function allRegistreNoteCandidat($code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadAllRegistreNoteCandidat($code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function urlAllRegistreNoteCandidat(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required'
+            ]);
+
+            return $this->documentService->getUrlAllRegistreNoteCandidat($request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    
+
+    public function allRegistreNoteCandidatSearch($code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadAllRegistreNoteCandidatSearch($code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
+    public function urlAllRegistreNoteCandidatSearch(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required'
+            ]);
+
+            return $this->documentService->getUrlAllRegistreNoteCandidatSearch($request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 
 }
