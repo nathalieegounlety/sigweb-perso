@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 use App\Helpers\ResponseHandler; 
 use App\Services\contracts\AuditeursInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AuditeursContoller extends Controller
-{
+{ 
 
     private AuditeursInterface $auditeurService;
 
@@ -400,6 +401,27 @@ class AuditeursContoller extends Controller
             'choix_mode' => 'required'
         ]); 
             return $data = $this->auditeurService->updateMode($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function deleteCompteAuditeur(Request $request)
+    {
+        try {
+            // Validation des données
+            $validatedData = $request->validate([ 
+                'identifiant' => 'required'
+            ]);
+            // procéder à l'enregistrement
+            Log::info("start delete compte $request->identifiant");
+            return $processSave = $this->auditeurService->startDeleteCompteAuditeur($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());

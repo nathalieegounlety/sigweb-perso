@@ -468,7 +468,8 @@ class ComptabilitesService implements ComptabilitesInterface
             0 as pourcentage,
             0 as have_reduction,
             '' as code_formation,
-            '' as theme
+            '' as theme,
+            paiements.code_inscription
         ");
 
         /** PAIEMENTS PARTIELS */
@@ -498,7 +499,8 @@ class ComptabilitesService implements ComptabilitesInterface
             reductions.pourcentage,
             0 as have_reduction,
             formations.code_formation,
-            formations.theme
+            formations.theme,
+            detailspaiements.code_inscription
         ");
 
         /** PAIEMENTS DSC (TRANCHES) */
@@ -529,7 +531,8 @@ class ComptabilitesService implements ComptabilitesInterface
             MAX(reductions.pourcentage) as pourcentage,
             MAX(detailspaiements.have_reduction_dsc) as have_reduction,
             MAX(formations.code_formation) as code_formation,
-            MAX(formations.theme) as theme
+            MAX(formations.theme) as theme,
+            MAX(detailspaiements.code_inscription) as code_inscription
             ");
 
         /** UNION GLOBAL */
