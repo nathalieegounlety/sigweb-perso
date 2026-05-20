@@ -1401,13 +1401,14 @@ class DocumentsService implements DocumentsInterface
     }
 
     public function downloadAttestationMoodleCandidat($id, $code_formation)
-    {
-        // TODO: Implement downloadAttestationMoodleCandidat() method.
-
-        set_time_limit(0);
-        // récupérer la liste des rapports dont le code de formation est passé en url
+{
+    // TODO: Implement downloadAttestationMoodleCandidat() method.
+    set_time_limit(0);
+    
+    // Récupérer le candidat
     $candidat = Tmpmoodlecandidats::find($id);
 
+    // Récupérer le participant avec ses moyennes
     $participant = DB::table('moodlemoyennegenerales') 
         ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
         ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
@@ -1416,37 +1417,31 @@ class DocumentsService implements DocumentsInterface
         ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
         ->first(); 
  
-    // récupérer l'objet de la formation
-    $formation =  Formations::where('code_formation', $code_formation)->get()->first();
-    $date = date('d-m-YH:i:s');
-    // share data to view
-    //view()->share(['participant' => $participant, 'code_formation' => $code_formation, 'formation' => $formation]);
+    $formation = Formations::where('code_formation', $code_formation)->first();
+    
+    $date = date('d-m-Y_H-i-s');
  
-    //$pdf = PDF::loadView('attestations.attestation_dsc', $participant);
     $pdf = PDF::loadView('attestations.attestation_dsc', [
-    'participant' => $participant,
-    'code_formation' => $code_formation,
-    'formation' => $formation,
-]);
-    $pdf->output();
+        'participant' => $participant,
+        'code_formation' => $code_formation,
+        'formation' => $formation,
+    ]);
+
     $pdf->setPaper('A4', 'landscape');
-    // ##### a considerer pour pagination ###############
-    // $pdf->output();
+
     $dom_pdf = $pdf->getDomPDF();
     $canvas = $dom_pdf->get_canvas();
     $footer = $canvas->open_object();
     $w = $canvas->get_width();
     $h = $canvas->get_height();
-    //     $canvas->page_text($w-60,$h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
+    
     $canvas->close_object();
     $canvas->add_object($footer, "all");
-    //  $canvas->get_cpdf()->setEncryption('frogs', '', array('print'));
-    // ##### end a considerer pour pagination ###############
-    // download PDF file with download method
 
+    // Lancement du téléchargement officiel de l'attestation
     return $pdf->download($code_formation . '_ATTESTATION_DSC_' . $date . '.pdf');
+}
 
-    }
  
     public function getUrlAttestationMoodleCandidat($id, $code_formation)
     {
@@ -1458,7 +1453,7 @@ class DocumentsService implements DocumentsInterface
 
     
 
-    public function downloadReleveNoteCandidat($id, $code_formation)
+  /*  public function downloadReleveNoteCandidat($id, $code_formation)
     {
         // TODO: Implement downloadReleveNoteCandidat() method.
 
@@ -1514,7 +1509,59 @@ class DocumentsService implements DocumentsInterface
 
     return $pdf->download($code_formation . '_RELEVE_DE_NOTES_' . $date . '.pdf');
 
-    }
+    }*/
+
+    public function downloadReleveNoteCandidat($id, $code_formation)
+{
+    // TODO: Implement downloadReleveNoteCandidat() method.
+    set_time_limit(0);
+    
+    $candidat = Tmpmoodlecandidats::find($id);
+    
+    $notes = DB::table('moodlemoyennes') 
+        ->join('moodlemodules', 'moodlemodules.id', '=', 'moodlemoyennes.moodlemodule_id') 
+        ->select('moodlemoyennes.note_totale as note', 'moodlemoyennes.note_coef as note_credit', 'moodlemodules.credit', 'moodlemoyennes.reference_candidat','moodlemodules.code','moodlemodules.libelle')
+        ->where('moodlemoyennes.code_formation', $code_formation) 
+        ->where('moodlemoyennes.reference_candidat', $candidat->email)
+        ->orderBy('moodlemoyennes.note_coef', 'DESC')
+        ->get(); 
+
+    $moyenne_generale = DB::table('moodlemoyennegenerales') 
+        ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
+        ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email')
+        ->where('moodlemoyennegenerales.code_formation', $code_formation) 
+        ->where('moodlemoyennegenerales.reference_candidat', $candidat->email)
+        ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
+        ->first();  
+
+    $formation = Formations::where('code_formation', $code_formation)->first();
+    $date = date('d-m-Y_H-i-s'); // Correction syntaxe : pas de ":" dans un nom de fichier !
+
+    $pdf = PDF::loadView('documents.pdf_releve_notes', [
+        'notes' => $notes, 
+        'code_formation' => $code_formation, 
+        'formation' => $formation, 
+        'candidat' => $candidat,
+        'moyenne_generale' => $moyenne_generale
+    ]);
+
+    // Note : Votre code d'origine demandait 'landscape' (Paysage). Si vous voulez du vertical, mettez 'portrait'
+    $pdf->setPaper('A4', 'portrait');
+
+    $dom_pdf = $pdf->getDomPDF();
+    $canvas = $dom_pdf->get_canvas();
+    
+    $footer = $canvas->open_object();
+    $w = $canvas->get_width();
+    $h = $canvas->get_height();
+    // Activer si nécessaire :
+    // $canvas->page_text($w-60, $h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
+    $canvas->close_object();
+    $canvas->add_object($footer, "all");
+
+    return $pdf->download($code_formation . '_RELEVE_DE_NOTES_' . $date . '.pdf');
+}
+
 
     
 
@@ -1530,49 +1577,41 @@ class DocumentsService implements DocumentsInterface
     
 
     public function downloadAllAttestationMoodleCandidat($code_formation)
-    {
-        // TODO: Implement downloadAllAttestationMoodleCandidat() method.
-
-        set_time_limit(0); 
-     $participants = DB::table('moodlemoyennegenerales') 
+{
+    // TODO: Implement downloadAllAttestationMoodleCandidat() method.
+    set_time_limit(0); 
+    
+    $participants = DB::table('moodlemoyennegenerales') 
         ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
         ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
         ->where('moodlemoyennegenerales.code_formation', $code_formation) 
-        //->where('moodlemoyennegenerales.reference_candidat', $candidat->email)
         ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
         ->get(); 
  
-    // récupérer l'objet de la formation
-    $formation =  Formations::where('code_formation', $code_formation)->get()->first();
-    $date = date('d-m-YH:i:s');
-    // share data to view
-    //view()->share(['participant' => $participant, 'code_formation' => $code_formation, 'formation' => $formation]);
+    $formation = Formations::where('code_formation', $code_formation)->first();
+    
+    $date = date('d-m-Y_H-i-s');
  
-    //$pdf = PDF::loadView('attestations.attestation_dsc', $participant);
     $pdf = PDF::loadView('attestations.attestation_dsc_impression_lot', [
-    'participants' => $participants,
-    'code_formation' => $code_formation,
-    'formation' => $formation,
-]);
-    $pdf->output();
+        'participants' => $participants,
+        'code_formation' => $code_formation,
+        'formation' => $formation,
+    ]);
+
     $pdf->setPaper('A4', 'landscape');
-    // ##### a considerer pour pagination ###############
-    // $pdf->output();
+
     $dom_pdf = $pdf->getDomPDF();
     $canvas = $dom_pdf->get_canvas();
     $footer = $canvas->open_object();
     $w = $canvas->get_width();
     $h = $canvas->get_height();
-    //     $canvas->page_text($w-60,$h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
+    
     $canvas->close_object();
     $canvas->add_object($footer, "all");
-    //  $canvas->get_cpdf()->setEncryption('frogs', '', array('print'));
-    // ##### end a considerer pour pagination ###############
-    // download PDF file with download method
 
-    return $pdf->download($code_formation . '_ATTESTATION_DSC_' . $date . '.pdf');
+    return $pdf->download($code_formation . '_ATTESTATIONS_DSC_LOT_' . $date . '.pdf');
+}
 
-    }
  
     public function getUrlAllAttestationMoodleCandidat($code_formation)
     {
@@ -1587,48 +1626,48 @@ class DocumentsService implements DocumentsInterface
     public function downloadAllReleveNoteCandidat($code_formation)
     {
         // TODO: Implement downloadAllReleveNoteCandidat() method.
-
         set_time_limit(0);
+    
         $participants = DB::table('moodlemoyennegenerales') 
-        ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
-        ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email')
-        ->where('moodlemoyennegenerales.code_formation', $code_formation) 
-        //->where('moodlemoyennegenerales.reference_candidat', $candidat->email)
-        ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
-        ->get();  
-
-
-    // récupérer l'objet de la formation
-    $formation =  Formations::where('code_formation', $code_formation)->get()->first();
-    $date = date('d-m-YH:i:s');
-    // share data to view
-    //view()->share(['notes' => $notes, 'code_formation' => $code_formation, 'formation' => $formation, 'candidat' => $candidat,'moyenne_generale' => $moyenne_generale]);
- 
-    //$pdf = PDF::loadView('moodlecandidats.pdf_releve_notes', $notes);
-    $pdf = PDF::loadView('documents.pdf_impression_lot_releve_notes', [
-      'code_formation' => $code_formation, 'formation' => $formation, 'participants' => $participants
-    ]);
-
-    $pdf->output();
-    $pdf->setPaper('A4', 'landscape');
-    // ##### a considerer pour pagination ###############
-
-    // $pdf->output();
-    $dom_pdf = $pdf->getDomPDF();
-    $canvas = $dom_pdf->get_canvas();
-    $footer = $canvas->open_object();
-    $w = $canvas->get_width();
-    $h = $canvas->get_height();
-    //     $canvas->page_text($w-60,$h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
-    $canvas->close_object();
-    $canvas->add_object($footer, "all");
-    //  $canvas->get_cpdf()->setEncryption('frogs', '', array('print'));
-    // ##### end a considerer pour pagination ###############
-    // download PDF file with download method
-
-    return $pdf->download($code_formation . '_RELEVE_DE_NOTES_' . $date . '.pdf');
-
+            ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
+            ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email')
+            ->where('moodlemoyennegenerales.code_formation', $code_formation) 
+            ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
+            ->get();  
+    
+        // Récupérer l'objet de la formation
+        $formation = Formations::where('code_formation', $code_formation)->first();
+        
+        // Correction : Remplacement des ":" interdits dans un nom de fichier sur Windows/macOS
+        $date = date('d-m-Y_H-i-s');
+    
+        // Charger la vue HTML dédiée à l'impression en lot
+        $pdf = PDF::loadView('documents.pdf_impression_lot_releve_notes', [
+            'code_formation' => $code_formation, 
+            'formation' => $formation, 
+            'participants' => $participants
+        ]);
+    
+        // CONFIGURATION : Application du format A4 Portrait avant le traitement du canvas
+        $pdf->setPaper('A4', 'portrait');
+    
+        // GESTION DU CANVAS & PAGINATION
+        $dom_pdf = $pdf->getDomPDF();
+        $canvas = $dom_pdf->get_canvas();
+        $footer = $canvas->open_object();
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+        
+        // Vous pouvez activer la numérotation globale des pages si nécessaire :
+        // $canvas->page_text($w-60, $h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
+        
+        $canvas->close_object();
+        $canvas->add_object($footer, "all");
+    
+        // Lancement du téléchargement du fichier PDF assemblé
+        return $pdf->download($code_formation . '_RELEVES_DE_NOTES_LOT_' . $date . '.pdf');
     }
+    
 
     
 
@@ -1660,52 +1699,55 @@ class DocumentsService implements DocumentsInterface
     public function downloadAllRegistreNoteCandidat($code_formation)
     {
         // TODO: Implement downloadAllRegistreNoteCandidat() method.
-
         set_time_limit(0); 
         
-    $candidat = DB::table('moodlemoyennegenerales') 
-        ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
-        ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
-        ->where('moodlemoyennegenerales.code_formation', $code_formation)  
-        ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
-        ->first(); 
-
-    $participants = DB::table('moodlemoyennegenerales') 
-        ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
-        ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
-        ->where('moodlemoyennegenerales.code_formation', $code_formation)  
-        ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
-        ->get(); 
+        $candidat = DB::table('moodlemoyennegenerales') 
+            ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
+            ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
+            ->where('moodlemoyennegenerales.code_formation', $code_formation)  
+            ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
+            ->first(); 
     
-    // récupérer l'objet de la formation
-    $formation =  Formations::where('code_formation', $code_formation)->get()->first();
-    $date = date('d-m-YH:i:s'); 
-    //$pdf = PDF::loadView('attestations.attestation_dsc', $participant);
-    $pdf = PDF::loadView('documents.pdf_liste_notes', [
-    'participants' => $participants,
-    'code_formation' => $code_formation,
-    'formation' => $formation,
-    'candidat' => $candidat
-]);
-    $pdf->output();
-    $pdf->setPaper('A4', 'landscape');
-    // ##### a considerer pour pagination ###############
-    // $pdf->output();
-    $dom_pdf = $pdf->getDomPDF();
-    $canvas = $dom_pdf->get_canvas();
-    $footer = $canvas->open_object();
-    $w = $canvas->get_width();
-    $h = $canvas->get_height();
-    //     $canvas->page_text($w-60,$h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
-    $canvas->close_object();
-    $canvas->add_object($footer, "all");
-    //  $canvas->get_cpdf()->setEncryption('frogs', '', array('print'));
-    // ##### end a considerer pour pagination ###############
-    // download PDF file with download method
-
-    return $pdf->download($code_formation . '_LISTE_DES_NOTES_DSC_' . $date . '.pdf');
-
+        $participants = DB::table('moodlemoyennegenerales') 
+            ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
+            ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
+            ->where('moodlemoyennegenerales.code_formation', $code_formation)  
+            ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
+            ->get(); 
+        
+        // Récupérer l'objet de la formation
+        $formation = Formations::where('code_formation', $code_formation)->first();
+        
+        // Correction : Pas de ":" dans le nom du fichier (interdit par Windows/macOS)
+        $date = date('d-m-Y_H-i-s'); 
+    
+        // Charger la vue HTML
+        $pdf = PDF::loadView('documents.pdf_liste_notes', [
+            'participants' => $participants,
+            'code_formation' => $code_formation,
+            'formation' => $formation,
+            'candidat' => $candidat
+        ]);
+    
+        // CONFIGURATION : Impérativement AVANT le rendu du Canvas ou l'output
+        $pdf->setPaper('A4', 'landscape');
+    
+        // GESTION DU CANVAS & PAGINATION
+        $dom_pdf = $pdf->getDomPDF();
+        $canvas = $dom_pdf->get_canvas();
+        $footer = $canvas->open_object();
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+        
+         $canvas->page_text($w-60, $h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
+        
+        $canvas->close_object();
+        $canvas->add_object($footer, "all");
+    
+        // Lancement du téléchargement sécurisé
+        return $pdf->download($code_formation . '_LISTE_DES_NOTES_DSC_' . $date . '.pdf');
     }
+    
 
     
     public function downloadAllRegistreNoteCandidatSearch($code_formation)

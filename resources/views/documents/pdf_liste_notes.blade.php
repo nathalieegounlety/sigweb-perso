@@ -12,30 +12,35 @@
             --font-size: 12pt;
         }
 
-        /*body {
+        body {
             font-family: Tahoma, sans-serif;
             font-size: var(--font-size);
-            ;background: url('img/logo/logo-ohada-new500.png') no-repeat center 100px;
-            ;background-size: contain;
-            ;opacity: 0.1;
             margin: 0;
             padding: 0;
             z-index: 100;
-        }*/
+        }
 
-        /*
-            margin-left: 1.75cm;
-            1.27cm;
-            margin-right: 1.75cm;
-            1.27cm;
-            margin-top: 1.27cm;
-            0.73cm;
-            margin-bottom: 1.27cm;
-            */
+       
+        .watermark-container {
+    position: fixed;
+    top: 4.5cm;      
+    left: 4.5cm;     
+    width: 20.7cm;    
+    height: 12cm;
+    text-align: center;
+    opacity: 0.06;
+    z-index: -1000;
+}
+
+.watermark-container img {
+    width: 500px;     
+    height: auto;
+}
 
         @page {
-            size: 21cm 29.7cm;
-            margin: 0.73cm 1.27cm 0.97cm;
+            size: 21cm 29.7cm landscape;
+    margin: 1.27cm 1.75cm;
+        
         }
 
         p {
@@ -95,6 +100,9 @@
 
 
 <body lang="fr-BJ" link="#0563c1" vlink="#800000" dir="ltr" style="font-family: Tahoma, sans-serif;z-index: 100;">
+    <div class="watermark-container">
+        <img src="{{ public_path('img/logo/Logo_OHADA_DSC.png') }}" alt="Filigrane">
+    </div>
 
     <div style="z-index: 10; background:none;">
 
@@ -123,25 +131,14 @@
             </div>
             <img src="img/logo/Logo_ERSUMA-1.jpg" alt="logo" style="height: 70px; margin-top:8px;">
         </div>
-        <div
-            style="background: url('img/logo/Logo_OHADA_DSC.png') no-repeat center 100px;
-            background-size: contain; opacity: 0.2; z-index: -1; bottom:0; display:block; padding-bottom:15px;">
-            <!-- div opacity -->
-            <div style="z-index: 300; opacity:0; margin:0;">
-                {{--<div
-                    style="z-index: 100;clear:both; display:block; margin: 0; text-align: center;line-height: 1.2;font-size: 28px; color:#233468; font-weight:bold; border-top:; 6px solid #1571c6; border-bottom:  8px solid #233468; padding:0px;">
+<div style="clear:both;"></div>
 
-                    <div style="margin: 10px 0; padding:6px;">
-                        Diplômes de Spécialité et Certificats OHADA
-                    </div>
-                </div>
-                <div
-                    style="z-index: 100;clear:both; display:block; margin: 20 0 0px 0;text-align: center;line-height: 115%;font-size: 25pt; color:#006fc0; font-weight:bold;">
-                    <div style="margin: 0 0 5px 0;">
-                        RELEVE DE NOTES <br>
-                    </div>
-                </div>--}}
-                <!--  -->
+
+
+<div style="z-index: 300; margin:0;">
+
+            <!-- div opacity -->
+        
                  <div
                         style="z-index: 100;clear:both; display:block; margin: 0; text-align: center;line-height: 1.2;font-size: 28px; color:#233468; font-weight:bold; border-bottom:  8px solid #233468; padding:0px;">
 
@@ -251,10 +248,6 @@
                 </div>
                 <div style="clear:both; "> 
                 </div>
-
-
-            </div>
-            <!-- end div opacity -->
 
         </div><!-- fermeture div background-image -->
 
