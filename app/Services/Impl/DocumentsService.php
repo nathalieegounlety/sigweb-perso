@@ -1048,6 +1048,8 @@ class DocumentsService implements DocumentsInterface
         $pdf = $this->genarateurCodeService->getBladeAttestationFormateur($formation->is_event, $formation->typeformation_id);
 
         $password = substr(md5($getFormateur->getFormation->code_formation . '' . $getFormateur->getFormateur->email), 0, 8);
+        
+
         $pdf->setPaper('A4', 'landscape');
         $pdf->setEncryption($password);
         $date = date('d_m_Y_His');
