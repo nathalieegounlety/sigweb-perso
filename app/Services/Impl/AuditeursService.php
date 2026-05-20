@@ -2201,6 +2201,9 @@ class AuditeursService implements AuditeursInterface
             if ($check_auditeur) {
                 $update = Rapports::where('email', $request->anc_email)->update(['email' => $request->new_email]);
             } 
+            
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');  
+
             return  ResponseHandler::success("Mise à jour effectuée avec succès");
         } else {
             $auditeur->setAttribute('email', $request->new_email);
@@ -2248,7 +2251,194 @@ class AuditeursService implements AuditeursInterface
             $action = 'CHANGEMENT MAIL AUDITEUR';
             $description = "Changement auditeur, anc_mail : ".$request->anc_email." new_mail ".$request->new_email;
             $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
-        return  ResponseHandler::success("Mise à jour effectuée avec succès");
+             return  ResponseHandler::success("Mise à jour effectuée avec succès");
+        }
+        
+
+    }
+
+    
+    public function startDeleteCompteAuditeurOld(Request $request): \Illuminate\Http\JsonResponse
+    {  
+ 
+         // Désactiver temporairement la vérification des clés étrangères
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+        // update table auditeur
+        $auditeur = Auditeurs::find($request->identifiant);
+        $user = User::whereEmail($auditeur->email)->first(); 
+        if ($user) {
+            
+                    try {
+                        
+                    $idUser = $user->id;
+                    $idAuditeur = $auditeur->id;
+                    $emailAuditeur = $auditeur->email;
+
+                    DB::beginTransaction(); 
+                        // suppression des paiements
+                    $paiements = Paiements::whereEmail($emailAuditeur)->get();
+                    foreach($paiements as $paiement){
+                        // suppression des détails paiements selon le type de paiement
+                        if($paiement->type == "OUVRAGE"){ // suppression des données relatives aux OUVRAGES
+                                DB::table('detailpaiementouvrages')->where('paiementouvrage_id', $paiement->id)->delete();
+                        }
+
+                        if($paiement->type == "FORMATION"){ // suppression des données relatives aux FORMATIONS CLASSIQUES
+                                DB::table('detailspaiements')->where('reference_paiement', $paiement->reference)->delete();
+                        }
+
+                        if($paiement->type == "DSC"){ // suppression des données relatives aux DSC
+                                DB::table('paiements_tranches')->where('reference','like','%'.$paiement->reference.'%')->delete();
+                                DB::table('tranches')->where('email',$paiement->email)->delete();
+                                DB::table('detailspaiements')->where('reference_paiement', $paiement->reference)->delete();
+                        }
+                    }
+                    // suppression des données dans la table paiements
+                    DB::table('paiements')->where('email', $emailAuditeur)->delete(); 
+
+                    // suppressions des rapports
+                    DB::table('rapports')->where('email', $emailAuditeur)->delete(); 
+                    // suppressions des participants
+                    DB::table('participants')->where('email', $emailAuditeur)->delete(); 
+                    // suppressions des autresparticipants
+                    DB::table('autresparticipants')->where('username', $emailAuditeur)->delete(); 
+                    // suppressions des auditeurs_pieces
+                    DB::table('auditeurs_pieces')->where('created_by', $idUser)->delete(); 
+                    // suppressions des panelistes
+                    DB::table('panelistes')->where('email', $emailAuditeur)->delete();  
+
+                    $inscriptions = Inscriptions::whereEmail($emailAuditeur)->get();
+                    foreach ($inscriptions as $inscription){
+                        // suppression des historiquetraitementdossiers
+                        DB::table('historiquetraitementdossiers')->where('code_inscription', $inscription->code_inscription)->delete(); 
+                        // suppression des inscriptions_dscs
+                        DB::table('inscriptions_dscs')->where('code_inscription', $inscription->code_inscription)->delete(); 
+                    }
+                    // suppression des inscriptions
+                    DB::table('inscriptions')->where('email', $emailAuditeur)->delete();  
+                    // suppression des auditeurs
+                    DB::table('auditeurs')->where('email', $emailAuditeur)->delete(); 
+                    // suppression des roles
+                    DB::table('roles_users')->where('user_id', $idUser)->delete(); 
+                    // suppression des users
+                    DB::table('users')->where('id', $idUser)->delete();  
+
+                    DB::commit();
+
+                        // Réactiver la vérification des clés étrangères
+                        DB::statement('SET FOREIGN_KEY_CHECKS=1');  
+
+                        return  ResponseHandler::success("Suppression effectuée avec succès");
+
+                } catch (\Exception $e) {
+
+                    DB::rollBack();
+
+                        // Réactiver la vérification des clés étrangères
+                        DB::statement('SET FOREIGN_KEY_CHECKS=1');  
+                        Log::info($e->getMessage());
+                        return  ResponseHandler::error("Erreur lors de la suppression"); 
+                } 
+                
+        } else { 
+            // Réactiver la vérification des clés étrangères
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');  
+            return  ResponseHandler::error("Le compte n'existe pas");
+        }
+        
+
+    }
+    
+    public function startDeleteCompteAuditeur(Request $request): \Illuminate\Http\JsonResponse
+    {  
+ 
+         // Désactiver temporairement la vérification des clés étrangères
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+        // update table auditeur
+        $auditeur = Auditeurs::find($request->identifiant);
+        $user = User::whereEmail($auditeur->email)->first(); 
+        if ($user) {
+            
+                    try {
+                        
+                    $idUser = $user->id;
+                    $idAuditeur = $auditeur->id;
+                    $emailAuditeur = $auditeur->email;
+                    $erreur = false;
+
+                    DB::beginTransaction(); 
+                        // suppression des paiements
+                    $paiements = Paiements::whereEmail($emailAuditeur)->get();
+                    foreach($paiements as $paiement){
+                        // suppression des détails paiements selon le type de paiement
+                        if($paiement->type == "OUVRAGE"){ // suppression des données relatives aux OUVRAGES
+                            $check1 =    DB::table('detailpaiementouvrages')->where('paiementouvrage_id', $paiement->id)->exists();
+                            if($check1){
+                                $erreur = true;
+                            }
+                        }else{ // suppression des données relatives aux FORMATIONS CLASSIQUES
+                              $check2 =   DB::table('detailspaiements')->where('reference_paiement', $paiement->reference)->exists();
+                              if($check2){
+                                $erreur = true;
+                            }
+                        } 
+                    }
+                    // suppression des données dans la table paiements
+                   if(count($paiements) > 0){ $erreur = true; }
+
+                    // suppressions des rapports
+                    $check3 = DB::table('rapports')->where('email', $emailAuditeur)->exists(); 
+                    if($check3){
+                                $erreur = true;
+                    }
+                    // suppressions des participants
+                    $check4 = DB::table('participants')->where('email', $emailAuditeur)->exists(); 
+                    if($check4){
+                                $erreur = true;
+                    } 
+
+                    $inscriptions = Inscriptions::whereEmail($emailAuditeur)->count();
+                    if($inscriptions > 0 ){ $erreur = true; } 
+
+                    if($erreur){
+                        // Réactiver la vérification des clés étrangères
+                        DB::statement('SET FOREIGN_KEY_CHECKS=1');  
+
+                        return  ResponseHandler::error("Impossible de supprimer le compte, il dispose d'une formation",301);
+
+                    }else{
+                         // suppression des auditeurs
+                    DB::table('auditeurs')->where('email', $emailAuditeur)->delete(); 
+                    // suppression des roles
+                    DB::table('roles_users')->where('user_id', $idUser)->delete(); 
+                    // suppression des users
+                    DB::table('users')->where('id', $idUser)->delete();  
+
+                    DB::commit();
+
+                        // Réactiver la vérification des clés étrangères
+                        DB::statement('SET FOREIGN_KEY_CHECKS=1');  
+
+                        return  ResponseHandler::success("Suppression effectuée avec succès");
+                    }
+                   
+
+                } catch (\Exception $e) {
+
+                    DB::rollBack();
+
+                        // Réactiver la vérification des clés étrangères
+                        DB::statement('SET FOREIGN_KEY_CHECKS=1');  
+                        Log::info($e->getMessage());
+                        return  ResponseHandler::error("Erreur lors de la suppression", 301); 
+                } 
+                
+        } else { 
+            // Réactiver la vérification des clés étrangères
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');  
+            return  ResponseHandler::error("Le compte n'existe pas", 301);
         }
         
 

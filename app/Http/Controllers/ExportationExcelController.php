@@ -10,9 +10,12 @@ use App\Exports\AuditeursExport;
 use App\Exports\ExportEtatRecapitulatifOuvrage;
 use App\Exports\ExportListePresence;
 use App\Exports\ExportsInscritsDsc;
+use App\Exports\ExportsInscritsDscSR;
 use App\Exports\ExportsInscritsExcel;
 use App\Exports\ExportsInscritsPresentielVisioExcel;
 use App\Exports\ExportsInscritsVisioExcel;
+use App\Exports\ExportsListeDossiersRejetesDsc;
+use App\Exports\ExportsListeDossiersValidesDsc;
 use App\Exports\ListeFormateur;
 use App\Helpers\ResponseHandler;
 use App\Imports\ImportCandidatsMoodle;
@@ -26,6 +29,7 @@ use App\Mail\ImportationPresentiel;
 use App\Mail\NotificationImportation;
 use App\Models\Documentwebinaires;
 use App\Models\Formations;
+use App\Models\Moodlemoyennes;
 use App\Models\Moodlenotes;
 use App\Models\Rapports;
 use App\Models\Tmpmoodlecandidats;
@@ -43,6 +47,15 @@ class ExportationExcelController extends Controller
     public function exportListeInscritsDsc($code_formation) // ExportInscritsExcel
     {
         return Excel::download(new ExportsInscritsDsc($code_formation), "SIGWEB_ERSUMA_liste_inscrits_dsc_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
+    }
+
+    /**
+     * Export stats mode paiement
+     *
+     */
+    public function exportListeInscritsDscSR($code_formation) // ExportInscritsExcel
+    {
+        return Excel::download(new ExportsInscritsDscSR($code_formation), "SIGWEB_ERSUMA_liste_inscrits_dsc_sousreserve_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
     }
 
     /**
@@ -390,10 +403,11 @@ class ExportationExcelController extends Controller
         // vérifier si les notes sont importées
         $date = date('Y-m-d');
         $checkNote = Moodlenotes::where("created_at","like","%$date%")->count();
+        $checkNoteMoyenne = Moodlemoyennes::where("created_at","like","%$date%")->count();
 
-        if ($checkNote > 0) {
+        if ($checkNote > 0 || $checkNoteMoyenne > 0) {
             # code...
-            return ResponseHandler::success("Rapports importés avec succès", ['success' => true]);
+            return ResponseHandler::success("Notes importées avec succès", ['success' => true]);
 
         } else {
             # code...
@@ -447,5 +461,16 @@ class ExportationExcelController extends Controller
     // export all attestation formateur by code formation
     public function ExportAllAttestationFormateurExcel(Request $request) {
         return Excel::download(new AllAttestationsFormateursExport($request->code_formation),"LISTE_FORMATEURS_ATTESTATIONS_".date("Ymdhis").".xlsx");
+    }
+
+    
+    public function exportListeDossiersValidesDsc($code_formation) 
+    {
+        return Excel::download(new ExportsListeDossiersValidesDsc($code_formation), "SIGWEB_ERSUMA_liste_dossiers_valides_dsc_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
+    }
+    
+    public function exportListeDossiersRejetesDsc($code_formation) 
+    {
+        return Excel::download(new ExportsListeDossiersRejetesDsc($code_formation), "SIGWEB_ERSUMA_liste_dossiers_rejetes_dsc_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
     }
 }

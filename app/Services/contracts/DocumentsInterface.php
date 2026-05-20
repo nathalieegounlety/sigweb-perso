@@ -46,4 +46,18 @@ interface DocumentsInterface
     public function downloadListeFormateur($code_formation);
     public function getUrlListeFormateur($code_formation);    
     public function getListeRapports(Request $request, string $code_formation); //: LengthAwarePaginator;
+    public function downloadAttestationMoodleCandidat($id, $code_formation);
+    public function getUrlAttestationMoodleCandidat($id, $code_formation);
+    public function downloadReleveNoteCandidat($id, $code_formation);
+    public function getUrlReleveNoteCandidat($id, $code_formation);
+    // impression  par lot des attestations moodle
+    public function downloadAllAttestationMoodleCandidat($code_formation);
+    public function getUrlAllAttestationMoodleCandidat($code_formation);
+    public function downloadAllReleveNoteCandidat($code_formation);
+    public function getUrlAllReleveNoteCandidat($code_formation);
+    // registre de notes 
+    public function downloadAllRegistreNoteCandidat($code_formation);
+    public function getUrlAllRegistreNoteCandidat($code_formation);
+    public function downloadAllRegistreNoteCandidatSearch($code_formation);
+    public function getUrlAllRegistreNoteCandidatSearch($code_formation);
 }

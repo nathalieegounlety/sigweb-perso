@@ -8,6 +8,7 @@ use App\Repositories\Eloquent\RolesRepository;
 use App\Repositories\Eloquent\UsersRepository;
 use App\Services\contracts\AuditeursInterface;
 use App\Services\contracts\AuthServiceInterface;
+use App\Services\contracts\CandidaturesInterface;
 use App\Services\contracts\ComptabilitesInterface;
 use App\Services\contracts\DashboardInterface;
 use App\Services\contracts\DocumentsInterface;
@@ -34,6 +35,7 @@ use App\Services\contracts\ZoomRecordInterface;
 use App\Services\contracts\ZoomRecordsInterface;
 use App\Services\Impl\AuditeursService;
 use App\Services\Impl\AuthService;
+use App\Services\Impl\CandidaturesService;
 use App\Services\Impl\ComptabilitesService;
 use App\Services\Impl\DashboardService;
 use App\Services\Impl\DocumentsService;
@@ -94,6 +96,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(MoodletypeexamensInterface::class, MoodletypeexamensService::class);
         $this->app->bind(FormateursInterface::class, FormateursService::class);
         $this->app->bind(ZoomRecordInterface::class, ZoomRecordService::class);
+        $this->app->bind(CandidaturesInterface::class, CandidaturesService::class);
     }
 
     /**

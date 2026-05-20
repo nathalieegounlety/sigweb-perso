@@ -94,4 +94,5 @@ class ResetPasswordController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
 }

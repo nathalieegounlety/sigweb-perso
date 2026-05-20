@@ -45,5 +45,6 @@ interface AuditeursInterface
     public function getIndicateursAuditeur($email): \Illuminate\Http\JsonResponse;
     public function getMode($codeFormation): \Illuminate\Http\JsonResponse;
     public function updateMode(Request $request): \Illuminate\Http\JsonResponse;
+    public function startDeleteCompteAuditeur(Request $data): \Illuminate\Http\JsonResponse;
 
 }

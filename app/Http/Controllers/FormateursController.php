@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
  
 use App\Helpers\ResponseHandler;
+use App\Imports\ImportationFormateurs;
+use App\Models\Formateurs;
 use App\Services\contracts\FormateursInterface;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FormateursController extends Controller
 {
@@ -279,5 +282,26 @@ class FormateursController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
 
+    }
+
+    // 
+    
+    public function importationFormateur(Request $request)
+    { 
+         // procéder à l'extration des données relatives aux notes dans le fichier envoyé
+        Excel::import(new ImportationFormateurs(),$request->fichier);
+
+        // vérifier si les notes sont importées
+        $date = date('Y-m-d');
+        $checkData = Formateurs::where("updated_at","like","%$date%")->count();
+
+        if ($checkData > 0) {
+            # code...
+            return ResponseHandler::success("Importation effectuée avec succès",['success' => true]);
+
+        } else {
+            # code...
+            return ResponseHandler::success("Echec lors de l'importation des données",['success' => false]);
+        }
     }
 }

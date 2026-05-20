@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHandler;
+use App\Models\User;
 use App\Services\contracts\AuthServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -64,5 +65,16 @@ class AuthController extends Controller
             'token_type'=>'bearer',
             'expires_in'=> (int) config('jwt.ttl') * 60,
         ]);
+    }
+
+    
+    public function checkEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $exists = User::where('email', $request->email)->exists();
+        return ResponseHandler::success('ok',['exists'=>$exists]); 
     }
 }

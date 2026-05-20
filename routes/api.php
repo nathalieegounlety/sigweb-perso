@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CandidaturesController;
 use App\Http\Controllers\ExcelPresentielController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\ForgotPasswordController;
@@ -19,6 +20,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/reset-password/info', [ResetPasswordController::class, 'infoResetPassword']);
     // Réinitialisation effective du mot de passe
     Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+    // check email
+    Route::post('/check-email', [AuthController::class, 'checkEmail']);
 
 });
 
@@ -153,6 +156,25 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::get('exportation/liste_globale_pdf/{code_formation}','exportListeGlobaleToPDF');
     Route::get('exportation_pdf/{code_formation}','exportListeParticipantAttestationPDF');
 
+    // ATTESTATION MOODLE CANDIDAT 
+    Route::post('get/url/attestation/moodle/candidat', 'urlAttestationMoodleCandidat');
+    Route::get('export/attestation/moodle/candidat/{id}/{code_formation}', 'attestationCandidat')->name('attestationCandidat.moodle')->middleware('signed');
+    
+    Route::post('get/url/releve/note/candidat', 'urlReleveNoteCandidat');
+    Route::get('export/releve/note/candidat/{id}/{code_formation}', 'releveNoteCandidat')->name('releveNoteCandidat.moodle')->middleware('signed');
+    
+    Route::post('get/url/all/attestation/moodle/candidat', 'urlAllAttestationMoodleCandidat');
+    Route::get('export/all/attestation/moodle/candidat/{code_formation}', 'allAttestationCandidat')->name('allAttestationCandidat.moodle')->middleware('signed');
+    
+    Route::post('get/url/all/releve/note/candidat', 'urlAllReleveNoteCandidat');
+    Route::get('export/all/releve/note/candidat/{code_formation}', 'allReleveNoteCandidat')->name('allReleveNoteCandidat.moodle')->middleware('signed');
+    
+    Route::post('get/url/all/registre/note/candidat', 'urlAllRegistreNoteCandidat');
+    Route::get('export/all/registre/note/candidat/{code_formation}', 'allRegistreNoteCandidat')->name('allRegistreNoteCandidat.moodle')->middleware('signed');
+
+    Route::post('get/url/all/registre/note/candidat/search', 'urlAllRegistreNoteCandidatSearch');
+    Route::get('export/all/registre/note/candidat/search/{code_formation}', 'allRegistreNoteCandidatSearch')->name('allRegistreNoteCandidatSearch.moodle')->middleware('signed');
+
 });
 
 
@@ -232,6 +254,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('liste/modes', 'listeModes');
     Route::post('update/modes', 'updateMode');
     Route::post('update/email', 'updateEmailAuditeur');
+    Route::post('delete/compte', 'deleteCompteAuditeur');
 });
 
 // gestion des api du frontoffice
@@ -279,6 +302,9 @@ Route::prefix('v1/formationsdsc')->controller(\App\Http\Controllers\FormationsDs
     Route::post('remove', 'remove');
     Route::get('dossiers/attente', 'listeDossiersAttente');
     Route::post('traitements/dossiers/candidature', 'traitementsDossier');
+    Route::get('dossiers/valides', 'listeDossiersValides');
+    Route::get('dossiers/sousreserve', 'listeDossierSousreserve');
+    Route::get('dossiers/rejetes', 'listeDossiersRejetes');
 });
 
 // gestion des signataires
@@ -380,10 +406,7 @@ Route::prefix('v1/zoom')->controller(\App\Http\Controllers\ZoomController::class
     Route::get('inscription', 'inscription')->name('zoom.inscription')->middleware('auth');
     //
     Route::post('inscription/store', 'inscriptionStore')->name('zoom.sync-inscrit');
-});
-
-
-
+}); 
 
 Route::get('v1/test-error-mail', function () {
     throw new Exception('🔥 Test envoi mail erreur Laravel 12');
@@ -391,6 +414,7 @@ Route::get('v1/test-error-mail', function () {
 
 Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExcelController::class)->group(function () {
     Route::get('formation/dsc/{code_formation}', 'exportListeInscritsDsc');
+    Route::get('formation/dsc/sr/{code_formation}', 'exportListeInscritsDscSR');
     Route::get('formation/presentielle/{code_formation}', 'exportListeInscritPresentielleExcel');
     Route::get('formation/visio/{code_formation}', 'exportListeInscritVisioExcel');
     Route::get('formation/liste/presence/{code_formation}', 'exportListePresenceExcel');
@@ -412,6 +436,8 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     Route::get('all/liste/attestation/participants/{code_formation}', 'ExportAllAttestationParticipantExcel'); 
     Route::get('all/liste/rapports/{code_formation}', 'ExportAllRapportExcel'); 
     Route::get('all/liste/participants/{code_formation}', 'ExportAllParticipantExcel'); 
+    Route::get('dossiers/valides/dsc/{code_formation}', 'exportListeDossiersValidesDsc');
+    Route::get('dossiers/rejetes/dsc/{code_formation}', 'exportListeDossiersRejetesDsc');
 });
 
 // gestion des tarifs
@@ -434,6 +460,7 @@ Route::prefix('v1/formateurs')->controller(\App\Http\Controllers\FormateursContr
     Route::post('store/for/formation','storeAddFormateur');
     Route::post('store/edit/role','storeEditRoleFormateur');
     Route::post('store/delete/formateur','storeDeleteFormateur');
+    Route::post('importation/lot','importationFormateur');
 });
 
 // routes/api.php
@@ -476,4 +503,15 @@ Route::get('/v1/files/{path}', [FileController::class, 'show'])
     
 // updateCodeUser
 Route::get('/v1/update/liste', [HomeController::class, 'updateCodeUser']);
+
+// Gestion de la scolarité
+Route::prefix('v1/scolarites')->controller(CandidaturesController::class)->group(function () {
+    Route::get('moodle/liste/candidats', 'listeCandidats')->name('listeCandidat.moodle'); 
+    Route::post('moodle/update/info/candidat', 'updateInfoCandidat');
+    Route::post('moodle/liste/formations/candidat', 'listeFormationsCandidat')->name('listeformation.moodle'); 
+    Route::get('moodle/liste/notesfinale/candidats', 'listeNoteFinaleCandidats')->name('listeNoteFinaleCandidats.moodle'); 
+    Route::post('moodle/liste/notes/brutes', 'listeNotesBrutes')->name('listenotesbrutes.moodle'); 
+    Route::post('moodle/calcul/mg', 'calculMg')->name('calculMg.moodle'); 
+    Route::get('moodle/registre/notes/candidats', 'registreNotesCandidats')->name('registreNotesCandidats.moodle'); 
+});
 

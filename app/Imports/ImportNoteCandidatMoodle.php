@@ -65,7 +65,7 @@ class ImportNoteCandidatMoodle implements ToCollection
                 continue;
             }
 
-            // Traitement des notes normales (CC, EXAM, RATP)
+            // Traitement des notes normales (CC, EXAM, RATP) || CC-CAO1
             if (!in_array($code_type_examen, ["NOTE FINALE", "NOTE SOUTENANCE"])) {
                 for ($line = 1; $line < $nbr_ligne; $line++) {
                     $get_note = $rows[$line][$col];
@@ -142,7 +142,7 @@ class ImportNoteCandidatMoodle implements ToCollection
                 }
             }
 
-            // Traitement des notes finales et soutenances
+            // Traitement des notes finales et soutenances NOTE FINALE-CAO1 || NOTE SOUTENANCE-CAO1
             if (in_array($code_type_examen, ["NOTE FINALE", "NOTE SOUTENANCE"])) {
                 for ($line = 1; $line < $nbr_ligne; $line++) {
                     $get_note = $rows[$line][$col];

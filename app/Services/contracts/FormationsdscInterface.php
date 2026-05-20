@@ -21,5 +21,8 @@ interface FormationsdscInterface
     public function objFormationDsc(): \Illuminate\Http\JsonResponse;
     public function getListeDossiersAttente(Request $request, string $code_formation);
     public function validerDossiersCandidature(Request $request): \Illuminate\Http\JsonResponse;
+    public function getListeDossiersValides(Request $request, string $code_formation);
+    public function getListeDossierSousreserve(Request $request, string $code_formation);
+    public function getListeDossiersRejetes(Request $request, string $code_formation);
 
 }
