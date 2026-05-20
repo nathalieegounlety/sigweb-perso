@@ -460,6 +460,7 @@ Route::prefix('v1/formateurs')->controller(\App\Http\Controllers\FormateursContr
     Route::post('store/for/formation','storeAddFormateur');
     Route::post('store/edit/role','storeEditRoleFormateur');
     Route::post('store/delete/formateur','storeDeleteFormateur');
+    Route::post('importation/lot','importationFormateur');
 });
 
 // routes/api.php
