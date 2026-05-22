@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="fr">
-
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>ATTESTATION DE PARTICIPATION - ERSUMA</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>Attestation de formation - ERSUMA</title>
     <style type="text/css">
+        /* Réinitialisation et base */
         body {
             font-family: Tahoma, sans-serif;
             font-size: 12pt;
@@ -12,7 +12,7 @@
             padding: 0;
             position: relative;
         }
-    
+
         body::before {
             content: "";
             position: fixed;
@@ -25,117 +25,180 @@
             opacity: 0.1;
             z-index: -1;
         }
-    
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3.5cm;
-            border-bottom: 6px solid #0d043d;
-        }
-    
+
+        /* Configuration de la page */
         @page {
             size: 29.7cm 21cm;
-            margin: 0.73cm 1.27cm 0.97cm;
+            margin: 1.27cm;
         }
-    
-        p {
-            margin-bottom: 0.25cm;
-            direction: ltr;
-            line-height: 115%;
-            text-align: justify;
-            orphans: 2;
-            widows: 2;
-            background: transparent;
-            font-size: 12pt;
-        }
-    
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 5.2cm;
-            margin: 0;
-        }
-    
-        .attestation-content {
-            margin-top: 115px;
+
+        /* En-tête */
+        header {
             position: relative;
-            z-index: 1;
+            margin-bottom: 1cm;
+            padding: 0;
+            width: 100%;
         }
-    
-        .logo-section {
-            text-align: center;
-            margin-bottom: 10px;
+
+        /* Conteneur principal */
+        .attestation-container {
+            position: relative;
+            min-height: 29.7cm;
+            padding: 0;
+            margin-bottom: 20px;
         }
-    
-        .logo-section img {
-            height: 95px;
+
+        /* Contenu principal */
+        .content {
+            position: relative;
+            margin-top: 1cm;
+            padding: 0 1cm;
         }
-    
-        .footer-content {
-            font-size: 10pt;
-            text-align: center;
-            padding: 5px 0;
-        }
-    
-        .signature-section {
+
+        /* Pied de page */
+        footer {
+            position: relative;
+            width: 100%;
+            height: auto;
             margin-top: 20px;
+            font-size: 10pt;
+            padding: 0.5cm 1cm;
+            border-top: 10px solid #9cc2e5;
         }
-    
-        .signature-section img {
-            height: 145px;
+
+        /* Titres et sections */
+        .main-title {
+            text-align: center;
+            font-size: 36px;
+            color: #006fc0;
+            font-weight: bold;
+            margin: 10px 0;
+            line-height: 1.1;
+        }
+
+        .sub-title {
+            text-align: center;
+            font-size: 20px;
+            color: #1a0642;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .director-title {
+            text-align: center;
+            font-size: 20px;
+            color: #000000;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        /* Texte principal */
+        .main-text {
+            text-align: justify;
+            line-height: 1.5;
+            font-size: 11.6pt;
+            margin: 15px 0;
+        }
+
+        .participant-name {
+            text-align: center;
+            font-size: 20pt;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .theme-title {
+            text-align: center;
+            font-size: 16pt;
+            font-style: italic;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        /* Section signature */
+        .signature-section {
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .qr-code {
+            text-align: left;
+            margin-left: 10px;
+        }
+
+        /* Tableaux */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Liens */
+        a {
+            color: #0563c1;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Correction pour l'impression */
+        @media print {
+            body::before {
+                opacity: 0.1;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .content {
+                margin-top: 0;
+            }
         }
     </style>
-    
 </head>
 
 <body>
     @php
         $duree_formation = 0;
+        $i = 0;
+        $theme = '';         
+        $duree_formation = 0;
         $duree_enregistrement = getDureeEnregistrement($code_formation);
         foreach ($duree_session as $duree) {
             $duree_formation += $duree->duree_session;
         }
-    @endphp
+
+    @endphp 
 
     @foreach ($liste_participants as $participant)
-        @if ($participant->temps_presence == 0 && $participant->presentiel == 1)
-            <!-- Attestation pour présentiel -->
-            <table style="width: 100%; padding: 0; margin: 0;">
-                <tbody>
-                    <tr>
-                        <td style="vertical-align: top;">
-                          
-                            @if ($logo_partenaires->count() == 0)
+        <div class="attestation-container">
+            @if ($participant->temps_presence == 0 && $participant->presentiel == 1)
+                @if ($logo_partenaires->count() == 0)
                     <!-- Entête standard -->
-                      <header>
-                                <table style="width: 100%; padding: 0; margin: 0; text-align: center;">
-                                    <tr style="border-bottom: 4px solid #1a0642;">
-                                        <td style="width: 15%;">
-                                            <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo"
-                                                style="height: 95px;">
-                                        </td>
-                                        <td>&nbsp;</td>
-                                        <td>
-                                            <img src="img/inc-attestations/logo_DGIA_doing-good-in-africa.jpg"
-                                                alt="logo" style="height: 90px;">
-                                        </td>
-                                        <td>&nbsp;</td>
-                                        <td>
-                                            <img src="img/inc-attestations/Logo-AM.png" alt="logo"
-                                                style="height: 95px;">
-                                        </td>
-                                        <td>&nbsp;</td>
-                                        <td style="width: 20%;">
-                                            <img src="img/inc-attestations/logo-FIPROD.jpg" alt="logo"
-                                                style="height: 105px;">
-                                        </td>
-                                    </tr>
-                                </table>
-                            </header>
+                    <header> 
+                        <div style="display: block; clear: both; width: 100%; background: #fff; border: 0; border-top: 10px solid #1571c6; border-bottom: 10px solid #9cc2e5; margin: 0 0 10px 0; color: #000000; padding: 0; height: 10px; text-align: center;"></div>
+                        <div style="width: 100%;">
+                            <div style="float: left; width: 82%;">
+                                <div style="border-bottom: 5px double #2681ca; max-width: 75.7%; padding: 0 0 10px 0;">
+                                    <div style="float: left; width: 105px; margin: 0; height: 92px;">
+                                        <img src="img/logo/logo-ohada.png" alt="Logo OHADA" style="height: 85px;">
+                                    </div>
+                                    <div style="line-height: 1.17; margin: -15px 0 0 100px; padding: 0; font-size: 12pt; text-align: justify;">
+                                        Organisation &nbsp;&nbsp;pour &nbsp;l’Harmonisation &nbsp;en &nbsp;Afrique &nbsp;du &nbsp;Droit &nbsp;des &nbsp;&nbsp;Affaires <br>
+                                        Organization &nbsp;&nbsp; for&nbsp; &nbsp;the&nbsp; &nbsp;Harmonization &nbsp;&nbsp; of &nbsp;&nbsp;Business &nbsp;&nbsp; Law &nbsp;in &nbsp;&nbsp; Africa <br>
+                                        Organización para la Armonización en África del Derecho de los Negocios <br>
+                                        Organização &nbsp;para &nbsp;a &nbsp;Harmonização &nbsp;em &nbsp;África &nbsp;do &nbsp;Direito dos Negócios
+                                    </div>
+                                </div>
+                            </div>
+                            <img src="img/logo/attestation_flyers2.png" alt="Logo Attestation" style="height: 90px; float: right;">
+                        </div>
+                    </header>
                     <!-- Fin Entête standard -->
                 @else
                     <!-- Entête dynamique -->
@@ -169,34 +232,36 @@
                     </header>
                     <!-- Fin Entête dynamique -->
                 @endif
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
 
-            <div style="z-index: 10; background: none; margin-top:115px; margin-bottom: 0;">
-                @php
-                    $nbre_jour =
-                        round((strtotime($participant->date_fin) - strtotime($participant->date_debut)) / 86400) + 1;
-                    $masse_horaire = 8 * $nbre_jour;
-                @endphp
+                <div class="content">
+                    @php
+                        $nbre_jour = 0; 
+                        $masse_horaire = 8 * $nbre_jour;
 
-                <div style="z-index: 300; opacity: 1; margin: 0; font-size: 12pt;">
-                    <div
-                        style="z-index: 3; display: block; text-align: center; margin: 15px 0 0px 0; font-size: 20pt; font-weight: bold; color: #1a0642;">
-                        3ème édition du Forum International des Professionnels du Droit et du Chiffre
-                    </div>
+                         $nbre_jour = round((strtotime($participant->date_fin) - strtotime($participant->date_debut)) / 86400) + 1;
+                        $masse_horaire = 8 * $nbre_jour;
+                    @endphp
 
-                    <div
-                        style="z-index: 100; clear: both; display: block; margin: 8px 0; text-align: center; line-height: 1.2; font-size: 30pt; color: #006fc0; font-weight: bold;">
-                        <div style="margin: 20px 0 10px 0;">
-                            ATTESTATION DE PARTICIPATION
+                    @if ($formation->titre_evenement)
+                        <div style="text-align: center; font-size: 20px; font-weight: bold; color: #1a0642; margin-bottom: 10px;">
+                            {{ $formation->titre_evenement }}
                         </div>
+                    @endif
+
+                    <div class="main-title">
+                        @if ($typeformation_id == 1)
+                            ATTESTATION DE FORMATION
+                        @else
+                            ATTESTATION DE PARTICIPATION
+                        @endif
                     </div>
 
-                    <div style="clear: both; display: block; text-align: justify;">
-                        <div style="line-height: 1.4;">
-                            <span style="font-size: 11.6pt;">
+                    <!--<div class="director-title">
+                        LE DIRECTEUR GENERAL
+                    </div>-->
+
+                    <div class="main-text">
+                        <span style="font-size: 11.6pt;">
                                 <b>Vu</b> le Traité relatif à l’Harmonisation du droit des Affaires en Afrique signé à
                                 Port-Louis le 17 octobre 1993, tel que révisé à Québec le 17 octobre 2008 notamment en
                                 son article 41 ;<br>
@@ -205,16 +270,14 @@
                                 02/2016/CM/OHADA du 28 octobre 2016 portant Statut révisé de l’ERSUMA ;
                             </span><br>
 
-                            <div
-                                style="clear: both; margin-top: 8px; display: block; text-align: center; font-size: 14pt;">
-                                délivrée à
-                            </div>
+                        <div style="text-align: center; font-size: 14pt;">
+                            délivrée à
+                        </div>
 
-                            <div
-                                style="line-height: 1.3; font-size: 13pt; display: block; text-align: center; margin-bottom: 10px;">
-                                <span
-                                    style="font-weight: bold; font-size: 26pt; color: #0451AC;">{{ trim($participant->prenoms) }}
-                                    {{ trim($participant->nom) }}</span><br>
+                        <div style="line-height: 1.5; font-size: 13pt; text-align: center; margin-bottom: 10px;">
+                            <span style="font-weight: bold; font-size: 20pt;">
+                               {{ trim($participant->prenoms) }} {{ trim($participant->nom) }}
+                            </span><br>
                                 pour sa participation au <span
                                     style="font-weight: bold; font-size: 16pt;"><i>{{ $participant->theme }}</i></span><br>
                                 qui s’est tenu @if ($participant->lieu != '')
@@ -227,205 +290,158 @@
                                     {{ \Carbon\Carbon::parse($participant->date_fin)->isoFormat('DD MMM YYYY') }},
                                 @endif
                                 correspondant à {{ $nbre_jour == 1 ? '4 heures' : "$masse_horaire heures" }} de
-                                participation.
-                            </div>
-
-                            <p>
-                                La présente attestation lui est délivrée pour en jouir avec les droits et prérogatives
-                                qui y sont attachés.
-                            </p>
+                                participation. 
                         </div>
+
+                        <p style="text-align: justify;">
+                           La présente attestation lui est délivrée pour en jouir avec les droits et prérogatives qui y sont attachés.
+                        </p>
                     </div>
                 </div>
-            </div>
 
-            <table style="width: 100%; padding: 0; margin: 0;">
-                <tbody>
-                    <tr>
-                        <td style="vertical-align: bottom;">
-                            <footer>
-                                <div style="clear: both; display: block; margin: 10px 0; width: 100%;">
-                                    <div style="float: left;">&nbsp;</div>
-                                    <div style="float: right; padding-right: 5px;">
-                                        <b>Délivrée à {{ $participant->lieu }}, le
-                                            {{ \Carbon\Carbon::parse($participant->date_fin)->isoFormat('DD MMM YYYY') }}</b>
-                                    </div>
-                                </div>
+                <footer>
+                    <div style="clear: both; margin: 10px 0 0; width: 100%;">
+                        <div style="float: right; padding-right: 5px;">
+                            <b>Délivrée à {{ $participant->lieu }}, le {{ \Carbon\Carbon::parse(date('d-m-Y'))->isoFormat('DD MMM YYYY') }}</b>
+                        </div>
+                    </div>
 
-                                <div style="clear: both;">
-                                    <table style="width: 100%; padding: 0; margin: 0;">
-                                        <tbody>
-                                            <tr>
-                                                <td style="width: 40%; vertical-align: bottom;">
-                                                    <div style="margin-bottom: 1px; margin-left: 10px;">
-                                                        <img width="95" height="95"
-                                                            src="data:image/png;base64, {!! base64_encode(
-                                                                QrCode::encoding('UTF-8')->format('svg')->size(100)->generate(
-                                                                        'Code Formation : ' .
-                                                                            $participant->code_formation .
-                                                                            ' / Thème : ' .
-                                                                            $participant->theme .
-                                                                            ' / Auditeur : ' .
-                                                                            trim($participant->prenoms) .
-                                                                            ' ' .
-                                                                            trim($participant->nom),
-                                                                    ),
-                                                            ) !!}" />
-                                                    </div>
-                                                </td>
+                    <div style="clear: both;">
+                        <table style="width: 100%; padding: 0; margin: 0;">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 40%; vertical-align: bottom;">
+                                        <div class="qr-code">
+                                            <img width="95" height="95" src="data:image/png;base64, {!! base64_encode(QrCode::encoding('UTF-8')->format('svg')->size(100)->generate('Code Formation : ' . $participant->code_formation . ' / Thème : ' . $participant->theme . ' / Auditeur : ' . trim($participant->prenoms) . ' ' . trim($participant->nom))) !!}" />
+                                        </div>
+                                    </td>
 
-                                                <td style="text-align: center; vertical-align: bottom;">&nbsp;</td>
+                                    <td style="text-align: center; vertical-align: bottom;">
+                                        &nbsp;
+                                    </td>
 
-                                                <td style="width: 30%; vertical-align: bottom; padding: 0;">
-                                                    @php
-                                                        $signataire = getSignataire($participant->code_formation);
-                                                    @endphp
-                                                    @if ($signataire == false)
-                                                        <div
-                                                            style="text-align: left; margin: 0; padding: 0; z-index: 10;">
-                                                            <img src="img/signature_20231102-223858.png" alt="Signature"
-                                                                style="margin: -15px; padding: 0; height: 145px;">
-                                                        </div>
-                                                        <div
-                                                            style="padding: 0; margin: -20px 0 0; text-align: center; z-index: 100;">
-                                                            <b><u>Dr. DOGUE Karel Osiris Coffi</u></b>
-                                                        </div>
-                                                    @else
-                                                        <div
-                                                            style="text-align: left; margin: 0; padding: 0; z-index: 10;">
-                                                            <img src="storage/signature/{{ $signataire->signature }}"
-                                                                alt="Signature"
-                                                                style="margin: -15px; padding: 0; height: 145px;">
-                                                        </div>
-                                                        <div
-                                                            style="padding: 0; margin: -20px 0 0; text-align: center; z-index: 100;">
-                                                            <b><u>{{ $signataire->titre }} {{ $signataire->nom }}
-                                                                    {{ $signataire->prenoms }}</u></b>
-                                                        </div>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                    <td style="width: 30%; vertical-align: bottom; padding: 0;">
+                                        @php
+                                            $signataire = getSignataire($participant->code_formation);
+                                        @endphp
+                                        @if ($signataire == false)
+                                            <div style="text-align: left; margin: 0; padding: 0;">
+                                                <img src="img/signatdg.png" alt="Signature" style="height: 130px;">
+                                            </div>
+                                            <div style="text-align: center; margin: -20px 0 0;">
+                                                <b><u>Dr. DOGUE Karel Osiris Coffi</u></b>
+                                            </div>
+                                        @else
+                                            <div style="text-align: left; margin: 0; padding: 0;">
+                                                <img src="storage/signature/{{ $signataire->signature }}" alt="Signature" style="height: 130px;">
+                                            </div>
+                                            <div style="text-align: center; margin: -20px 0 0;">
+                                                <b><u>{{ $signataire->titre }} {{ trim($signataire->nom) }} {{ trim($signataire->prenoms) }}</u></b>
+                                            </div>
+                                        @endif
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                                <div
-                                    style="display: block; clear: both; width: 100%; background: #fff; border: 0; border-top: 10px solid #9cc2e5; border-bottom: 10px solid #1571c6; margin: 5px 0 10px; color: #000000; font-size: 9pt; text-align: center; padding: 5px 0;">
-                                    ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo,
-                                    BENIN - Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org - Web : <font
-                                        color="#0563c1"><u><a
-                                                href="https://ersuma.ohada.org/">https://ersuma.ohada.org</a></u></font>
-                                </div>
-                            </footer>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            @if (!$loop->last)
+                    <div style="width: 100%; background: #fff; border: 0; border-top: 10px solid #9cc2e5; border-bottom: 10px solid #1571c6; margin: 5px 0 10px; text-align: center; padding: 5px 0; font-size: 10pt;">
+                        ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
+                        Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org - Web : <a href="https://ersuma.ohada.org/">https://ersuma.ohada.org</a>
+                    </div>
+                </footer>
+                @if (!$loop->last)
                 <div style="page-break-after: always;"></div>
-            @endif
-        @else
-            @php
+                @endif
+            @else
+                @php
                 $duree_reel = $duree_enregistrement > 0 ? $duree_enregistrement : $duree_formation;
                 $scoring = intval(($duree_reel * 2) / 3);
-            @endphp
-            @if ($participant->temps_presence >= $scoring)
-                <!-- Attestation pour VISIO -->
-                <table style="width: 100%; padding: 0; margin: 0;">
-                    <tbody>
-                        <tr>
-                            <td style="vertical-align: top;">
-                                
-                            @if ($logo_partenaires->count() == 0)
-                    <!-- Entête standard -->
-                      <header>
-                                <table style="width: 100%; padding: 0; margin: 0; text-align: center;">
-                                    <tr style="border-bottom: 4px solid #1a0642;">
-                                        <td style="width: 15%;">
-                                            <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo"
-                                                style="height: 95px;">
-                                        </td>
-                                        <td>&nbsp;</td>
-                                        <td>
-                                            <img src="img/inc-attestations/logo_DGIA_doing-good-in-africa.jpg"
-                                                alt="logo" style="height: 90px;">
-                                        </td>
-                                        <td>&nbsp;</td>
-                                        <td>
-                                            <img src="img/inc-attestations/Logo-AM.png" alt="logo"
-                                                style="height: 95px;">
-                                        </td>
-                                        <td>&nbsp;</td>
-                                        <td style="width: 20%;">
-                                            <img src="img/inc-attestations/logo-FIPROD.jpg" alt="logo"
-                                                style="height: 105px;">
-                                        </td>
-                                    </tr>
-                                </table>
-                            </header>
-                    <!-- Fin Entête standard -->
-                @else
-                    <!-- Entête dynamique -->
-                    <header>
-                        <table style="width: 100%; padding: 0; margin: 0; text-align: center; border-bottom: 4px solid #1a0642;">
-                            <tr style="border-bottom: 4px solid #1a0642;">
-                                @if ($formation->is_coorganisation)
-                                    <!-- Logo OHADA par défaut -->
-                                    <td style="width: 40%;">
-                                        <img src="img/inc-attestations/logo_ohada-fr.jpg" alt="Logo OHADA" style="height: 95px;">
-                                    </td>
-                                @else
-                                    <!-- Logo ERSUMA par défaut -->
-                                    <td style="width: 15%;">
-                                        <img src="img/inc-attestations/logo_ersuma.jpg" alt="Logo ERSUMA" style="height: 80px;">
-                                    </td>
-                                @endif
-                                @foreach ($logo_partenaires as $logo)
-                                    @if ($logo_partenaires->count() == 1)
-                                        <td style="text-align: right;">
-                                            <img src="storage/logo_partenaire/{{ $logo->logo_path }}" alt="Logo Partenaire" style="height: 80px;">
+                 
+                @endphp
+
+                @if ($participant->temps_presence >= $scoring)
+                    @if ($logo_partenaires->count() == 0)
+                        <!-- Entête standard -->
+                        <header>
+                            <div style="display: block; clear: both; width: 100%; background: #fff; border: 0; border-top: 10px solid #1571c6; border-bottom: 10px solid #9cc2e5; margin: 0 0 10px 0; color: #000000; padding: 0; height: 10px; text-align: center;"></div>
+                            <div style="width: 100%;">
+                                <div style="float: left; width: 82%;">
+                                    <div style="border-bottom: 5px double #2681ca; max-width: 75.7%; padding: 0 0 10px 0;">
+                                        <div style="float: left; width: 105px; margin: 0; height: 92px;">
+                                            <img src="img/logo/logo-ohada.png" alt="Logo OHADA" style="height: 85px;">
+                                        </div>
+                                        <div style="line-height: 1.17; margin: -15px 0 0 100px; padding: 0; font-size: 12pt; text-align: justify;">
+                                            Organisation &nbsp;&nbsp;pour &nbsp;l’Harmonisation &nbsp;en &nbsp;Afrique &nbsp;du &nbsp;Droit &nbsp;des &nbsp;&nbsp;Affaires <br>
+                                            Organization &nbsp;&nbsp; for&nbsp; &nbsp;the&nbsp; &nbsp;Harmonization &nbsp;&nbsp; of &nbsp;&nbsp;Business &nbsp;&nbsp; Law &nbsp;in &nbsp;&nbsp; Africa <br>
+                                            Organización para la Armonización en África del Derecho de los Negocios <br>
+                                            Organização &nbsp;para &nbsp;a &nbsp;Harmonização &nbsp;em &nbsp;África &nbsp;do &nbsp;Direito dos Negócios
+                                        </div>
+                                    </div>
+                                </div>
+                                <img src="img/logo/attestation_flyers2.png" alt="Logo Attestation" style="height: 90px; float: right;">
+                            </div>
+                        </header>
+                        <!-- Fin Entête standard -->
+                    @else
+                        <!-- Entête dynamique -->
+                        <header>
+                            <table style="width: 100%; padding: 0; margin: 0; text-align: center; border-bottom: 4px solid #1a0642;">
+                                <tr style="border-bottom: 4px solid #1a0642;">
+                                    @if ($formation->is_coorganisation)
+                                        <!-- Logo OHADA par défaut -->
+                                        <td style="width: 40%;">
+                                            <img src="img/inc-attestations/logo_ohada-fr.jpg" alt="Logo OHADA" style="height: 95px;">
                                         </td>
                                     @else
-                                        <td>
-                                            <img src="storage/logo_partenaire/{{ $logo->logo_path }}" alt="Logo Partenaire" style="height: 80px;">
+                                        <!-- Logo ERSUMA par défaut -->
+                                        <td style="width: 15%;">
+                                            <img src="img/inc-attestations/logo_ersuma.jpg" alt="Logo ERSUMA" style="height: 80px;">
                                         </td>
                                     @endif
-                                @endforeach
-                            </tr>
-                        </table>
-                    </header>
-                    <!-- Fin Entête dynamique -->
-                @endif
-                            </td>
-                        </tr>
-                    </tbody>
-                </table> 
+                                    @foreach ($logo_partenaires as $logo)
+                                        @if ($logo_partenaires->count() == 1)
+                                            <td style="text-align: right;">
+                                                <img src="storage/logo_partenaire/{{ $logo->logo_path }}" alt="Logo Partenaire" style="height: 80px;">
+                                            </td>
+                                        @else
+                                            <td>
+                                                <img src="storage/logo_partenaire/{{ $logo->logo_path }}" alt="Logo Partenaire" style="height: 80px;">
+                                            </td>
+                                        @endif
+                                    @endforeach
+                                </tr>
+                            </table>
+                        </header>
+                        <!-- Fin Entête dynamique -->
+                    @endif
 
-                <div style="z-index: 10; background: none; margin-top: 115px; margin-bottom: 0;">
-                    @php
-                        $nbre_jour =
-                            round((strtotime($participant->date_fin) - strtotime($participant->date_debut)) / 86400) +
-                            1;
+                    <div class="content">
+                        @php
+                     $nbre_jour = round((strtotime($participant->date_fin) - strtotime($participant->date_debut)) / 86400) + 1;
                         $masse_horaire = 8 * $nbre_jour;
-                    @endphp
+                        @endphp
 
-                    <div style="z-index: 300; opacity: 1; margin: 0; font-size: 12pt;">
-                        <div
-                            style="z-index: 3; display: block; text-align: center; margin: 15px 0 0px 0; font-size: 20pt; font-weight: bold; color: #1a0642;">
-                            3ème édition du Forum International des Professionnels du Droit et du Chiffre
-                        </div>
-
-                        <div
-                            style="z-index: 100; clear: both; display: block; margin: 8px 0; text-align: center; line-height: 1.2; font-size: 30pt; color: #006fc0; font-weight: bold;">
-                            <div style="margin: 20px 0 10px 0;">
-                                ATTESTATION DE PARTICIPATION
+                        @if ($formation->titre_evenement)
+                            <div style="text-align: center; font-size: 20px; font-weight: bold; color: #1a0642; margin-bottom: 10px;">
+                                {{ $formation->titre_evenement }}
                             </div>
+                        @endif
+
+                        <div class="main-title">
+                            @if ($typeformation_id == 1)
+                                ATTESTATION DE FORMATION
+                            @else
+                                ATTESTATION DE PARTICIPATION
+                            @endif
                         </div>
 
-                        <div style="clear: both; display: block; text-align: justify;">
-                            <div style="line-height: 1.4;">
-                                <span style="font-size: 11.6pt;">
+                        <div class="director-title">
+                            LE DIRECTEUR GENERAL
+                        </div>
+
+                        <div class="main-text">
+                           <span >
                                     <b>Vu</b> le Traité relatif à l’Harmonisation du droit des Affaires en Afrique signé
                                     à Port-Louis le 17 octobre 1993, tel que révisé à Québec le 17 octobre 2008
                                     notamment en son article 41 ;<br>
@@ -434,17 +450,15 @@
                                     02/2016/CM/OHADA du 28 octobre 2016 portant Statut révisé de l’ERSUMA ;
                                 </span><br>
 
-                                <div
-                                    style="clear: both; margin-top: 8px; display: block; text-align: center; font-size: 14pt;">
-                                    délivrée à
-                                </div>
+                            <div style="text-align: center; font-size: 14pt; margin: 10px 0;">
+                                délivrée à
+                            </div>
 
-                                <div
-                                    style="line-height: 1.3; font-size: 13pt; display: block; text-align: center; margin-bottom: 10px;">
-                                    <span
-                                        style="font-weight: bold; font-size: 26pt; color: #0451AC;">{{ trim($participant->prenoms) }}
-                                        {{ trim($participant->nom) }}</span><br>
-                                    pour sa participation au <span
+                            <div style="line-height: 1.5; font-size: 13pt; text-align: center; margin-bottom: 10px;">
+                                <span style="font-weight: bold; font-size: 20pt;">
+                                   {{ trim($participant->prenoms) }} {{ trim($participant->nom) }}
+                                </span> <br>
+                                pour sa participation au <span
                                         style="font-weight: bold; font-size: 16pt;"><i>{{ $participant->theme }}</i></span><br>
                                     qui s’est tenue en visioconférence
                                     @if ($participant->date_debut == $participant->date_fin)
@@ -456,108 +470,73 @@
                                         {{ \Carbon\Carbon::parse($participant->date_fin)->isoFormat('DD MMM YYYY') }},
                                     @endif
                                     correspondant à {{ $nbre_jour == 1 ? '4 heures' : "$masse_horaire heures" }} de
-                                    participation.
-                                </div>
-
-                                <p>
-                                    La présente attestation lui est délivrée pour en jouir avec les droits et
-                                    prérogatives qui y sont attachés.
-                                </p>
+                                    participation. 
                             </div>
+
+                            <p style="text-align: justify;">
+                                La présente attestation lui est délivrée pour en jouir avec les droits et prérogatives qui y sont attachés.
+                            </p>
                         </div>
                     </div>
-                </div>
 
-                <table style="width: 100%; padding: 0; margin: 0;">
-                    <tbody>
-                        <tr>
-                            <td style="vertical-align: bottom;">
-                                <footer>
-                                    <div style="clear: both; display: block; margin: 10px 0; width: 100%;">
-                                        <div style="float: left;">&nbsp;</div>
-                                        <div style="float: right; padding-right: 5px;">
-                                            <b>Délivrée à {{ $participant->lieu }}, le
-                                                {{ \Carbon\Carbon::parse(date('d-m-Y'))->isoFormat('DD MMM YYYY') }}</b>
-                                        </div>
-                                    </div>
+                    <footer>
+                        <div style="clear: both; margin: 10px 0 0; width: 100%;">
+                            <div style="float: right; padding-right: 5px;">
+                                <b>Délivrée à {{ $participant->lieu }}, le {{ \Carbon\Carbon::parse(date('d-m-Y'))->isoFormat('DD MMM YYYY') }}</b>
+                            </div>
+                        </div>
 
-                                    <div style="clear: both;">
-                                        <table style="width: 100%; padding: 0; margin: 0;">
-                                            <tbody>
-                                                <tr>
-                                                    <td style="width: 40%; vertical-align: bottom;">
-                                                        <div style="margin-bottom: 1px; margin-left: 10px;">
-                                                            <img width="95" height="95"
-                                                                src="data:image/png;base64, {!! base64_encode(
-                                                                    QrCode::encoding('UTF-8')->format('svg')->size(100)->generate(
-                                                                            'Code Formation : ' .
-                                                                                $participant->code_formation .
-                                                                                ' / Thème : ' .
-                                                                                $participant->theme .
-                                                                                ' / Auditeur : ' .
-                                                                                trim($participant->prenoms) .
-                                                                                ' ' .
-                                                                                trim($participant->nom),
-                                                                        ),
-                                                                ) !!}" />
-                                                        </div>
-                                                    </td>
+                        <div style="clear: both;">
+                            <table style="width: 100%; padding: 0; margin: 0;">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 40%; vertical-align: bottom;">
+                                            <div class="qr-code">
+                                                <img width="95" height="95" src="data:image/png;base64, {!! base64_encode(QrCode::encoding('UTF-8')->format('svg')->size(100)->generate('Code Formation : ' . $participant->code_formation . ' / Thème : ' . $participant->theme . ' / Auditeur : ' . trim($participant->prenoms) . ' ' . trim($participant->nom))) !!}" />
+                                            </div>
+                                        </td>
 
-                                                    <td style="text-align: center; vertical-align: bottom;">&nbsp;</td>
+                                        <td style="text-align: center; vertical-align: bottom;">
+                                            &nbsp;
+                                        </td>
 
-                                                    <td style="width: 30%; vertical-align: bottom; padding: 0;">
-                                                        @php
-                                                            $signataire = getSignataire($participant->code_formation);
-                                                        @endphp
-                                                        @if ($signataire == false)
-                                                            <div
-                                                                style="text-align: left; margin: 0; padding: 0; z-index: 10;">
-                                                                <img src="img/signatdg.png" alt="Signature"
-                                                                    style="margin: -15px; padding: 0; height: 145px;">
-                                                            </div>
-                                                            <div
-                                                                style="padding: 0; margin: -20px 0 0; text-align: center; z-index: 100;">
-                                                                <b><u>Pr. Mayatta Ndiaye MBAYE</u></b>
-                                                            </div>
-                                                        @else
-                                                            <div
-                                                                style="text-align: left; margin: 0; padding: 0; z-index: 10;">
-                                                                <img src="storage/signature/{{ $signataire->signature }}"
-                                                                    alt="Signature"
-                                                                    style="margin: -15px; padding: 0; height: 145px;">
-                                                            </div>
-                                                            <div
-                                                                style="padding: 0; margin: -20px 0 0; text-align: center; z-index: 100;">
-                                                                <b><u>{{ $signataire->titre }} {{ $signataire->nom }}
-                                                                        {{ $signataire->prenoms }}</u></b>
-                                                            </div>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                        <td style="width: 30%; vertical-align: bottom; padding: 0;">
+                                            @php
+                                                $signataire = getSignataire($participant->code_formation);
+                                            @endphp
+                                            @if ($signataire == false)
+                                                <div style="text-align: left; margin: 0; padding: 0;">
+                                                    <img src="img/signatdg.png" alt="Signature" style="height: 130px;">
+                                                </div>
+                                                <div style="text-align: center; margin: -20px 0 0;">
+                                                    <b><u>Pr. Mayatta Ndiaye MBAYE</u></b>
+                                                </div>
+                                            @else
+                                                <div style="text-align: left; margin: 0; padding: 0;">
+                                                    <img src="storage/signature/{{ $signataire->signature }}" alt="Signature" style="height: 130px;">
+                                                </div>
+                                                <div style="text-align: center; margin: -20px 0 0;">
+                                                    <b><u>{{ $signataire->titre }} {{ trim($signataire->nom) }} {{ trim($signataire->prenoms) }}</u></b>
+                                                </div>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
-                                    <div
-                                        style="display: block; clear: both; width: 100%; background: #fff; border: 0; border-top: 10px solid #9cc2e5; border-bottom: 10px solid #1571c6; margin: 5px 0 10px; color: #000000; font-size: 9pt; text-align: center; padding: 5px 0;">
-                                        ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo,
-                                        BENIN - Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org - Web : <font
-                                            color="#0563c1"><u><a
-                                                    href="https://ersuma.ohada.org/">https://ersuma.ohada.org</a></u>
-                                        </font>
-                                    </div>
-                                </footer>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                @if (!$loop->last)
-                    <div style="page-break-after: always;"></div>
+                        <div style="width: 100%; background: #fff; border: 0; border-top: 10px solid #9cc2e5; border-bottom: 10px solid #1571c6; margin: 5px 0 10px; text-align: center; padding: 5px 0; font-size: 10pt;">
+                            ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
+                            Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org - Web : <a href="https://ersuma.ohada.org/">https://ersuma.ohada.org</a>
+                        </div>
+                    </footer>
                 @endif
             @endif
+        </div>
+
+        @if (!$loop->last)
+            <div style="page-break-after: always;"></div>
         @endif
     @endforeach
 </body>
-
 </html>
