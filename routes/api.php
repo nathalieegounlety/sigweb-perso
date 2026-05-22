@@ -102,6 +102,10 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('delete/reduction', 'deleteReduction');
     Route::post('obj/liste/reductions', 'objReductionFormation');
     Route::get('dsc/obj', 'listeFormationDscObj');
+    // 
+    Route::post('liste/logos', 'listeLogos');
+    Route::post('add/logos', 'addLogos');
+    Route::post('delete/logo', 'deleteLogo');
 
 });
 

@@ -32,5 +32,8 @@ interface FormationsInterface
     public function getListeReductions(Request $request): \Illuminate\Http\JsonResponse;
     public function getReductionFormation(Request $request): \Illuminate\Http\JsonResponse;
     public function getFormationsDscObj(Request $request): \Illuminate\Http\JsonResponse;
+    public function saveLogos(Request $request): \Illuminate\Http\JsonResponse;
+    public function saveDeleteLogo(Request $request): \Illuminate\Http\JsonResponse;
+    public function getListeLogos(Request $request): \Illuminate\Http\JsonResponse;
 
 }

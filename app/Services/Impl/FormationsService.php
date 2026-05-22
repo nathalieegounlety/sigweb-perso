@@ -900,4 +900,74 @@ class FormationsService implements FormationsInterface
 
         return ResponseHandler::success('ok', ['success'=>true,'listeReductions' => $data]);
     }
+
+    
+    
+
+    public function saveLogos(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // save logo partenaire si disponible
+        $logo_partenaires = $request->logos;
+        $formation = Formations::whereCodeFormation($request->code_formation)->first();
+             if($request->logos){
+                if(count($logo_partenaires) > 0){
+                    $i=0;
+                    foreach ($logo_partenaires as $key => $logo) {
+                        $i= $i+1;
+                        # code...
+                        if ($logo) {
+                            # code...
+                            $extension = $logo->getClientOriginalExtension();
+                            $name_logo = 'logo_'.$request->code_formation. '_' .date('YmdHis').$i. '.'.$logo->extension();
+                            //$logo->move(public_path('img/logo/'), $name_logo);
+                            $logo->storeAs('logo_partenaire', $name_logo, 'public');
+
+                            // enregistrement dans la table logo
+                            $logo_partenaire = new Logopartenaires();
+                            $logo_partenaire->setAttribute('logo_path',$name_logo);
+                            $logo_partenaire->setAttribute('code_formation',$formation->code_formation);
+                            $logo_partenaire->setAttribute('created_by', auth('api')->id());
+                            $logo_partenaire->setAttribute('updated_by', auth('api')->id());
+                            $logo_partenaire->save();
+                        }
+                    }
+                    
+            return  ResponseHandler::success("Enregistrement efféctué",['success'=>true]);
+
+                }else{
+            return  ResponseHandler::error("Echec lors de la l'enregistrement");
+
+                }
+            }else{
+            return  ResponseHandler::error("Echec lors de la l'enregistrement");
+
+            } 
+    }
+
+    
+
+    public function getListeLogos(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $logopartenaires = Logopartenaires::where("code_formation",$request->code_formation)
+        ->get(['logopartenaires.id','logopartenaires.code_formation','logopartenaires.logo_path','logopartenaires.largeur','logopartenaires.hauteur']);
+
+        return ResponseHandler::success('ok', ['success'=>true,'listeLogos' => $logopartenaires]);
+    }
+
+    
+
+    public function saveDeleteLogo(Request $request): \Illuminate\Http\JsonResponse
+    { 
+        try {
+            Log::info($request->idLogo);
+            //code...
+            $id = (int) $request->idLogo;
+            $data = Logopartenaires::find($id);
+            $data->delete();
+            return ResponseHandler::success("ok",['success'=>true]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return ResponseHandler::error("ok",400,$th->getMessage());
+        }  
+    }
 }

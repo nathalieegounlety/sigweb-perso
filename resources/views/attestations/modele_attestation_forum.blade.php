@@ -183,11 +183,11 @@
                                         @foreach ($logo_partenaires as $logo)
                                             @if ($logo_partenaires->count() == 1)
                                                 <td style="text-align:right;">
-                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="80px" style="height: 80px;">
+                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="95px" style="height: 95px;">
                                                 </td>
                                             @else
                                                 <td style="">
-                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="80px" style="height: 80px;">
+                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="95px" style="height: 95px;">
                                                 </td>
                                             @endif
                                         @endforeach
