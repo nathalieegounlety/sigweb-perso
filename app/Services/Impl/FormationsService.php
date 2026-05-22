@@ -322,6 +322,8 @@ class FormationsService implements FormationsInterface
     {
         // TODO: Implement update() method.
         $have_logo = false;
+        $logo_partenaires = $request->logos;
+        Log::info('begin update formation');
 
         // sauvegarde du visuel
         $name_visuel = null;
@@ -389,6 +391,37 @@ class FormationsService implements FormationsInterface
                 $formation->setAttribute('titre_evenement', $request->titre_evenement);
             }
             $formation->save();
+
+            
+         // save logo partenaire si disponible 
+             if($request->logos){
+        Log::info('start save logo');
+                if(count($logo_partenaires) > 0){
+                    $i=0;
+        Log::info('nbre de logo '.count($logo_partenaires));
+                     
+                    foreach ($logo_partenaires as $key => $logo) {
+                        $i= $i+1;
+                        # code...
+                        if ($logo) {
+                            # code...
+                            $extension = $logo->getClientOriginalExtension();
+                            $name_logo = 'logo_'.$formation->code_formation. '_' .date('YmdHis').$i. '.'.$logo->extension();
+                            //$logo->move(public_path('img/logo/'), $name_logo);
+                            $logo->storeAs('logo_partenaire', $name_logo, 'public');
+        Log::info('save logo '.$name_logo);
+
+                            // enregistrement dans la table logo
+                            $logo_partenaire = new Logopartenaires();
+                            $logo_partenaire->setAttribute('logo_path',$name_logo);
+                            $logo_partenaire->setAttribute('code_formation',$formation->code_formation);
+                            $logo_partenaire->setAttribute('created_by', auth('api')->id());
+                            $logo_partenaire->setAttribute('updated_by', auth('api')->id());
+                            $logo_partenaire->save();
+                        }
+                    }
+                }
+            }
 
             // update reduction if exists
             Log::info($request->input('idReductions'));
@@ -574,82 +607,11 @@ class FormationsService implements FormationsInterface
                             }
 
                 }
-            }
-
-                /*for($i = 0; $i<$nbr_cout;$i++){
-                    $get_cout = $cout_formation[$i];
-                    
-                    if (!empty($get_cout)) {
-                        # code...
-                        $id_grille = $get_cout ;
-
-                        $grilleTarifaire = Grilletarifaires::find($id_grille) ;
-
-                        // enregistrement dans la table tarification
-                        // vérifier si la données existe dans le cas contraire enregistrer
-                        $check_existe = Tarificationsformation::where('code_formation',$request->code_formation)
-                            ->where('id_grilletarifaire',$id_grille)->get();
-
-                        if (count($check_existe) == 0) { // je fais l'enregistrement
-                            # code...
-                            $tarification_formation = new Tarificationsformation();
-                            $tarification_formation->setAttribute('code_formation',$request->get('code_formation')) ;
-                            $tarification_formation->setAttribute('id_grilletarifaire',$id_grille) ;
-                            $tarification_formation->setAttribute('created_by', auth('api')->id());
-                            $tarification_formation->setAttribute('created_at', new \DateTime());
-                            $tarification_formation->save();
-
-                            if ($formation->is_formation_dsc) {
-
-                                $type_tarif = Grilletarifaires::where('type_tarif', 'INSCRIPTION')
-                                    ->orWhere('type_tarif', 'ETUDIANTS')
-                                    ->orWhere('type_tarif', 'PROFESSIONNELS')
-                                    ->distinct()->get();
-
-                                //dd( $type_tarif);
-
-                                if ($type_tarif != "INSCRIPTION")  {
-
-                                    $formation_tranche = new FormationsTranches();
-                                    $formation_tranche->setAttribute('formation_id',$formation->id) ;
-                                    $formation_tranche->setAttribute('grilletarifaire_id', $id_grille) ;
-                                    $formation_tranche->setAttribute('tranche', 'tranche 1') ;
-                                    $formation_tranche->setAttribute('taux_1', 100) ;
-                                    $formation_tranche->setAttribute('taux_2', 0) ;
-                                    $formation_tranche->setAttribute('echeance_1', '2024-06-30') ;
-                                    $formation_tranche->setAttribute('echeance_2', null) ;
-                                    $formation_tranche->setAttribute('categorie_auditeur',$grilleTarifaire->libelle) ;
-                                    $formation_tranche->setAttribute('reduction',5);
-                                    $formation_tranche->setAttribute('created_at', new \DateTime());
-                                    $formation_tranche->save();
-
-
-                                    $formation_tranche = new FormationsTranches();
-                                    $formation_tranche->setAttribute('formation_id',$formation->id) ;
-                                    $formation_tranche->setAttribute('grilletarifaire_id', $id_grille) ;
-                                    $formation_tranche->setAttribute('tranche', 'tranche 2') ;
-                                    $formation_tranche->setAttribute('taux_1', 50) ;
-                                    $formation_tranche->setAttribute('taux_2', 50) ;
-                                    $formation_tranche->setAttribute('echeance_1', '2024-06-30') ;
-                                    $formation_tranche->setAttribute('echeance_2', '2024-10-30') ;
-                                    $formation_tranche->setAttribute('categorie_auditeur', $grilleTarifaire->libelle) ;
-                                    $formation_tranche->setAttribute('reduction',0) ;
-                                    $formation_tranche->setAttribute('created_at', new \DateTime());
-                                    $formation_tranche->save();
-
-                                    # code...
-
-                                }
-
-                            }
-
-                            # code...
-                        }
-                    }
-
-                }*/
+            } 
+               
             }
         }
+
         // return
         return ResponseHandler::success("Modification effectuée.");
     }
