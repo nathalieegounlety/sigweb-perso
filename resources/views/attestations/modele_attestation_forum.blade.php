@@ -108,7 +108,10 @@
                 <tbody>
                     <tr>
                         <td style="vertical-align: top;">
-                            <header>
+                          
+                            @if ($logo_partenaires->count() == 0)
+                    <!-- Entête standard -->
+                      <header>
                                 <table style="width: 100%; padding: 0; margin: 0; text-align: center;">
                                     <tr style="border-bottom: 4px solid #1a0642;">
                                         <td style="width: 15%;">
@@ -133,6 +136,39 @@
                                     </tr>
                                 </table>
                             </header>
+                    <!-- Fin Entête standard -->
+                @else
+                    <!-- Entête dynamique -->
+                    <header>
+                        <table style="width: 100%; padding: 0; margin: 0; text-align: center; border-bottom: 4px solid #1a0642;">
+                            <tr style="border-bottom: 4px solid #1a0642;">
+                                @if ($formation->is_coorganisation)
+                                    <!-- Logo OHADA par défaut -->
+                                    <td style="width: 40%;">
+                                        <img src="img/inc-attestations/logo_ohada-fr.jpg" alt="Logo OHADA" style="height: 95px;">
+                                    </td>
+                                @else
+                                    <!-- Logo ERSUMA par défaut -->
+                                    <td style="width: 15%;">
+                                        <img src="img/inc-attestations/logo_ersuma.jpg" alt="Logo ERSUMA" style="height: 80px;">
+                                    </td>
+                                @endif
+                                @foreach ($logo_partenaires as $logo)
+                                    @if ($logo_partenaires->count() == 1)
+                                        <td style="text-align: right;">
+                                            <img src="storage/logo_partenaire/{{ $logo->logo_path }}" alt="Logo Partenaire" style="height: 80px;">
+                                        </td>
+                                    @else
+                                        <td>
+                                            <img src="storage/logo_partenaire/{{ $logo->logo_path }}" alt="Logo Partenaire" style="height: 80px;">
+                                        </td>
+                                    @endif
+                                @endforeach
+                            </tr>
+                        </table>
+                    </header>
+                    <!-- Fin Entête dynamique -->
+                @endif
                         </td>
                     </tr>
                 </tbody>
@@ -300,35 +336,71 @@
                     <tbody>
                         <tr>
                             <td style="vertical-align: top;">
-                                <header>
-                                    <table style="width: 100%; padding: 0; margin: 0; text-align: center;">
-                                        <tr style="border-bottom: 4px solid #1a0642;">
-                                            <td style="width: 15%;">
-                                                <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo"
-                                                    style="height: 95px;">
-                                            </td>
-                                            <td>&nbsp;</td>
-                                            <td>
-                                                <img src="img/inc-attestations/logo_DGIA_doing-good-in-africa.jpg"
-                                                    alt="logo" style="height: 90px;">
-                                            </td>
-                                            <td>&nbsp;</td>
-                                            <td>
-                                                <img src="img/inc-attestations/Logo-AM.png" alt="logo"
-                                                    style="height: 95px;">
-                                            </td>
-                                            <td>&nbsp;</td>
-                                            <td style="width: 20%;">
-                                                <img src="img/inc-attestations/logo-FIPROD.jpg" alt="logo"
-                                                    style="height: 105px;">
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </header>
+                                
+                            @if ($logo_partenaires->count() == 0)
+                    <!-- Entête standard -->
+                      <header>
+                                <table style="width: 100%; padding: 0; margin: 0; text-align: center;">
+                                    <tr style="border-bottom: 4px solid #1a0642;">
+                                        <td style="width: 15%;">
+                                            <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo"
+                                                style="height: 95px;">
+                                        </td>
+                                        <td>&nbsp;</td>
+                                        <td>
+                                            <img src="img/inc-attestations/logo_DGIA_doing-good-in-africa.jpg"
+                                                alt="logo" style="height: 90px;">
+                                        </td>
+                                        <td>&nbsp;</td>
+                                        <td>
+                                            <img src="img/inc-attestations/Logo-AM.png" alt="logo"
+                                                style="height: 95px;">
+                                        </td>
+                                        <td>&nbsp;</td>
+                                        <td style="width: 20%;">
+                                            <img src="img/inc-attestations/logo-FIPROD.jpg" alt="logo"
+                                                style="height: 105px;">
+                                        </td>
+                                    </tr>
+                                </table>
+                            </header>
+                    <!-- Fin Entête standard -->
+                @else
+                    <!-- Entête dynamique -->
+                    <header>
+                        <table style="width: 100%; padding: 0; margin: 0; text-align: center; border-bottom: 4px solid #1a0642;">
+                            <tr style="border-bottom: 4px solid #1a0642;">
+                                @if ($formation->is_coorganisation)
+                                    <!-- Logo OHADA par défaut -->
+                                    <td style="width: 40%;">
+                                        <img src="img/inc-attestations/logo_ohada-fr.jpg" alt="Logo OHADA" style="height: 95px;">
+                                    </td>
+                                @else
+                                    <!-- Logo ERSUMA par défaut -->
+                                    <td style="width: 15%;">
+                                        <img src="img/inc-attestations/logo_ersuma.jpg" alt="Logo ERSUMA" style="height: 80px;">
+                                    </td>
+                                @endif
+                                @foreach ($logo_partenaires as $logo)
+                                    @if ($logo_partenaires->count() == 1)
+                                        <td style="text-align: right;">
+                                            <img src="storage/logo_partenaire/{{ $logo->logo_path }}" alt="Logo Partenaire" style="height: 80px;">
+                                        </td>
+                                    @else
+                                        <td>
+                                            <img src="storage/logo_partenaire/{{ $logo->logo_path }}" alt="Logo Partenaire" style="height: 80px;">
+                                        </td>
+                                    @endif
+                                @endforeach
+                            </tr>
+                        </table>
+                    </header>
+                    <!-- Fin Entête dynamique -->
+                @endif
                             </td>
                         </tr>
                     </tbody>
-                </table>
+                </table> 
 
                 <div style="z-index: 10; background: none; margin-top: 115px; margin-bottom: 0;">
                     @php
