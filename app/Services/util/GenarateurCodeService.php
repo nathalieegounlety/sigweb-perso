@@ -127,6 +127,7 @@ class GenarateurCodeService {
                     break;
                 case 4: // forum
                     # code...
+                    Log::info('begin print attestation forum');
                     $pdf = PDF::loadView('attestations.modele_attestation_forum');
                     break;
                 case 5: // atelier
