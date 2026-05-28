@@ -106,6 +106,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('liste/logos', 'listeLogos');
     Route::post('add/logos', 'addLogos');
     Route::post('delete/logo', 'deleteLogo');
+    Route::post('edit/logos', 'editLogos');
 
 });
 

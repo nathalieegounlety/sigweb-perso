@@ -35,5 +35,6 @@ interface FormationsInterface
     public function saveLogos(Request $request): \Illuminate\Http\JsonResponse;
     public function saveDeleteLogo(Request $request): \Illuminate\Http\JsonResponse;
     public function getListeLogos(Request $request): \Illuminate\Http\JsonResponse;
+    public function saveEditLogos(Request $request): \Illuminate\Http\JsonResponse;
 
 }
