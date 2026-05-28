@@ -15,6 +15,7 @@ use App\Services\contracts\DocumentsInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\URL;
 use NumberFormatter;
 use PDF;
 
@@ -1005,5 +1006,51 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function urlPieceAuditeur(Request $request)
+{
+    $request->validate([
+        'auditeur_id' => 'required',
+        'code_formation' => 'required|string',
+        'piece_path' => 'required|string', 
+    ]);
+
+    // Génération de l'URL avec TOUS les paramètres structurels du dossier
+    $url = URL::temporarySignedRoute(
+        'api.documents.piece_auditeur.show',
+        now()->addMinutes(30),
+        [
+            'auditeur_id'    => $request->auditeur_id,
+            'code_formation' => $request->code_formation,
+            'filename'       => $request->piece_path,
+        ]
+    );
+
+    return response()->json([
+        'url' => $url,
+    ]);
+}
+
+public function showPieceAuditeur(Request $request, $auditeur_id, $code_formation, $filename)
+{
+    if (! $request->hasValidSignature()) {
+        abort(403, 'Signature invalide ou expirée.');
+    }
+
+    
+    $path = storage_path('private/pieces_auditeur/' . $filename);
+
+    if (!file_exists($path)) {
+        abort(404, 'Fichier introuvable sur le disque. Chemin tenté : ' . $path);
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . basename($filename) . '"'
+    ]);
+}
+
+
+    
 
 }

@@ -178,7 +178,9 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
 
     Route::post('get/url/all/registre/note/candidat/search', 'urlAllRegistreNoteCandidatSearch');
     Route::get('export/all/registre/note/candidat/search/{code_formation}', 'allRegistreNoteCandidatSearch')->name('allRegistreNoteCandidatSearch.moodle')->middleware('signed');
+    Route::post('get/url/piece/auditeur', 'urlPieceAuditeur')->name('api.documents.url_piece_auditeur');
 
+Route::get('pieces_auditeur/{auditeur_id}/{code_formation}/{filename}','showPieceAuditeur')->name('api.documents.piece_auditeur.show')->where('filename', '.*')->middleware('signed');
 });
 
 
