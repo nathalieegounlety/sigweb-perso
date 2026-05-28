@@ -103,7 +103,7 @@ class GenarateurCodeService {
         }
         else{
 
-            switch ($formation->typeformation_id) {
+            switch ($formation->typeformation_id) { 
                 case 1: // formation
                     # code...
                     $pdf = PDF::loadView('attestations.modele_attestation');

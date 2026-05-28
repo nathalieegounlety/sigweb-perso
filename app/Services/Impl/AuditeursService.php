@@ -190,6 +190,8 @@ class AuditeursService implements AuditeursInterface
 
         }
 
+        $listeFmExists = [];
+
         if ($auditeur) {
             # code...
         } else {
@@ -198,7 +200,7 @@ class AuditeursService implements AuditeursInterface
                 'success' => false,
                 'message' => "Le compte de l'auditeur n'existe pas"
             ];
-            return ResponseHandler::success("Le compte de l'auditeur n'existe pas",$dataResponse,500);
+            return ResponseHandler::success("Le compte de l'auditeur n'existe pas",$dataResponse,301);
         }
 
         // ### generer code inscription
@@ -246,6 +248,7 @@ class AuditeursService implements AuditeursInterface
                     // if participant exist
                     $get_auditeur = Inscriptions::where('email', $auditeur->email)->where('code_formation', $formation->code_formation)->get()->first();
                     $generateCode = $get_auditeur->code_inscription;
+                    $listeFmExists[] = $formation->code_formation;
                 } else {
                     // vérifier si la formation est présentiel ou pas
                     $presentiel = 0; // default visio
@@ -442,12 +445,12 @@ class AuditeursService implements AuditeursInterface
                     'success' => true,
                 ];
 
-                return ResponseHandler::success("Modification effectuée avec succès",$dataResponse);
+                return ResponseHandler::success("Inscription effectué avec succès",$dataResponse);
 
             }else{
                 $dataResponse = [
                     'success' => false,
-                    'message' => "Vous avez déjà une inscription en cours pour cette formation"
+                    'message' => "Vous avez déjà une inscription en cours pour cette formation ". implode(', ', $listeFmExists)
                 ];
                 return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse,500);
             }
@@ -1001,6 +1004,7 @@ class AuditeursService implements AuditeursInterface
             $auditeur = Auditeurs::where("email", $user->email)->first();
 
         } 
+        $listeFmExists = [];
 
         if ($auditeur) {
             # code...
@@ -1010,12 +1014,12 @@ class AuditeursService implements AuditeursInterface
                 'success' => false,
                 'message' => "Le compte de l'auditeur n'existe pas"
             ];
-            return ResponseHandler::success("Le compte de l'auditeur n'existe pas",$dataResponse,500);
+            return ResponseHandler::success("Le compte de l'auditeur n'existe pas",$dataResponse);
         }
 
         // ### generer code inscription
         $generateCode = $this->genarateurCodeService->genererCodeAlphaNumeric(8);
-
+        // 
         $montant_total = 0;
         // vérifier si la variable session existe
         if ($request->formations_dsc) {
@@ -1053,6 +1057,7 @@ class AuditeursService implements AuditeursInterface
                         ->get()
                         ->first();
                     $generateCode = $get_auditeur->code_inscription;
+                    $listeFmExists[] = $formation->code_formation;
                 } else {
                     // vérifier si la formation est présentiel ou pas
                     $presentiel = 0;
@@ -1218,9 +1223,9 @@ class AuditeursService implements AuditeursInterface
             }else{
                 $dataResponse = [
                     'success' => false,
-                    'message' => "Vous avez déjà une inscription en cours pour cette formation"
+                    'message' => "Vous avez déjà une inscription en cours pour cette formation ". implode(', ', $listeFmExists)
                 ];
-                return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse,500);
+                return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse);
             }
 
             /************************** end ******************* */
@@ -1229,7 +1234,7 @@ class AuditeursService implements AuditeursInterface
                 'success' => false,
                 'message' => "Veuillez choisir la formation auquelle vous voulez vous inscrire."
             ];
-            return ResponseHandler::success("Vous avez déjà une inscription en cours pour cette formation",$dataResponse,500);
+            return ResponseHandler::success("Veuillez choisir une formation pour l'inscription.",$dataResponse);
         }
     }
 
@@ -1528,13 +1533,16 @@ class AuditeursService implements AuditeursInterface
                     ->first();
 
                 $remise = 0 / 100;
-                if (!empty($details_paiement)) {
+                // vérifier si la formation DSC dispose d'une entrée de données dans la table detailspaiements
+                if (!empty($details_paiement)) { 
                     // vérifier si la remise existe
                     if (!empty($details_paiement->id_reduction)) {
                         # code...
                         $remise = $details_paiement->getReduction->pourcentage / 100;
                     }
                 } else {
+                // cas ou la formation DSC ne dispose pas d'entrée dans la table detailspaiements
+                // on fait une seconde vérification avec l'e-mail
                     $details_paiement = Detailspaiements::where("email", $anc_tarif_fm->email)
                         ->where("id_tarification_formation", $anc_tarif_fm->tarif_formation_id)
                         ->first();
@@ -1558,6 +1566,102 @@ class AuditeursService implements AuditeursInterface
                         }
                         $anc_tarif_fm->update();
 
+                        // il faut procéder à la génération de la facture
+        //********************************* enregistrement des informations dans la table paiement  *********************************/
+// enregistrement des informations dans la table de paiement
+
+                # code...
+                /************************ start *********************** */
+                // récupérer l'objet auditeur 
+                $auditeur = Auditeurs::whereEmail($anc_tarif_fm->email);
+                $inscrit = Inscriptions::where("code_inscription", $anc_tarif_fm->code_inscription)->orderBy("id", "DESC")->get()->first();
+                // vérifier si le paiement existe déjà
+                $check_paiement = Paiements::where("email", $inscrit->email)->where("code_inscription", $inscrit->code_inscription)->exists();
+
+                if ($check_paiement) {
+                    # code...
+                    # code... la formation a été déjà enregistrée
+                } else {
+                    # code...
+
+                    // récupération des variables
+                    $montant_total = 0;
+                    $nom = $auditeur->nom;
+                    $prenoms = $auditeur->prenoms;
+                    $email = $auditeur->email;
+                    $telephone = $auditeur->telephone;
+
+                    // enregistrement des informations de tatification
+                    $new_price_scolarite = $new_tarif->getGrilletarifaire->montant;
+                    // récupérer le coût d'inscription
+                    $getGrille = Grilletarifaires::where('type_tarif','INSCRIPTION')->first();
+                    $priceInscription = Tarificationsformation::where("code_formation",$inscrit->code_formation)
+                        ->where('id_grilletarifaire',$getGrille->id)
+                        ->first();
+
+                    $montant_total = $new_price_scolarite + $getGrille->montant;
+
+                    // générer le numero de reference facture : ERS-2025-FAC-000001
+                    $reference_paiement = $this->genarateurCodeService->genererNumeroPaiement();
+
+                    // enregistrement du paiement
+                    $statut_details_paiement = "IMPAYE";
+                    $statut_paiement = "EN ATTENTE";
+
+                    // vérifier si le paiement n'est pas déjà enregistré
+                    $checkExistingPaiement = Paiements::whereReference($reference_paiement)->exists();
+                    if (!$checkExistingPaiement) { // si le paiement n'existe pas encore
+
+                        $paiement = new Paiements();
+                        $paiement->setAttribute('reference', $reference_paiement);
+                        $paiement->setAttribute('email', $email);
+                        $paiement->setAttribute('telephone', $telephone);
+                        $paiement->setAttribute('code_inscription', $inscrit->code_inscription);
+                        $paiement->setAttribute('montant_total', $montant_total);
+                        $paiement->setAttribute('montant_restant', $montant_total);
+                        $paiement->setAttribute('statut_paiement', $statut_paiement);
+                        $paiement->setAttribute('type', "DSC");
+
+                        // enregistrement des détails de la facture
+
+                        try {
+                            //code...
+                            $paiement->save();
+
+                            // enregistrer les frais d'inscriptions  
+
+                                $details_paiement = new Detailspaiements();
+                                $details_paiement->setAttribute('reference_paiement', $paiement->reference);
+                                $details_paiement->setAttribute('code_formation', $inscrit->code_formation);
+                                $details_paiement->setAttribute('code_inscription', $paiement->code_inscription);
+                                $details_paiement->setAttribute('montant_restant', $getGrille->montant);
+                                $details_paiement->setAttribute('email', $email);
+                                $details_paiement->setAttribute('id_tarification_formation', $priceInscription->id);
+                                $details_paiement->setAttribute('statut_paiement', 'IMPAYE');
+                                $details_paiement->save();
+
+                                // frais formation
+                                $details_paiement = new Detailspaiements();
+                                $details_paiement->setAttribute('reference_paiement', $paiement->reference);
+                                $details_paiement->setAttribute('code_formation', $inscrit->code_formation);
+                                $details_paiement->setAttribute('code_inscription', $paiement->code_inscription);
+                                $details_paiement->setAttribute('montant_restant', $new_price_scolarite);
+                                $details_paiement->setAttribute('email', $email);
+                                $details_paiement->setAttribute('id_tarification_formation', $new_tarif->id);
+                                $details_paiement->setAttribute('statut_paiement', 'IMPAYE');
+                                $details_paiement->save();
+                            
+                        } catch (\Exception $e) {
+                            //throw $th;
+                            echo $e->getMessage();
+                        }
+
+                    }
+
+                    //##################### end start #################
+                } 
+        //********************************* end enregistrement des informations dans la table paiement ********************************/
+
                         $action = 'CHANGEMENT MODE FORMATION';
                         $description = "Changement mode de formation : ".$request->code_formation;
                         $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
@@ -1567,6 +1671,8 @@ class AuditeursService implements AuditeursInterface
                     }
  
                 }
+
+                // Cas ou detailspaiements contient déjà des données, on procède à la mise à jour
 
                 // $default_price = $default_price - ($default_price * $remise);
                 $new_tarif = Tarificationsformation::find($new_tarification_id);
@@ -1707,7 +1813,7 @@ class AuditeursService implements AuditeursInterface
 
             try {
              # code...
-             Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
+            // Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
             } catch(\Exception $e){
                 // Get error here
 
@@ -1933,7 +2039,7 @@ class AuditeursService implements AuditeursInterface
 
             try {
              # code...
-             Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
+             // Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
             } catch(\Exception $e){
                 // Get error here
 
@@ -2121,7 +2227,7 @@ class AuditeursService implements AuditeursInterface
 
             try {
              # code...
-             Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
+             // Mail::to($auditeur->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(  new Paiement($contenu));
             } catch(\Exception $e){
                 // Get error here
 

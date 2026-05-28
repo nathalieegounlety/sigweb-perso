@@ -95,22 +95,15 @@
                             <table style="width: 100%; padding: 0; margin: 0 ; text-align:center;">
                                 <tr style=" border-bottom:4px solid #1a0642;">
                                     <td style="width:15%;">
-                                        <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo" height="95px"
-                                            style="height: 95px;">
+                                        <img src="img/inc-attestations/brand_fiprod4_ersuma.jpg" alt="logo" height="105px"
+                                            style="height: 105px;">
                                     </td>
                                     <td style="">
                                         &nbsp;
                                     </td>
                                     <td style="">
-                                        <img src="img/inc-attestations/logo_DGIA_doing-good-in-africa.jpg"
-                                            alt="logo" height="90px" style="height: 90px;">
-                                    </td>
-                                    <td style="">
-                                        &nbsp;
-                                    </td>
-                                    <td style="">
-                                        <img src="img/inc-attestations/Logo-AM.png" alt="logo" height="95px"
-                                            style="height: 95px;">
+                                        <img src="img/inc-attestations/brand_fiprod4_togo.jpg"
+                                            alt="logo" height="105px" style="height: 105px;">
                                     </td>
                                     <td style="">
                                         &nbsp;
@@ -138,10 +131,10 @@
 
                     <div
                         style="z-index: 3; display:block; text-align:center; margin: 8px 0 0px 0; font-size: 20pt; font-weight:bold; color:#1a0642;">
-                        3ème édition du Forum International des Professionnels du Droit et du Chiffre</div>
+                        4ème édition du Forum International des Professionnels du Droit et du Chiffre</div>
 
                     <div
-                        style="z-index: 100;clear:both; display:block; margin: 10px 0 0px 0;text-align: center;line-height: 1.2;font-size: 26pt; color:#006fc0; font-weight:bold;">
+                        style="z-index: 100;clear:both; display:block; margin: 10px 0 0px 0;text-align: center;line-height: 1.2;font-size: 28pt; color:#006fc0; font-weight:bold;">
                         <div style="margin: 8px 0 8px 0;">
                             ATTESTATION DE {{ $formateur->role == 'MODERATEUR' ? 'MODERATEUR' : 'PANELISTE' }}
 
@@ -284,7 +277,7 @@
                                 </table>
                             </div>
                             <div
-                                style="display:block; clear:both; width:100%; background: #fff; border: 0; border-top: 12px solid #9cc2e5; border-bottom:  12px solid #1571c6;  margin: 5px 0 10px 0; color:#000000; font-size:9.3pt; text-align:center; padding:5px 0 5px 0">
+                                style="display:block; clear:both; width:100%; background: #fff; border: 0; border-top: 12px solid #9cc2e5; border-bottom:  12px solid #1571c6;  margin: 5px 0 5px 0; color:#000000; font-size:9.1pt; text-align:center; padding:5px 0 5px 0">
 
                                 ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN -
                                 Tél. : +229 01 97 97
