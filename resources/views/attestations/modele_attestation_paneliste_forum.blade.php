@@ -91,11 +91,56 @@
             <tbody>
                 <tr>
                     <td style="vertical-align:top;">
+                        @if ($logo_partenaires->count() == 0)
+<header>
+                                <div style="display:block; clear:both; width:100%; background: #fff; border: 0; border-top: 10px solid #1571c6; border-bottom: 10px solid #9cc2e5; margin: 0 0 10px 0; color:#000000; padding:0; height:10px; text-align:center;"></div>
+                                <div style="z-index:100;">
+                                    <div style="float:left; width:82%;">
+                                        <div style="z-index:100; border-bottom:5px double #2681ca; max-width:75.7%; padding: 0 0 10px 0;">
+                                            <div style="z-index:100; float:left; width: 105px; margin:0px; height:92px;">
+                                                <img src="img/logo/logo-ohada.png" alt="" height="85px" style="height: 85px;">
+                                            </div>
+                                            <div style="line-height:1.17; margin: -15px 0 0 100px; padding:0px; top:0; font-size:12pt; text-align:justify;">
+                                                Organisation &nbsp;&nbsp;pour &nbsp;l’Harmonisation &nbsp;en &nbsp;Afrique &nbsp;du &nbsp;Droit &nbsp;des &nbsp;&nbsp;Affaires <br>
+                                                Organization &nbsp;&nbsp; for&nbsp; &nbsp;the&nbsp; &nbsp;Harmonization &nbsp;&nbsp; of &nbsp;&nbsp;Business &nbsp;&nbsp; Law &nbsp;in &nbsp;&nbsp; Africa <br>
+                                                Organización para la Armonización en África del Derecho de los Negocios <br>
+                                                Organização &nbsp;para &nbsp;a &nbsp;Harmonização &nbsp;em &nbsp;África &nbsp;do &nbsp;Direito dos Negócios
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <img src="img/logo/attestation_flyers2.png" alt="logo" height="90px" style="height: 90px;">
+                                </div>
+                            </header>
+                        @else
                         <header>
                             <table style="width: 100%; padding: 0; margin: 0 ; text-align:center;">
                                 <tr style=" border-bottom:4px solid #1a0642;">
+                                    @if ($formateur->getFormation->is_coorganisation)
+                                            <td style="width:40%;border:4px solid red;">
+                                                <img src="img/inc-attestations/logo_ohada-fr.jpg" alt="logo" height="105px" style="height: 105px;">
+                                            </td>
+                                        @else
+                                            <td style="width:20%;">
+												{{-- <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo" height="105px" style="height: 105px;"> --}}
+                                                <img src="img/inc-attestations/brand_fiprod4_ersuma.jpg" alt="logo" height="105px" style="height: 105px;">
+												
+                                            </td>
+                                        @endif
+                                        @foreach ($logo_partenaires as $logo)
+                                            @if ($logo_partenaires->count() == 1)
+                                                <td style="text-align:right;">
+                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="105px" style="height: 105px;95px;">
+                                                </td>
+                                            @else
+                                                <td style="">
+                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="105px" style="height: 105px;">
+                                                </td>
+                                            @endif
+                                        @endforeach
+                                        {{--
+                                        
                                     <td style="width:15%;">
-                                        <img src="img/inc-attestations/brand_fiprod4_ersuma.jpg" alt="logo" height="105px"
+                                        <img src="img/inc-attestations/brand_fiprod4_ersuma.jpg" alt="logo fiprod" height="105px"
                                             style="height: 105px;">
                                     </td>
                                     <td style="">
@@ -112,9 +157,11 @@
                                         <img src="img/inc-attestations/logo-FIPROD.jpg" alt="logo" height="105px"
                                             style="height: 105px;">
                                     </td>
+                                        --}}
                                 </tr>
                             </table>
                         </header>
+                        @endif 
 
                     </td>
                 </tr>
@@ -122,16 +169,24 @@
         </table>
 
 
-        <div style="z-index: 10; background:none; margin-top:115px; margin-bottom:0;">
+        <div style="z-index: 10; background:none; margin-top:105px; margin-bottom:0;">
 
 
             <div>
                 <!-- div opacity -->
                 <div style="z-index: 300; opacity:1; margin:0;font-size:12pt;">
 
+                    {{--
                     <div
                         style="z-index: 3; display:block; text-align:center; margin: 8px 0 0px 0; font-size: 20pt; font-weight:bold; color:#1a0642;">
                         4ème édition du Forum International des Professionnels du Droit et du Chiffre</div>
+                    --}}
+                    
+                    <!-- dynamic title -->
+                    @if ($formateur->getFormation->titre_evenement)
+                        <div style="z-index: 3;  display:block; text-align:center; margin: 8px 0 0px 0; font-size: 20pt; font-weight:bold; color:#1a0642; ">{{$formateur->getFormation->titre_evenement}}</div>
+                    @endif
+                    <!-- end dynamic title -->
 
                     <div
                         style="z-index: 100;clear:both; display:block; margin: 10px 0 0px 0;text-align: center;line-height: 1.2;font-size: 28pt; color:#006fc0; font-weight:bold;">
