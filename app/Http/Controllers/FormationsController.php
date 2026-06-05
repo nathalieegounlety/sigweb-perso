@@ -295,9 +295,19 @@ class FormationsController extends Controller
     
     public function listeLogos(Request $request)
     {
-        // récupérer la liste des rôles
+        // 
         try {
            return  $data = $this->formationsService->getListeLogos($request); 
+
+        }catch (\Exception $e){
+            return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+    public function editLogos(Request $request)
+    {
+        // 
+        try {
+            return $data = $this->formationsService->saveEditLogos($request); 
 
         }catch (\Exception $e){
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());

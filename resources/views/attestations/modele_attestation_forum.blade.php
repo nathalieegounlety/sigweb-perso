@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <title>Attestation de participation - ERSUMA</title>
     <style type="text/css">
         body {
@@ -172,22 +172,24 @@
                                 <table style="width: 100%; padding: 0; margin: 0; text-align:center;">
                                     <tr style="border-bottom:4px solid #1a0642;">
                                         @if ($formation->is_coorganisation)
-                                            <td style="width:40%;">
-                                                <img src="img/inc-attestations/logo_ohada-fr.jpg" alt="logo" height="95px" style="height: 95px;">
+                                            <td style="width:40%;border:4px solid red;">
+                                                <img src="img/inc-attestations/logo_ohada-fr.jpg" alt="logo" height="115px" style="height: 115px;">
                                             </td>
                                         @else
-                                            <td style="width:15%;">
-                                                <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo" height="95px" style="height: 95px;">
+                                            <td style="width:20%;">
+												{{-- <img src="img/inc-attestations/logo_ersuma.jpg" alt="logo" height="115px" style="height: 115px;"> --}}
+                                                <img src="img/inc-attestations/brand_fiprod4_ersuma.jpg" alt="logo" height="115px" style="height: 115px;">
+												
                                             </td>
                                         @endif
                                         @foreach ($logo_partenaires as $logo)
                                             @if ($logo_partenaires->count() == 1)
                                                 <td style="text-align:right;">
-                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="95px" style="height: 95px;">
+                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="115px" style="height: 115px;95px;">
                                                 </td>
                                             @else
                                                 <td style="">
-                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="95px" style="height: 95px;">
+                                                    <img src="storage/logo_partenaire/{{$logo->logo_path}}" alt="logo" height="115px" style="height: 115px;">
                                                 </td>
                                             @endif
                                         @endforeach
@@ -209,10 +211,10 @@
 
             <!-- Suppression de la div avec opacity -->
             @if ($formation->titre_evenement)
-                <div style="z-index: 3; display:block; text-align:center; font-size: 20px; font-weight:bold; color:#1a0642; ">{{$formation->titre_evenement}}</div>
+                <div style="z-index: 3; display:block; text-align:center; font-size: 24px; font-weight:bold; color:#1a0642; ">{{$formation->titre_evenement}}</div>
             @endif
 
-            <div style="z-index: 100; clear:both; display:block; margin: 5px 0 0px 0; text-align: center; line-height: 1.2; font-size: 36px; color:#006fc0; font-weight:bold;">
+            <div style="z-index: 100; clear:both; display:block; margin: 5px 0 0px 0; text-align: center; line-height: 1.2; font-size: 38px; color:#006fc0; font-weight:bold;">
                 <div style="margin: 08px 0;">
                     {{$nbre_jour >= 5 ? "CERTIFICAT DE FORMATION" : "ATTESTATION DE PARTICIPATION"}}
                 </div>

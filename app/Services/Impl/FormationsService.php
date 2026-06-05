@@ -970,4 +970,33 @@ class FormationsService implements FormationsInterface
             return ResponseHandler::error("ok",400,$th->getMessage());
         }  
     }
+    
+    public function saveEditLogos(Request $request): \Illuminate\Http\JsonResponse
+    { 
+        try { 
+            //code...
+            $id = (int) $request->idLogo;
+            $logo_partenaire = Logopartenaires::find($id);
+            $logo = $request->fichier;
+             if ($logo) {
+                            # code...
+                            $extension = $logo->getClientOriginalExtension();
+                            $name_logo = 'logo_'.$request->code_formation. '_' .date('YmdHis'). '.'.$logo->extension();
+                            //$logo->move(public_path('img/logo/'), $name_logo);
+                            $logo->storeAs('logo_partenaire', $name_logo, 'public');
+
+                            // enregistrement dans la table logo 
+                            $logo_partenaire->setAttribute('logo_path',$name_logo);  
+                            $logo_partenaire->setAttribute('updated_by', auth('api')->id());
+                            $logo_partenaire->update();
+                            return ResponseHandler::success("ok",['success'=>true]);
+                        }else{
+                            return ResponseHandler::success("Echec lors de l'enregistrement",['success'=>false]);
+
+                        } 
+        } catch (\Throwable $th) {
+            //throw $th;
+            return ResponseHandler::error("ok",400,$th->getMessage());
+        }  
+    }
 }
