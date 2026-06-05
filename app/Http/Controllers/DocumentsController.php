@@ -1010,47 +1010,47 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
     public function urlPieceAuditeur(Request $request)
 {
     $request->validate([
-        'auditeur_id' => 'required',
+        'auditeur_id' => 'required|integer',
         'code_formation' => 'required|string',
-        'piece_path' => 'required|string', 
+        'piece_path' => 'required|string',
     ]);
 
-    // Génération de l'URL avec TOUS les paramètres structurels du dossier
     $url = URL::temporarySignedRoute(
         'api.documents.piece_auditeur.show',
         now()->addMinutes(30),
         [
-            'auditeur_id'    => $request->auditeur_id,
+            'auditeur_id' => $request->auditeur_id,
             'code_formation' => $request->code_formation,
-            'filename'       => $request->piece_path,
+            'path' => $request->piece_path, 
         ]
     );
 
-    return response()->json([
-        'url' => $url,
-    ]);
+    return response()->json(['url' => $url]);
 }
 
-public function showPieceAuditeur(Request $request, $auditeur_id, $code_formation, $filename)
-{
-    if (! $request->hasValidSignature()) {
-        abort(403, 'Signature invalide ou expirée.');
-    }
-
+    public function showPieceAuditeur(Request $request, $auditeur_id, $code_formation, $path)
+    {
+        if (!$request->hasValidSignature()) {
+            \Log::error('Signature invalide', [
+                'url' => $request->url(),
+                'parameters' => $request->route()->parameters(),
+                'query' => $request->query(),
+            ]);
+            abort(403, 'Signature invalide ou expirée.');
+        }
     
-    $path = storage_path('private/pieces_auditeur/' . $filename);
-
-    if (!file_exists($path)) {
-        abort(404, 'Fichier introuvable sur le disque. Chemin tenté : ' . $path);
-    }
-
-    return response()->file($path, [
-        'Content-Type' => 'application/pdf',
-        'Content-Disposition' => 'inline; filename="' . basename($filename) . '"'
-    ]);
-}
-
-
+        $fullPath = storage_path('private/pieces_auditeur/' . $path);
     
+        if (!file_exists($fullPath)) {
+            \Log::error('Fichier introuvable', ['path' => $fullPath]);
+            abort(404, 'Fichier introuvable : ' . $path);
+        }
+    
+        return response()
+            ->file($fullPath, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
+            ]);
+    } 
 
 }
