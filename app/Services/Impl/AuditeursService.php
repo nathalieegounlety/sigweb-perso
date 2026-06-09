@@ -1264,7 +1264,7 @@ class AuditeursService implements AuditeursInterface
 
     public function mesPieces(Request $request): \Illuminate\Http\JsonResponse
     {
-        // TODO: Implement mesPieces() method.
+        // TODO: Implement mesPieces() method. 
         if ($request->has('auditeur_id') && !empty($request->input('auditeur_id'))) {
             # code...
             $auditeur = Auditeurs::find($request->auditeur_id);
@@ -1273,18 +1273,19 @@ class AuditeursService implements AuditeursInterface
         } else {
             # code...
             $user = auth('api')->user();
+            $auditeur = Auditeurs::whereEmail($user->email)->first();
         }
         
         $code_formation = $request->code_formation;
         $listePieces = InscritsTypePieces::leftJoin(
             'auditeurs_pieces',
-            function ($join) use ($user,$code_formation) {
+            function ($join) use ($user,$code_formation, $auditeur) {
                     $join->on(
                         'auditeurs_pieces.inscrits_typespieces_id',
                         '=',
                         'inscrits_type_pieces.id'
                     )
-                        ->where('auditeurs_pieces.created_by', $user->id)
+                        ->where('auditeurs_pieces.auditeur_id', $auditeur->id)
                         ->where('auditeurs_pieces.code_formation', $code_formation);
                 }
             )
@@ -1299,7 +1300,8 @@ class AuditeursService implements AuditeursInterface
             ]);
         $totalPieces = InscritsTypePieces::count();
         $totalPiecesFournies = DB::table('auditeurs_pieces')
-            ->where('created_by', $user->id)
+            //->where('created_by', $user->id)
+            ->where('auditeur_id', $auditeur->id)
             ->where('code_formation', $request->code_formation)
             ->count();
         $dataResponse = [

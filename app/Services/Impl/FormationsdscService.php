@@ -243,14 +243,14 @@ class FormationsdscService implements FormationsdscInterface
             ->selectRaw(
                 '(EXISTS (
                 SELECT 1 FROM auditeurs_pieces
-                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-            )) as check_dossier'
+                WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+            )) as check_dossier', [$code_formation]
             )
             ->selectRaw(
           '(
             SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
-            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-          ) as nbre_dossier' 
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+          ) as nbre_dossier' , [$code_formation]
       );
 
         // Recherche globale sur plusieurs champs
@@ -390,8 +390,7 @@ class FormationsdscService implements FormationsdscInterface
         }
         return  ResponseHandler::success('E-mail envoyé avec succès',['success'=> true, 'code_formation'=>$request->code_formation]);
     }
-
-    
+ 
 
     public function getListeDossiersValides(Request $request, string $code_formation)
     {$perPage = $request->input('per_page', 50);
@@ -424,14 +423,14 @@ class FormationsdscService implements FormationsdscInterface
             ->selectRaw(
                 '(EXISTS (
                 SELECT 1 FROM auditeurs_pieces
-                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-            )) as check_dossier'
+                WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+            )) as check_dossier', [$code_formation]
             )
             ->selectRaw(
           '(
             SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
-            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-          ) as nbre_dossier' 
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+          ) as nbre_dossier', [$code_formation]
       );
 
         // Recherche globale sur plusieurs champs
@@ -521,14 +520,14 @@ class FormationsdscService implements FormationsdscInterface
             ->selectRaw(
                 '(EXISTS (
                 SELECT 1 FROM auditeurs_pieces
-                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-            )) as check_dossier'
+                WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+            )) as check_dossier', [$code_formation]
             )
             ->selectRaw(
           '(
             SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
-            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-          ) as nbre_dossier' 
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+          ) as nbre_dossier', [$code_formation]
       );
 
         // Recherche globale sur plusieurs champs
