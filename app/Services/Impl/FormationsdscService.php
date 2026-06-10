@@ -221,7 +221,7 @@ class FormationsdscService implements FormationsdscInterface
         
         $filterNom = $request->input('filter_nom');
         $filterPrenoms = $request->input('filter_prenoms');
-        $filterCreatedAt = $request->input('filter_created_at');
+        $filterCreatedAt = $request->input('filter_created_at'); 
         
 
         $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
@@ -291,7 +291,11 @@ class FormationsdscService implements FormationsdscInterface
         $liste_inscrits->orderBy("detailspaiements.{$sortField}", $sortOrder);
 
         } 
-        
+        elseif ($sortField == 'check_dossier') {
+
+            $liste_inscrits->orderBy('check_dossier', $sortOrder);
+
+        }
         else{
             
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
@@ -472,6 +476,11 @@ class FormationsdscService implements FormationsdscInterface
 
         } 
         
+        elseif ($sortField == 'check_dossier') {
+
+            $liste_inscrits->orderBy('check_dossier', $sortOrder);
+
+        }
         else{
             
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
@@ -569,6 +578,11 @@ class FormationsdscService implements FormationsdscInterface
 
         } 
         
+        elseif ($sortField == 'check_dossier') {
+
+            $liste_inscrits->orderBy('check_dossier', $sortOrder);
+
+        }
         else{
             
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
@@ -617,14 +631,14 @@ class FormationsdscService implements FormationsdscInterface
             ->selectRaw(
                 '(EXISTS (
                 SELECT 1 FROM auditeurs_pieces
-                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-            )) as check_dossier'
+                WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+            )) as check_dossier', [$code_formation]
             )
             ->selectRaw(
           '(
             SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
-            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-          ) as nbre_dossier' 
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+          ) as nbre_dossier', [$code_formation]
       );
 
         // Recherche globale sur plusieurs champs
@@ -666,6 +680,11 @@ class FormationsdscService implements FormationsdscInterface
 
         } 
         
+        elseif ($sortField == 'check_dossier') {
+
+            $liste_inscrits->orderBy('check_dossier', $sortOrder);
+
+        }
         else{
             
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
