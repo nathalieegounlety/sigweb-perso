@@ -523,3 +523,9 @@ Route::prefix('v1/scolarites')->controller(CandidaturesController::class)->group
     Route::get('moodle/registre/notes/candidats', 'registreNotesCandidats')->name('registreNotesCandidats.moodle'); 
 });
 
+
+
+// gestion des formations dsc
+Route::prefix('v1/afribapay')->controller(\App\Http\Controllers\AfribapayController::class)->group(function () {
+    Route::get('token', 'generateToken'); 
+});

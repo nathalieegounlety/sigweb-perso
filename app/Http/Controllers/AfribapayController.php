@@ -2,30 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHandler;
+use App\Services\contracts\AfribapayInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class AfribapayController extends Controller
 {
-    /**
-     * Génère un mot de passe aléatoire.
-     */
-    private function genererToken(Request $request)
+     private AfribapayInterface $afribapayService;
+
+    public function __construct(AfribapayInterface $afribapayService)
     {
-       $client = new \GuzzleHttp\Client(
-        [
-            'headers' => ['Authorization' => env("AUTHORIZATION"), 'Content-Type' => 'application/json']
-        ]);
-        /*
-        $body = '';
-        $request = new Request('POST', 'https://api-sandbox.afribapay.com/v1/token', $headers, $body);
-        $res = $client->sendAsync($request)->wait();
-        echo $res->getBody();
-        */
+        // restriction des accès
+        $this->middleware('auth:api',['except' => ['generateToken']]);
+        $this->afribapayService = $afribapayService;
+    }
 
-        $response = $client->request('POST', 'https://api-sandbox.afribapay.com/v1/token', [ 
-        ]);
-        $response = json_decode($response->getBody(), true);
+    
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function geToken(Request $request)
+    {
+        try { 
+            // procéder à l'enregistrement
+             $token = $this->afribapayService->getToken();
+             return ResponseHandler::success("ok",$token);
 
-        return dd($response);
-    } 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function generateToken()
+    {
+        try { 
+            // procéder à l'enregistrement
+             $token = $this->afribapayService->generateToken();
+             return ResponseHandler::success("ok",$token);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function getHeaders()
+    {
+        return [
+            'Authorization' => 'Bearer '.$this->getToken(),
+            'Accept' => 'application/json'
+        ];
+    }
+
+    public function requestAfribapay(string $method,string $url,array $data = [])
+    {
+        $response = Http::withHeaders(
+            $this->getHeaders()
+        )->$method($url, $data);
+
+        if ($response->status() == 401) {
+
+            Cache::forget('afribapay_token');
+
+            $response = Http::withHeaders([
+                'Authorization' =>
+                    'Bearer '.$this->generateToken()
+            ])->$method($url, $data);
+        }
+
+        return $response;
+    }
+
 }
