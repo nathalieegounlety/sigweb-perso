@@ -13,12 +13,18 @@ class AfribapayService implements AfribapayInterface
          // 1. Vérifier le cache DB
          $token = Cache::get('afribapay_token');
 
-        if ($token) {
-            return $token;
+        if (!$token) {
+                return $this->generateToken();
+            }
+
+
+        // token expiré
+        if (now()->greaterThan($token['expires_at'])) {
+            return $this->generateToken();
         }
 
          // 2. Sinon générer un nouveau token
-        return $this->generateToken();
+        return $token;
     }
  
     public function generateToken()
@@ -26,7 +32,7 @@ class AfribapayService implements AfribapayInterface
         $authorize = config('services.afribapay.authorisation_key');
         $client = new Client(
         [
-            'verify' => false, // <=== à désactiver en production
+            'verify' => true, // <=== à désactiver en production
             'headers' => ['Authorization' => 'Basic ' . base64_encode($authorize), 'Content-Type' => 'application/json']
         ]); 
 
