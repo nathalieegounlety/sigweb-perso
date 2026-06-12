@@ -834,7 +834,7 @@ class FormationsService implements FormationsInterface
         $filterCreatedAt = $request->input('filter_created_at');
         
 
-        $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+        /*$liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
             ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
             ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
@@ -854,7 +854,76 @@ class FormationsService implements FormationsInterface
                 SELECT 1 FROM auditeurs_pieces
                 WHERE auditeurs_pieces.auditeur_id = auditeurs.id
             )) as check_dossier'
-            );
+            );*/
+
+            // AUDITEUR UNIQUE PAR EMAIL (évite doublons)
+            $subAuditeur = DB::table('auditeurs as a')
+                ->select([
+                    'a.email',
+                    'a.nom',
+                    'a.prenoms',
+                    'a.telephone',
+                    'a.id as id_auditeur'
+                ])
+                ->join(DB::raw('(
+                    SELECT email, MAX(id) as max_id
+                    FROM auditeurs
+                    GROUP BY email
+                ) last'), function ($join) {
+                    $join->on('a.id', '=', 'last.max_id');
+                });
+                
+            $liste_inscrits = Inscriptions::query()
+
+    ->leftJoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+    ->leftJoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
+    ->leftJoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+
+    //  auditeur unique (anti doublon email)
+    ->leftJoinSub($subAuditeur, 'auditeurs', function ($join) {
+        $join->on('inscriptions.email', '=', 'auditeurs.email');
+    })
+ 
+
+    ->where('inscriptions.code_formation', $code_formation)
+    ->where('inscriptions.is_delete', false)
+
+    ->select([
+        'inscriptions.id',
+        'inscriptions.sync_zoom',
+        'inscriptions.code_inscription',
+        'inscriptions.created_at',
+
+        'auditeurs.nom',
+        'auditeurs.prenoms',
+        'auditeurs.email',
+        'auditeurs.telephone',
+        'auditeurs.id_auditeur',
+
+        'formations.fm_presentielle',
+        'formations.fm_visio',
+        'formations.is_formation_dsc',
+ 
+        'grilletarifaires.type_tarif as mode_tarif',
+        'inscriptions.type_formation as mode',
+
+        'grilletarifaires.montant',
+
+        'inscriptions.type_formation',
+
+        'inscriptions.is_formation_dsc',
+        'inscriptions.is_delete',
+        'inscriptions.code_formation',
+    ])
+
+    //  dossier check corrigé
+    ->selectRaw("
+        EXISTS (
+            SELECT 1
+            FROM auditeurs_pieces
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+        ) as check_dossier
+    ");
 
         // Recherche globale sur plusieurs champs
         if ($search) {

@@ -706,6 +706,7 @@ class AuditeursService implements AuditeursInterface
     public function getListeInscriptions(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getListeInscriptions() method.
+        /*
         $data = Inscriptions::query()
             ->leftJoin('formations', 'formations.code_formation', '=', 'inscriptions.code_formation')
             ->leftJoin('inscriptions_dscs', 'inscriptions_dscs.code_inscription', '=', 'inscriptions.code_inscription')
@@ -744,7 +745,111 @@ class AuditeursService implements AuditeursInterface
             ])
             ->where('inscriptions.email', $request->email)
             ->orderBy("inscriptions.created_at","DESC")
-            ->get();
+            ->get(); */
+
+            $lastPaiement = DB::table('paiements as p')
+    ->select([
+        'p.code_inscription',
+        'p.reference',
+        'p.num_transaction',
+        'p.statut_paiement',
+    ])
+    ->join(
+        DB::raw('(
+            SELECT code_inscription, MAX(id) as max_id
+            FROM paiements
+            GROUP BY code_inscription
+        ) lp'),
+        function ($join) {
+            $join->on('p.id', '=', 'lp.max_id');
+        }
+    );
+
+$data = Inscriptions::query()
+    ->leftJoin(
+        'formations',
+        'formations.code_formation',
+        '=',
+        'inscriptions.code_formation'
+    )
+    ->leftJoin(
+        'inscriptions_dscs',
+        'inscriptions_dscs.code_inscription',
+        '=',
+        'inscriptions.code_inscription'
+    )
+    ->leftJoin(
+        'tarificationsformations',
+        'tarificationsformations.id',
+        '=',
+        'inscriptions.tarif_formation_id'
+    )
+    ->leftJoin(
+        'grilletarifaires',
+        'grilletarifaires.id',
+        '=',
+        'tarificationsformations.id_grilletarifaire'
+    )
+    ->leftJoinSub($lastPaiement, 'paiements', function ($join) {
+        $join->on(
+            'paiements.code_inscription',
+            '=',
+            'inscriptions.code_inscription'
+        );
+    })
+    ->select([
+        'formations.id as id_formation',
+        'formations.code_formation',
+        'formations.theme',
+        'formations.date_debut',
+        'formations.is_formation_dsc',
+
+        'inscriptions_dscs.id as id_dsc',
+
+        'inscriptions.id as id_inscription',
+        'inscriptions.code_inscription',
+        'inscriptions.email',
+
+        'paiements.reference',
+        'paiements.num_transaction',
+        'paiements.statut_paiement',
+
+        'grilletarifaires.libelle',
+    ])
+    ->addSelect([
+        DB::raw("
+            CASE
+                WHEN paiements.num_transaction IS NOT NULL
+                THEN 1
+                ELSE 0
+            END as checkPaiement
+        "),
+        DB::raw("
+            CASE
+                WHEN paiements.reference IS NOT NULL
+                THEN 1
+                ELSE 0
+            END as checkReferencePaiement
+        "),
+        DB::raw("
+            CASE
+                WHEN inscriptions_dscs.id IS NOT NULL
+                THEN 1
+                ELSE 0
+            END as checkdsc
+        "),
+        DB::raw("
+            CASE
+                WHEN formations.date_debut IS NOT NULL
+                AND YEAR(formations.date_debut) > 2024
+                THEN 1
+                ELSE 0
+            END as checkDsc2024
+        "),
+    ])
+    ->where('inscriptions.email', $request->email)
+    ->orderBy('inscriptions.created_at', 'DESC')
+    ->get();
 
         return  ResponseHandler::success("ok",$data);
     }
