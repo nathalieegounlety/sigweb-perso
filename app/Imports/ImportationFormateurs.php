@@ -39,8 +39,13 @@ class ImportationFormateurs implements ToCollection
                     # code...
                     $formateur = Formateurs::where("nom",trim($rows[$i][$nom]))->where("prenoms",trim($rows[$i][$prenoms]))->first(); 
                     $formateur->setAttribute('nom', trim($rows[$i][$nom]));
-                    $formateur->setAttribute('prenoms', trim($rows[$i][$prenoms]));
-                    $formateur->setAttribute('telephone', trim($rows[$i][$telephone]));
+                    $formateur->setAttribute('prenoms', trim($rows[$i][$prenoms]));if (!empty($rows[$i][$telephone])) {
+                        # code...
+                        $formateur->setAttribute('telephone', trim($rows[$i][$telephone]));
+                    } else {
+                        # code...
+                        $formateur->setAttribute('telephone', 88888888);
+                    }
                     $formateur->setAttribute('email', trim($rows[$i][$email]));
                     if (!empty($rows[$i][$nationalite])) {
                         # code...
@@ -62,7 +67,14 @@ class ImportationFormateurs implements ToCollection
                     $formateur = new Formateurs(); 
                     $formateur->setAttribute('nom', trim($rows[$i][$nom]));
                     $formateur->setAttribute('prenoms', trim($rows[$i][$prenoms]));
-                    $formateur->setAttribute('telephone', trim($rows[$i][$telephone]));
+                    if (!empty($rows[$i][$telephone])) {
+                        # code...
+                        $formateur->setAttribute('telephone', trim($rows[$i][$telephone]));
+                    } else {
+                        # code...
+                        $formateur->setAttribute('telephone', 88888888);
+                    }
+                    
                     $formateur->setAttribute('email', trim($rows[$i][$email]));
                     if (!empty($rows[$i][$nationalite])) {
                         # code...
