@@ -232,9 +232,7 @@ class AuditeursService implements AuditeursInterface
                 //return $formation_type;
                 $total_formation  = $total_formation + 1;
                 # code...
-                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
-                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
-                $formation = Formations::where("code_formation", $tarif_formation->code_formation)->get()->first();
+                $formation = Formations::where("code_formation", $tarif_formation->code_formation)->first();
 
                 // insert data in table inscrits
                 $created_at = date("Y-m-d H:i:s");
@@ -247,7 +245,7 @@ class AuditeursService implements AuditeursInterface
                     $check_exist  = $check_exist + 1;
                     // if participant exist
                     $get_auditeur = Inscriptions::where('email', $auditeur->email)->where('code_formation', $formation->code_formation)->get()->first();
-                    $generateCode = $get_auditeur->code_inscription;
+                    //$generateCode = $get_auditeur->code_inscription;
                     $listeFmExists[] = $formation->code_formation;
                 } else {
                     // vérifier si la formation est présentiel ou pas
@@ -258,10 +256,13 @@ class AuditeursService implements AuditeursInterface
 
                     $checkExitingFormation = Inscriptions::whereCodeFormation($formation->code_formation)
                         ->whereEmail(trim($auditeur->email))
-                        ->whereTarifFormationId($tarif_formation->id)
+                        //->whereTarifFormationId($tarif_formation->id)
                         ->exists();
 
                     if (!$checkExitingFormation) {
+                        
+                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
+                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
 
                         $inscrit = new Inscriptions();
                         $inscrit->setAttribute("email", trim($auditeur->email));
@@ -1143,8 +1144,6 @@ $data = Inscriptions::query()
                 // return
                 $total_formation  = $total_formation + 1;
                 # code...
-                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
-                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
                 $formation = Formations::where("code_formation", $tarif_formation->code_formation)->get()->first();
 
                 // insert data in table inscrits
@@ -1152,7 +1151,8 @@ $data = Inscriptions::query()
 
                 // enregistrement des données dans la table inscrit
                 // vérifier si l'e-mail existe dans la table des inscrits
-                $check_auditeur = Inscriptions::where('email', trim($auditeur->email))->where('code_formation', $formation->code_formation)->exists();
+                $check_auditeur = Inscriptions::where('email', trim($auditeur->email))
+                ->where('code_formation', $formation->code_formation)->exists();
 
                 if ($check_auditeur) {
                     $check_exist  = $check_exist + 1;
@@ -1161,18 +1161,21 @@ $data = Inscriptions::query()
                         ->where('code_formation', $formation->code_formation)
                         ->get()
                         ->first();
-                    $generateCode = $get_auditeur->code_inscription;
+                //    $generateCode = $get_auditeur->code_inscription;
                     $listeFmExists[] = $formation->code_formation;
                 } else {
                     // vérifier si la formation est présentiel ou pas
                     $presentiel = 0;
                     $checkExitingFormation = Inscriptions::whereCodeFormation($formation->code_formation)
                         ->whereEmail(trim($auditeur->email))
-                        ->whereTarifFormationId($tarif_formation->id)
+                        //->whereTarifFormationId($tarif_formation->id)
                         ->exists();
 
                     if (!$checkExitingFormation) {
 
+                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
+                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
+                
                         $inscrit = new Inscriptions();
                         $inscrit->setAttribute("email", trim($auditeur->email));
                         $inscrit->setAttribute("tarif_formation_id", $tarif_formation->id);
