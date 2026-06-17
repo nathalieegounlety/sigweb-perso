@@ -834,7 +834,7 @@ class FormationsService implements FormationsInterface
         $filterCreatedAt = $request->input('filter_created_at');
         
 
-        /*$liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+        $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
             ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
             ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
@@ -846,7 +846,7 @@ class FormationsService implements FormationsInterface
             ->where('inscriptions.is_delete', false)
             ->select(['inscriptions.id','inscriptions.sync_zoom','inscriptions.code_inscription', 'inscriptions.created_at',
                 'auditeurs.nom', 'auditeurs.prenoms', 'formations.fm_presentielle', 'formations.fm_visio', 'auditeurs.email',
-                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode', 'inscriptions.type_formation as mode','grilletarifaires.montant',
+                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode_tarif', 'inscriptions.type_formation as mode','grilletarifaires.montant',
                 'inscriptions.type_formation', 'detailspaiements.statut_paiement','detailspaiements.reference_paiement', 'auditeurs.id as id_auditeur',
                 'inscriptions.is_formation_dsc', 'inscriptions.is_delete','inscriptions.code_formation','formations.is_formation_dsc'])
             ->selectRaw(
@@ -854,10 +854,10 @@ class FormationsService implements FormationsInterface
                 SELECT 1 FROM auditeurs_pieces
                 WHERE auditeurs_pieces.auditeur_id = auditeurs.id
             )) as check_dossier'
-            );*/
+            );
 
             // AUDITEUR UNIQUE PAR EMAIL (évite doublons)
-            $subAuditeur = DB::table('auditeurs as a')
+            /*$subAuditeur = DB::table('auditeurs as a')
                 ->select([
                     'a.email',
                     'a.nom',
@@ -872,7 +872,7 @@ class FormationsService implements FormationsInterface
                 ) last'), function ($join) {
                     $join->on('a.id', '=', 'last.max_id');
                 });
-                
+
             $liste_inscrits = Inscriptions::query()
 
     ->leftJoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
@@ -923,7 +923,7 @@ class FormationsService implements FormationsInterface
             FROM auditeurs_pieces
             WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
         ) as check_dossier
-    ");
+    ");*/
 
         // Recherche globale sur plusieurs champs
         if ($search) {

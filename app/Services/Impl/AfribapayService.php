@@ -35,7 +35,7 @@ public function generateToken()
 {
     $authorize = config('services.afribapay.authorisation_key');
     $client = new Client([
-        'verify'  => true, // désactiver en production
+        'verify'  => false, // désactiver en production
         'headers' => [
             'Authorization' => 'Basic ' . base64_encode($authorize),
             'Content-Type'  => 'application/json'

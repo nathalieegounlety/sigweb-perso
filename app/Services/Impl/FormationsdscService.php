@@ -448,45 +448,32 @@ class FormationsdscService implements FormationsdscInterface
         $decision = $request->decision;
         $motif = $request->motif;
         $user = auth('api')->user();
-        Log::info($listeInscAuditeurs);
+        //Log::info($listeInscAuditeurs);
         if (!empty($listeInscAuditeurs)) {
             foreach ($listeInscAuditeurs as $key => $id) {
                 $inscrit = Inscriptions::find($id);
-                Log::info($inscrit);
+                //Log::info($inscrit);
                 if ($inscrit) { 
                      $auditeur = Auditeurs::where("email", trim($inscrit->email))->first();
                     if ($auditeur) {
-                        # code...                         
-                        if ($decision == "RELANCE") {
-                            // Mise à jour de l'inscription existante
-                            $updateInscrit = Inscriptions::find($inscrit->id);
-                            $updateInscrit->setAttribute("nbre_relance",$updateInscrit->nbre_relance +1); 
-                            $updateInscrit->update(); 
 
-                        }else{
-                            // Mise à jour de l'inscription existante
-                            $updateInscrit = Inscriptions::find($inscrit->id);
-                            $updateInscrit->setAttribute("traiter",true);
-                            $updateInscrit->setAttribute("statut_dossier",trim($decision));
-                            //$updateInscrit->setAttribute("valider", $request->statut === 'valider' ? 1 : 0);
-                            $updateInscrit->setAttribute("traiter_par",$user->id);
-                            $updateInscrit->setAttribute("observations", $motif);
-                            $updateInscrit->update(); 
-
-                        }
-        
+                    
                         // Enregistrement des informations dans la table inscriptions_dscs si dossier validé
                         if ($decision == "VALIDEE") {
                             # code...
+                            // vérifier si la données n'existe pas
+                            $checkData = InscriptionsDsc::where('code_inscription', $updateInscrit->code_inscription)
+                            ->where('inscrits_id',$updateInscrit->id)
+                            ->exists();
+                            if(!$checkData){
                             $inscription_dsc = new InscriptionsDsc();
                             $inscription_dsc->inscrits_id = $updateInscrit->id;
                             $inscription_dsc->code_inscription = $updateInscrit->code_inscription;
                             $inscription_dsc->traiter_par = $user->id;
                             $inscription_dsc->updated_by = $user->id;
                             $inscription_dsc->save();
-                        }
 
-                        // enregistrement de l'historique
+                              // enregistrement de l'historique
                         $historiqueTraitementDossier = new Historiquetraitementdossiers();
                         $historiqueTraitementDossier->setAttribute("inscrits_id",$updateInscrit->id);
                         $historiqueTraitementDossier->setAttribute("code_inscription",$inscrit->code_inscription);
@@ -512,6 +499,80 @@ class FormationsdscService implements FormationsdscInterface
 
                             } catch (\Exception $e) { 
                             }
+
+                            }
+                            
+                        } elseif ($decision == "RELANCE") {
+                            // Mise à jour de l'inscription existante
+                            $updateInscrit = Inscriptions::find($inscrit->id);
+                            $updateInscrit->setAttribute("nbre_relance",$updateInscrit->nbre_relance +1); 
+                            $updateInscrit->update(); 
+
+                              // enregistrement de l'historique
+                        $historiqueTraitementDossier = new Historiquetraitementdossiers();
+                        $historiqueTraitementDossier->setAttribute("inscrits_id",$updateInscrit->id);
+                        $historiqueTraitementDossier->setAttribute("code_inscription",$inscrit->code_inscription);
+                        $historiqueTraitementDossier->setAttribute("traiter_par",$user->id);
+                        $historiqueTraitementDossier->setAttribute("message",trim($motif)); 
+                        $historiqueTraitementDossier->setAttribute("statut_dossier",trim($decision));
+                        $historiqueTraitementDossier->save();
+
+                        // envoi de mail 
+                            $contenu = [
+                                'nom' => $auditeur->nom,
+                                'prenoms' => $auditeur->prenoms,
+                                'nom_prenoms' =>  $auditeur->nom . ' ' . $auditeur->prenoms,
+                                'subject' => 'INFORMATION SUR VOTRE CANDIDATURE ' . $request->code_formation,
+                                'email' => $auditeur->email,
+                                'statut' => $decision,
+                                'observations' => $motif,
+                            ];
+                            
+                           
+                            try {
+                               Mail::to($inscrit->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new ValidationDSC($contenu)); 
+
+                            } catch (\Exception $e) { 
+                            }
+
+                        }else{
+                            // Mise à jour de l'inscription existante
+                            $updateInscrit = Inscriptions::find($inscrit->id);
+                            $updateInscrit->setAttribute("traiter",true);
+                            $updateInscrit->setAttribute("statut_dossier",trim($decision));
+                            //$updateInscrit->setAttribute("valider", $request->statut === 'valider' ? 1 : 0);
+                            $updateInscrit->setAttribute("traiter_par",$user->id);
+                            $updateInscrit->setAttribute("observations", $motif);
+                            $updateInscrit->update(); 
+
+                              // enregistrement de l'historique
+                        $historiqueTraitementDossier = new Historiquetraitementdossiers();
+                        $historiqueTraitementDossier->setAttribute("inscrits_id",$updateInscrit->id);
+                        $historiqueTraitementDossier->setAttribute("code_inscription",$inscrit->code_inscription);
+                        $historiqueTraitementDossier->setAttribute("traiter_par",$user->id);
+                        $historiqueTraitementDossier->setAttribute("message",trim($motif)); 
+                        $historiqueTraitementDossier->setAttribute("statut_dossier",trim($decision));
+                        $historiqueTraitementDossier->save();
+
+                        // envoi de mail 
+                            $contenu = [
+                                'nom' => $auditeur->nom,
+                                'prenoms' => $auditeur->prenoms,
+                                'nom_prenoms' =>  $auditeur->nom . ' ' . $auditeur->prenoms,
+                                'subject' => 'INFORMATION SUR VOTRE CANDIDATURE ' . $request->code_formation,
+                                'email' => $auditeur->email,
+                                'statut' => $decision,
+                                'observations' => $motif,
+                            ];
+                            
+                           
+                            try {
+                               Mail::to($inscrit->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new ValidationDSC($contenu)); 
+
+                            } catch (\Exception $e) { 
+                            }
+
+                        } 
                              
                     }
                 }
@@ -522,7 +583,8 @@ class FormationsdscService implements FormationsdscInterface
  
 
     public function getListeDossiersValides(Request $request, string $code_formation)
-    {$perPage = $request->input('per_page', 50);
+    {
+        $perPage = $request->input('per_page', 50);
         $search = $request->input('search');
         $sortField = $request->input('sort_field', 'id');
         $sortOrder = $request->input('sort_order', 'desc');

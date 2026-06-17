@@ -748,7 +748,7 @@ class AuditeursService implements AuditeursInterface
             ->orderBy("inscriptions.created_at","DESC")
             ->get(); */
 
-            $lastPaiement = DB::table('paiements as p')
+    $lastPaiement = DB::table('paiements as p')
     ->select([
         'p.code_inscription',
         'p.reference',
@@ -1175,7 +1175,7 @@ $data = Inscriptions::query()
 
                 // récupérer le montant total pour vérifier si la formation est gratuite ou pas
                 $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
-                
+
                         $inscrit = new Inscriptions();
                         $inscrit->setAttribute("email", trim($auditeur->email));
                         $inscrit->setAttribute("tarif_formation_id", $tarif_formation->id);
