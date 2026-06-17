@@ -461,6 +461,15 @@ class FormationsdscService implements FormationsdscInterface
                         // Enregistrement des informations dans la table inscriptions_dscs si dossier validé
                         if ($decision == "VALIDEE") {
                             # code...
+                            // Mise à jour de l'inscription existante
+                            $updateInscrit = Inscriptions::find($inscrit->id);
+                            $updateInscrit->setAttribute("traiter",true);
+                            $updateInscrit->setAttribute("statut_dossier",trim($decision));
+                            //$updateInscrit->setAttribute("valider", $request->statut === 'valider' ? 1 : 0);
+                            $updateInscrit->setAttribute("traiter_par",$user->id);
+                            $updateInscrit->setAttribute("observations", $motif);
+                            $updateInscrit->update(); 
+                            
                             // vérifier si la données n'existe pas
                             $checkData = InscriptionsDsc::where('code_inscription', $updateInscrit->code_inscription)
                             ->where('inscrits_id',$updateInscrit->id)
@@ -500,7 +509,7 @@ class FormationsdscService implements FormationsdscInterface
                             } catch (\Exception $e) { 
                             }
 
-                            }
+                            } 
                             
                         } elseif ($decision == "RELANCE") {
                             // Mise à jour de l'inscription existante
