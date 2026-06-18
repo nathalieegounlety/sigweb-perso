@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'afribapay' => [
+    'base_url' => env('AFRIBAPAY_BASE_URL'),
+    'api_key' => env('AFRIBAPAY_PUBLIC_API_USER'),
+    'secret_key' => env('AFRIBAPAY_SECRET_API_KEY'),
+    'merchant_id' => env('AFRIBAPAY_MERCHANT_KEY'),
+    'user_key' => env('AFRIBAPAY_AGENT_ID'),
+    'authorisation_key' => env('AFRIBAPAY_AUTHORISATION'),
+],
+
 ];

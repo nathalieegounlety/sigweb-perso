@@ -214,14 +214,16 @@ class FormationsdscService implements FormationsdscInterface
     
 
     public function getListeDossiersAttente(Request $request, string $code_formation)
-    {$perPage = $request->input('per_page', 50);
+    {
+        /*
+        $perPage = $request->input('per_page', 50);
         $search = $request->input('search');
         $sortField = $request->input('sort_field', 'id');
         $sortOrder = $request->input('sort_order', 'desc');
         
         $filterNom = $request->input('filter_nom');
         $filterPrenoms = $request->input('filter_prenoms');
-        $filterCreatedAt = $request->input('filter_created_at');
+        $filterCreatedAt = $request->input('filter_created_at'); 
         
 
         $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
@@ -243,15 +245,138 @@ class FormationsdscService implements FormationsdscInterface
             ->selectRaw(
                 '(EXISTS (
                 SELECT 1 FROM auditeurs_pieces
-                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-            )) as check_dossier'
+                WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+            )) as check_dossier', [$code_formation]
             )
             ->selectRaw(
           '(
             SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
-            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-          ) as nbre_dossier' 
-      );
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id AND auditeurs_pieces.code_formation = ?
+          ) as nbre_dossier' , [$code_formation]
+      );*/
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search');
+        $sortField = $request->input('sort_field', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $filterNom = $request->input('filter_nom');
+        $filterPrenoms = $request->input('filter_prenoms');
+        $filterCreatedAt = $request->input('filter_created_at');
+
+
+        // AUDITEUR UNIQUE PAR EMAIL (évite doublons)
+        $subAuditeur = DB::table('auditeurs as a')
+            ->select([
+                'a.email',
+                'a.nom',
+                'a.prenoms',
+                'a.telephone',
+                'a.id as id_auditeur'
+            ])
+            ->join(DB::raw('(
+                SELECT email, MAX(id) as max_id
+                FROM auditeurs
+                GROUP BY email
+            ) last'), function ($join) {
+                $join->on('a.id', '=', 'last.max_id');
+            });
+
+
+        // QUERY PRINCIPALE
+        $liste_inscrits = Inscriptions::query()
+
+            ->leftJoin('formations', 'formations.code_formation', '=', 'inscriptions.code_formation')
+            ->leftJoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+            ->leftJoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+
+            // AUDITEUR UNIQUE
+            ->leftJoinSub($subAuditeur, 'auditeurs', function ($join) {
+                $join->on('inscriptions.email', '=', 'auditeurs.email');
+            })
+
+            ->where('inscriptions.code_formation', $code_formation)
+            ->where('inscriptions.is_delete', false)
+            ->where('inscriptions.traiter', false)
+
+            ->select([
+                'inscriptions.id',
+                'inscriptions.sync_zoom',
+                'inscriptions.code_inscription',
+                'inscriptions.created_at',
+
+                'auditeurs.nom',
+                'auditeurs.prenoms',
+                'auditeurs.email',
+                'auditeurs.telephone',
+                'auditeurs.id_auditeur',
+
+                'formations.fm_presentielle',
+                'formations.fm_visio',
+                'formations.is_formation_dsc',
+
+                'grilletarifaires.type_tarif as mode_tarif',
+                'inscriptions.type_formation as mode',
+                'grilletarifaires.montant',
+
+                'inscriptions.is_formation_dsc',
+                'inscriptions.is_delete',
+                'inscriptions.code_formation', 
+            ])
+
+            //  CHECK dossier existence
+            ->selectRaw("
+                EXISTS (
+                    SELECT 1
+                    FROM auditeurs_pieces
+                    WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+                    AND auditeurs_pieces.code_formation = ?
+                ) as check_dossier
+            ", [$code_formation])
+
+            //  nombre de pièces
+            ->selectRaw("
+                (
+                    SELECT COUNT(*)
+                    FROM auditeurs_pieces
+                    WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+                    AND auditeurs_pieces.code_formation = ?
+                ) as nbre_dossier
+            ", [$code_formation])
+
+            //  paiement existe
+            ->selectRaw("
+                EXISTS (
+                    SELECT 1
+                    FROM detailspaiements dp
+                    WHERE dp.email = inscriptions.email
+                    AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+                ) as has_paiement
+            ")
+
+            //  dernier statut paiement
+            ->selectRaw("
+                (
+                    SELECT dp.statut_paiement
+                    FROM detailspaiements dp
+                    WHERE dp.email = inscriptions.email
+                    AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+                    ORDER BY dp.id DESC
+                    LIMIT 1
+                ) as statut_paiement
+            ")
+
+            //  dernière référence paiement
+            ->selectRaw("
+                (
+                    SELECT dp.reference_paiement
+                    FROM detailspaiements dp
+                    WHERE dp.email = inscriptions.email
+                    AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+                    ORDER BY dp.id DESC
+                    LIMIT 1
+                ) as reference_paiement
+            ");
+
 
         // Recherche globale sur plusieurs champs
         if ($search) {
@@ -291,7 +416,11 @@ class FormationsdscService implements FormationsdscInterface
         $liste_inscrits->orderBy("detailspaiements.{$sortField}", $sortOrder);
 
         } 
-        
+        elseif ($sortField == 'check_dossier') {
+
+            $liste_inscrits->orderBy('check_dossier', $sortOrder);
+
+        }
         else{
             
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
@@ -319,22 +448,19 @@ class FormationsdscService implements FormationsdscInterface
         $decision = $request->decision;
         $motif = $request->motif;
         $user = auth('api')->user();
-        Log::info($listeInscAuditeurs);
+        //Log::info($listeInscAuditeurs);
         if (!empty($listeInscAuditeurs)) {
             foreach ($listeInscAuditeurs as $key => $id) {
                 $inscrit = Inscriptions::find($id);
-                Log::info($inscrit);
+                //Log::info($inscrit);
                 if ($inscrit) { 
                      $auditeur = Auditeurs::where("email", trim($inscrit->email))->first();
                     if ($auditeur) {
-                        # code...                         
-                        if ($decision == "RELANCE") {
-                            // Mise à jour de l'inscription existante
-                            $updateInscrit = Inscriptions::find($inscrit->id);
-                            $updateInscrit->setAttribute("nbre_relance",$updateInscrit->nbre_relance +1); 
-                            $updateInscrit->update(); 
 
-                        }else{
+                    
+                        // Enregistrement des informations dans la table inscriptions_dscs si dossier validé
+                        if ($decision == "VALIDEE") {
+                            # code...
                             // Mise à jour de l'inscription existante
                             $updateInscrit = Inscriptions::find($inscrit->id);
                             $updateInscrit->setAttribute("traiter",true);
@@ -343,21 +469,20 @@ class FormationsdscService implements FormationsdscInterface
                             $updateInscrit->setAttribute("traiter_par",$user->id);
                             $updateInscrit->setAttribute("observations", $motif);
                             $updateInscrit->update(); 
-
-                        }
-        
-                        // Enregistrement des informations dans la table inscriptions_dscs si dossier validé
-                        if ($decision == "VALIDEE") {
-                            # code...
+                            
+                            // vérifier si la données n'existe pas
+                            $checkData = InscriptionsDsc::where('code_inscription', $updateInscrit->code_inscription)
+                            ->where('inscrits_id',$updateInscrit->id)
+                            ->exists();
+                            if(!$checkData){
                             $inscription_dsc = new InscriptionsDsc();
                             $inscription_dsc->inscrits_id = $updateInscrit->id;
                             $inscription_dsc->code_inscription = $updateInscrit->code_inscription;
                             $inscription_dsc->traiter_par = $user->id;
                             $inscription_dsc->updated_by = $user->id;
                             $inscription_dsc->save();
-                        }
 
-                        // enregistrement de l'historique
+                              // enregistrement de l'historique
                         $historiqueTraitementDossier = new Historiquetraitementdossiers();
                         $historiqueTraitementDossier->setAttribute("inscrits_id",$updateInscrit->id);
                         $historiqueTraitementDossier->setAttribute("code_inscription",$inscrit->code_inscription);
@@ -383,6 +508,80 @@ class FormationsdscService implements FormationsdscInterface
 
                             } catch (\Exception $e) { 
                             }
+
+                            } 
+                            
+                        } elseif ($decision == "RELANCE") {
+                            // Mise à jour de l'inscription existante
+                            $updateInscrit = Inscriptions::find($inscrit->id);
+                            $updateInscrit->setAttribute("nbre_relance",$updateInscrit->nbre_relance +1); 
+                            $updateInscrit->update(); 
+
+                              // enregistrement de l'historique
+                        $historiqueTraitementDossier = new Historiquetraitementdossiers();
+                        $historiqueTraitementDossier->setAttribute("inscrits_id",$updateInscrit->id);
+                        $historiqueTraitementDossier->setAttribute("code_inscription",$inscrit->code_inscription);
+                        $historiqueTraitementDossier->setAttribute("traiter_par",$user->id);
+                        $historiqueTraitementDossier->setAttribute("message",trim($motif)); 
+                        $historiqueTraitementDossier->setAttribute("statut_dossier",trim($decision));
+                        $historiqueTraitementDossier->save();
+
+                        // envoi de mail 
+                            $contenu = [
+                                'nom' => $auditeur->nom,
+                                'prenoms' => $auditeur->prenoms,
+                                'nom_prenoms' =>  $auditeur->nom . ' ' . $auditeur->prenoms,
+                                'subject' => 'INFORMATION SUR VOTRE CANDIDATURE ' . $request->code_formation,
+                                'email' => $auditeur->email,
+                                'statut' => $decision,
+                                'observations' => $motif,
+                            ];
+                            
+                           
+                            try {
+                               Mail::to($inscrit->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new ValidationDSC($contenu)); 
+
+                            } catch (\Exception $e) { 
+                            }
+
+                        }else{
+                            // Mise à jour de l'inscription existante
+                            $updateInscrit = Inscriptions::find($inscrit->id);
+                            $updateInscrit->setAttribute("traiter",true);
+                            $updateInscrit->setAttribute("statut_dossier",trim($decision));
+                            //$updateInscrit->setAttribute("valider", $request->statut === 'valider' ? 1 : 0);
+                            $updateInscrit->setAttribute("traiter_par",$user->id);
+                            $updateInscrit->setAttribute("observations", $motif);
+                            $updateInscrit->update(); 
+
+                              // enregistrement de l'historique
+                        $historiqueTraitementDossier = new Historiquetraitementdossiers();
+                        $historiqueTraitementDossier->setAttribute("inscrits_id",$updateInscrit->id);
+                        $historiqueTraitementDossier->setAttribute("code_inscription",$inscrit->code_inscription);
+                        $historiqueTraitementDossier->setAttribute("traiter_par",$user->id);
+                        $historiqueTraitementDossier->setAttribute("message",trim($motif)); 
+                        $historiqueTraitementDossier->setAttribute("statut_dossier",trim($decision));
+                        $historiqueTraitementDossier->save();
+
+                        // envoi de mail 
+                            $contenu = [
+                                'nom' => $auditeur->nom,
+                                'prenoms' => $auditeur->prenoms,
+                                'nom_prenoms' =>  $auditeur->nom . ' ' . $auditeur->prenoms,
+                                'subject' => 'INFORMATION SUR VOTRE CANDIDATURE ' . $request->code_formation,
+                                'email' => $auditeur->email,
+                                'statut' => $decision,
+                                'observations' => $motif,
+                            ];
+                            
+                           
+                            try {
+                               Mail::to($inscrit->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new ValidationDSC($contenu)); 
+
+                            } catch (\Exception $e) { 
+                            }
+
+                        } 
                              
                     }
                 }
@@ -390,11 +589,11 @@ class FormationsdscService implements FormationsdscInterface
         }
         return  ResponseHandler::success('E-mail envoyé avec succès',['success'=> true, 'code_formation'=>$request->code_formation]);
     }
-
-    
+ 
 
     public function getListeDossiersValides(Request $request, string $code_formation)
-    {$perPage = $request->input('per_page', 50);
+    {
+        $perPage = $request->input('per_page', 50);
         $search = $request->input('search');
         $sortField = $request->input('sort_field', 'id');
         $sortOrder = $request->input('sort_order', 'desc');
@@ -402,37 +601,124 @@ class FormationsdscService implements FormationsdscInterface
         $filterNom = $request->input('filter_nom');
         $filterPrenoms = $request->input('filter_prenoms');
         $filterCreatedAt = $request->input('filter_created_at');
+
+        $subAuditeur = DB::table('auditeurs as a')
+    ->select([
+        'a.email',
+        'a.nom',
+        'a.prenoms',
+        'a.telephone',
+        'a.id as id_auditeur'
+    ])
+    ->join(DB::raw('(
+        SELECT email, MAX(id) as max_id
+        FROM auditeurs
+        GROUP BY email
+    ) last'), function ($join) {
+        $join->on('a.id', '=', 'last.max_id');
+    });
         
 
-        $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
-            ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
-            ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
-            ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
-            ->leftjoin("detailspaiements", function ($leftjoin) {
-                $leftjoin->on('detailspaiements.email', '=', 'inscriptions.email');
-                $leftjoin->on('detailspaiements.id_tarification_formation', '=', 'inscriptions.tarif_formation_id');
-            })
-            ->where('inscriptions.code_formation', $code_formation)
-            ->where('inscriptions.is_delete', false) 
-            ->where('inscriptions.traiter', true) 
-            ->where('inscriptions.statut_dossier','VALIDEE')
-            ->select(['inscriptions.id','inscriptions.sync_zoom','inscriptions.code_inscription', 'inscriptions.created_at',
-                'auditeurs.nom', 'auditeurs.prenoms', 'formations.fm_presentielle', 'formations.fm_visio', 'auditeurs.email','inscriptions.observations',
-                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode', 'inscriptions.type_formation as mode','grilletarifaires.montant',
-                'inscriptions.type_formation', 'detailspaiements.statut_paiement','detailspaiements.reference_paiement', 'auditeurs.id as id_auditeur',
-                'inscriptions.is_formation_dsc', 'inscriptions.is_delete','inscriptions.code_formation','formations.is_formation_dsc'])
-            ->selectRaw(
-                '(EXISTS (
-                SELECT 1 FROM auditeurs_pieces
-                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-            )) as check_dossier'
-            )
-            ->selectRaw(
-          '(
-            SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
-            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-          ) as nbre_dossier' 
-      );
+         $liste_inscrits = Inscriptions::query()
+
+    ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+    ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
+    ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+
+    //  auditeur unique (anti doublon email)
+    ->leftJoinSub($subAuditeur, 'auditeurs', function ($join) {
+        $join->on('inscriptions.email', '=', 'auditeurs.email');
+    })
+ 
+
+    ->where('inscriptions.code_formation', $code_formation)
+    ->where('inscriptions.is_delete', false)
+    ->where('inscriptions.traiter', true)
+    ->where('inscriptions.statut_dossier', 'VALIDEE')
+
+    ->select([
+        'inscriptions.id',
+        'inscriptions.sync_zoom',
+        'inscriptions.code_inscription',
+        'inscriptions.created_at',
+
+        'auditeurs.nom',
+        'auditeurs.prenoms',
+        'auditeurs.email',
+        'auditeurs.telephone',
+        'auditeurs.id_auditeur',
+
+        'formations.fm_presentielle',
+        'formations.fm_visio',
+        'formations.is_formation_dsc',
+
+        // 
+        'grilletarifaires.type_tarif as mode_tarif',
+        'inscriptions.type_formation as mode',
+
+        'grilletarifaires.montant',
+
+        'inscriptions.type_formation',
+        'inscriptions.observations',
+
+        'inscriptions.is_formation_dsc',
+        'inscriptions.is_delete',
+        'inscriptions.code_formation',
+    ])
+
+    //  check dossier
+    ->selectRaw("
+        EXISTS (
+            SELECT 1
+            FROM auditeurs_pieces
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+            AND auditeurs_pieces.code_formation = ?
+        ) as check_dossier
+    ", [$code_formation])
+
+    //  nombre de pièces
+    ->selectRaw("
+        (
+            SELECT COUNT(*)
+            FROM auditeurs_pieces
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+            AND auditeurs_pieces.code_formation = ?
+        ) as nbre_dossier
+    ", [$code_formation])
+
+    //  paiement existe
+    ->selectRaw("
+        EXISTS (
+            SELECT 1
+            FROM detailspaiements dp
+            WHERE dp.email = inscriptions.email
+            AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+        ) as has_paiement
+    ")
+
+    //  dernier statut paiement
+    ->selectRaw("
+        (
+            SELECT dp.statut_paiement
+            FROM detailspaiements dp
+            WHERE dp.email = inscriptions.email
+            AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+            ORDER BY dp.id DESC
+            LIMIT 1
+        ) as statut_paiement
+    ")
+
+    //  dernière référence paiement
+    ->selectRaw("
+        (
+            SELECT dp.reference_paiement
+            FROM detailspaiements dp
+            WHERE dp.email = inscriptions.email
+            AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+            ORDER BY dp.id DESC
+            LIMIT 1
+        ) as reference_paiement
+    ");
 
         // Recherche globale sur plusieurs champs
         if ($search) {
@@ -473,6 +759,11 @@ class FormationsdscService implements FormationsdscInterface
 
         } 
         
+        elseif ($sortField == 'check_dossier') {
+
+            $liste_inscrits->orderBy('check_dossier', $sortOrder);
+
+        }
         else{
             
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
@@ -499,37 +790,123 @@ class FormationsdscService implements FormationsdscInterface
         $filterNom = $request->input('filter_nom');
         $filterPrenoms = $request->input('filter_prenoms');
         $filterCreatedAt = $request->input('filter_created_at');
-        
+ 
+            // AUDITEUR UNIQUE PAR EMAIL (évite doublons)
+            $subAuditeur = DB::table('auditeurs as a')
+                ->select([
+                    'a.email',
+                    'a.nom',
+                    'a.prenoms',
+                    'a.telephone',
+                    'a.id as id_auditeur'
+                ])
+                ->join(DB::raw('(
+                    SELECT email, MAX(id) as max_id
+                    FROM auditeurs
+                    GROUP BY email
+                ) last'), function ($join) {
+                    $join->on('a.id', '=', 'last.max_id');
+                });
 
-        $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
-            ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
-            ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
-            ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
-            ->leftjoin("detailspaiements", function ($leftjoin) {
-                $leftjoin->on('detailspaiements.email', '=', 'inscriptions.email');
-                $leftjoin->on('detailspaiements.id_tarification_formation', '=', 'inscriptions.tarif_formation_id');
-            })
-            ->where('inscriptions.code_formation', $code_formation)
-            ->where('inscriptions.is_delete', false) 
-            ->where('inscriptions.traiter', true)
-            ->where('inscriptions.statut_dossier','SOUS RESERVE')
-            ->select(['inscriptions.id','inscriptions.sync_zoom','inscriptions.code_inscription', 'inscriptions.created_at',
-                'auditeurs.nom', 'auditeurs.prenoms', 'formations.fm_presentielle', 'formations.fm_visio', 'auditeurs.email',
-                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode', 'inscriptions.type_formation as mode','grilletarifaires.montant',
-                'inscriptions.type_formation', 'detailspaiements.statut_paiement','detailspaiements.reference_paiement', 'auditeurs.id as id_auditeur',
-                'inscriptions.is_formation_dsc', 'inscriptions.is_delete','inscriptions.code_formation','formations.is_formation_dsc'])
-            ->selectRaw(
-                '(EXISTS (
-                SELECT 1 FROM auditeurs_pieces
-                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-            )) as check_dossier'
-            )
-            ->selectRaw(
-          '(
-            SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
-            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-          ) as nbre_dossier' 
-      );
+        
+            $liste_inscrits = Inscriptions::query()
+
+    ->leftJoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+    ->leftJoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
+    ->leftJoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+
+    //  auditeur unique (anti doublon email)
+    ->leftJoinSub($subAuditeur, 'auditeurs', function ($join) {
+        $join->on('inscriptions.email', '=', 'auditeurs.email');
+    })
+ 
+
+    ->where('inscriptions.code_formation', $code_formation)
+    ->where('inscriptions.is_delete', false)
+    ->where('inscriptions.traiter', true)
+    ->where('inscriptions.statut_dossier', 'SOUS RESERVE')
+
+    ->select([
+        'inscriptions.id',
+        'inscriptions.sync_zoom',
+        'inscriptions.code_inscription',
+        'inscriptions.created_at',
+
+        'auditeurs.nom',
+        'auditeurs.prenoms',
+        'auditeurs.email',
+        'auditeurs.telephone',
+        'auditeurs.id_auditeur',
+
+        'formations.fm_presentielle',
+        'formations.fm_visio',
+        'formations.is_formation_dsc',
+ 
+        'grilletarifaires.type_tarif as mode_tarif',
+        'inscriptions.type_formation as mode',
+
+        'grilletarifaires.montant',
+
+        'inscriptions.type_formation',
+
+        'inscriptions.is_formation_dsc',
+        'inscriptions.is_delete',
+        'inscriptions.code_formation',
+    ])
+
+    //  dossier existe
+    ->selectRaw("
+        EXISTS (
+            SELECT 1
+            FROM auditeurs_pieces
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+            AND auditeurs_pieces.code_formation = ?
+        ) as check_dossier
+    ", [$code_formation])
+
+    //  nombre de pièces
+    ->selectRaw("
+        (
+            SELECT COUNT(*)
+            FROM auditeurs_pieces
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+            AND auditeurs_pieces.code_formation = ?
+        ) as nbre_dossier
+    ", [$code_formation])
+
+    //  paiement existe (optionnel mais safe)
+    ->selectRaw("
+        EXISTS (
+            SELECT 1
+            FROM detailspaiements dp
+            WHERE dp.email = inscriptions.email
+            AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+        ) as has_paiement
+    ")
+
+    //  dernier statut paiement
+    ->selectRaw("
+        (
+            SELECT dp.statut_paiement
+            FROM detailspaiements dp
+            WHERE dp.email = inscriptions.email
+            AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+            ORDER BY dp.id DESC
+            LIMIT 1
+        ) as statut_paiement
+    ")
+
+    //  dernière référence paiement
+    ->selectRaw("
+        (
+            SELECT dp.reference_paiement
+            FROM detailspaiements dp
+            WHERE dp.email = inscriptions.email
+            AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+            ORDER BY dp.id DESC
+            LIMIT 1
+        ) as reference_paiement
+    ");
 
         // Recherche globale sur plusieurs champs
         if ($search) {
@@ -570,6 +947,11 @@ class FormationsdscService implements FormationsdscInterface
 
         } 
         
+        elseif ($sortField == 'check_dossier') {
+
+            $liste_inscrits->orderBy('check_dossier', $sortOrder);
+
+        }
         else{
             
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);
@@ -597,36 +979,121 @@ class FormationsdscService implements FormationsdscInterface
         $filterPrenoms = $request->input('filter_prenoms');
         $filterCreatedAt = $request->input('filter_created_at');
         
+        
+            // AUDITEUR UNIQUE PAR EMAIL (évite doublons)
+            $subAuditeur = DB::table('auditeurs as a')
+                ->select([
+                    'a.email',
+                    'a.nom',
+                    'a.prenoms',
+                    'a.telephone',
+                    'a.id as id_auditeur'
+                ])
+                ->join(DB::raw('(
+                    SELECT email, MAX(id) as max_id
+                    FROM auditeurs
+                    GROUP BY email
+                ) last'), function ($join) {
+                    $join->on('a.id', '=', 'last.max_id');
+                });
+                    $liste_inscrits = Inscriptions::query()
 
-        $liste_inscrits = Inscriptions::leftjoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
-            ->leftjoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
-            ->leftjoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
-            ->leftjoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
-            ->leftjoin("detailspaiements", function ($leftjoin) {
-                $leftjoin->on('detailspaiements.email', '=', 'inscriptions.email');
-                $leftjoin->on('detailspaiements.id_tarification_formation', '=', 'inscriptions.tarif_formation_id');
-            })
-            ->where('inscriptions.code_formation', $code_formation)
-            ->where('inscriptions.is_delete', false) 
-            ->where('inscriptions.traiter', true) 
-            ->where('inscriptions.statut_dossier','REJETEE')
-            ->select(['inscriptions.id','inscriptions.sync_zoom','inscriptions.code_inscription', 'inscriptions.created_at',
-                'auditeurs.nom', 'auditeurs.prenoms', 'formations.fm_presentielle', 'formations.fm_visio', 'auditeurs.email','inscriptions.observations',
-                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode', 'inscriptions.type_formation as mode','grilletarifaires.montant',
-                'inscriptions.type_formation', 'detailspaiements.statut_paiement','detailspaiements.reference_paiement', 'auditeurs.id as id_auditeur',
-                'inscriptions.is_formation_dsc', 'inscriptions.is_delete','inscriptions.code_formation','formations.is_formation_dsc'])
-            ->selectRaw(
-                '(EXISTS (
-                SELECT 1 FROM auditeurs_pieces
-                WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-            )) as check_dossier'
-            )
-            ->selectRaw(
-          '(
-            SELECT count(auditeurs_pieces.id) FROM auditeurs_pieces 
-            WHERE auditeurs_pieces.auditeur_id = auditeurs.id
-          ) as nbre_dossier' 
-      );
+                        ->leftJoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+                        ->leftJoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
+                        ->leftJoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+
+                        //  auditeur unique (anti doublon email)
+                        ->leftJoinSub($subAuditeur, 'auditeurs', function ($join) {
+                            $join->on('inscriptions.email', '=', 'auditeurs.email');
+                        }) 
+
+                        ->where('inscriptions.code_formation', $code_formation)
+                        ->where('inscriptions.is_delete', false)
+                        ->where('inscriptions.traiter', true)
+                        ->where('inscriptions.statut_dossier', 'REJETEE')
+
+                        ->select([
+                            'inscriptions.id',
+                            'inscriptions.sync_zoom',
+                            'inscriptions.code_inscription',
+                            'inscriptions.created_at',
+
+                            'auditeurs.nom',
+                            'auditeurs.prenoms',
+                            'auditeurs.email',
+                            'auditeurs.telephone',
+                            'auditeurs.id_auditeur',
+
+                            'formations.fm_presentielle',
+                            'formations.fm_visio',
+                            'formations.is_formation_dsc',
+
+                            'grilletarifaires.type_tarif as mode_tarif',
+                            'inscriptions.type_formation as mode',
+
+                            'grilletarifaires.montant',
+
+                            'inscriptions.type_formation',
+                            'inscriptions.observations',
+
+                            'inscriptions.is_formation_dsc',
+                            'inscriptions.is_delete',
+                            'inscriptions.code_formation',
+                        ])
+
+                        //  dossier check
+                        ->selectRaw("
+                            EXISTS (
+                                SELECT 1
+                                FROM auditeurs_pieces
+                                WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+                                AND auditeurs_pieces.code_formation = ?
+                            ) as check_dossier
+                        ", [$code_formation])
+
+                        //  nombre de pièces
+                        ->selectRaw("
+                            (
+                                SELECT COUNT(*)
+                                FROM auditeurs_pieces
+                                WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+                                AND auditeurs_pieces.code_formation = ?
+                            ) as nbre_dossier
+                        ", [$code_formation])
+
+                        //  paiement existe (optionnel, sans JOIN)
+                        ->selectRaw("
+                            EXISTS (
+                                SELECT 1
+                                FROM detailspaiements dp
+                                WHERE dp.email = inscriptions.email
+                                AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+                            ) as has_paiement
+                        ")
+
+                        //  dernier statut paiement
+                        ->selectRaw("
+                            (
+                                SELECT dp.statut_paiement
+                                FROM detailspaiements dp
+                                WHERE dp.email = inscriptions.email
+                                AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+                                ORDER BY dp.id DESC
+                                LIMIT 1
+                            ) as statut_paiement
+                        ")
+
+                        //  dernière référence paiement
+                        ->selectRaw("
+                            (
+                                SELECT dp.reference_paiement
+                                FROM detailspaiements dp
+                                WHERE dp.email = inscriptions.email
+                                AND dp.id_tarification_formation = inscriptions.tarif_formation_id
+                                ORDER BY dp.id DESC
+                                LIMIT 1
+                            ) as reference_paiement
+                        ");
 
         // Recherche globale sur plusieurs champs
         if ($search) {
@@ -667,6 +1134,11 @@ class FormationsdscService implements FormationsdscInterface
 
         } 
         
+        elseif ($sortField == 'check_dossier') {
+
+            $liste_inscrits->orderBy('check_dossier', $sortOrder);
+
+        }
         else{
             
         $liste_inscrits->orderBy("inscriptions.{$sortField}", $sortOrder);

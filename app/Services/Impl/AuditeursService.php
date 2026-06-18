@@ -232,9 +232,7 @@ class AuditeursService implements AuditeursInterface
                 //return $formation_type;
                 $total_formation  = $total_formation + 1;
                 # code...
-                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
-                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
-                $formation = Formations::where("code_formation", $tarif_formation->code_formation)->get()->first();
+                $formation = Formations::where("code_formation", $tarif_formation->code_formation)->first();
 
                 // insert data in table inscrits
                 $created_at = date("Y-m-d H:i:s");
@@ -247,7 +245,7 @@ class AuditeursService implements AuditeursInterface
                     $check_exist  = $check_exist + 1;
                     // if participant exist
                     $get_auditeur = Inscriptions::where('email', $auditeur->email)->where('code_formation', $formation->code_formation)->get()->first();
-                    $generateCode = $get_auditeur->code_inscription;
+                    //$generateCode = $get_auditeur->code_inscription;
                     $listeFmExists[] = $formation->code_formation;
                 } else {
                     // vérifier si la formation est présentiel ou pas
@@ -258,10 +256,13 @@ class AuditeursService implements AuditeursInterface
 
                     $checkExitingFormation = Inscriptions::whereCodeFormation($formation->code_formation)
                         ->whereEmail(trim($auditeur->email))
-                        ->whereTarifFormationId($tarif_formation->id)
+                        //->whereTarifFormationId($tarif_formation->id)
                         ->exists();
 
                     if (!$checkExitingFormation) {
+                        
+                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
+                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
 
                         $inscrit = new Inscriptions();
                         $inscrit->setAttribute("email", trim($auditeur->email));
@@ -706,6 +707,7 @@ class AuditeursService implements AuditeursInterface
     public function getListeInscriptions(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getListeInscriptions() method.
+        /*
         $data = Inscriptions::query()
             ->leftJoin('formations', 'formations.code_formation', '=', 'inscriptions.code_formation')
             ->leftJoin('inscriptions_dscs', 'inscriptions_dscs.code_inscription', '=', 'inscriptions.code_inscription')
@@ -744,7 +746,111 @@ class AuditeursService implements AuditeursInterface
             ])
             ->where('inscriptions.email', $request->email)
             ->orderBy("inscriptions.created_at","DESC")
-            ->get();
+            ->get(); */
+
+    $lastPaiement = DB::table('paiements as p')
+    ->select([
+        'p.code_inscription',
+        'p.reference',
+        'p.num_transaction',
+        'p.statut_paiement',
+    ])
+    ->join(
+        DB::raw('(
+            SELECT code_inscription, MAX(id) as max_id
+            FROM paiements
+            GROUP BY code_inscription
+        ) lp'),
+        function ($join) {
+            $join->on('p.id', '=', 'lp.max_id');
+        }
+    );
+
+$data = Inscriptions::query()
+    ->leftJoin(
+        'formations',
+        'formations.code_formation',
+        '=',
+        'inscriptions.code_formation'
+    )
+    ->leftJoin(
+        'inscriptions_dscs',
+        'inscriptions_dscs.code_inscription',
+        '=',
+        'inscriptions.code_inscription'
+    )
+    ->leftJoin(
+        'tarificationsformations',
+        'tarificationsformations.id',
+        '=',
+        'inscriptions.tarif_formation_id'
+    )
+    ->leftJoin(
+        'grilletarifaires',
+        'grilletarifaires.id',
+        '=',
+        'tarificationsformations.id_grilletarifaire'
+    )
+    ->leftJoinSub($lastPaiement, 'paiements', function ($join) {
+        $join->on(
+            'paiements.code_inscription',
+            '=',
+            'inscriptions.code_inscription'
+        );
+    })
+    ->select([
+        'formations.id as id_formation',
+        'formations.code_formation',
+        'formations.theme',
+        'formations.date_debut',
+        'formations.is_formation_dsc',
+
+        'inscriptions_dscs.id as id_dsc',
+
+        'inscriptions.id as id_inscription',
+        'inscriptions.code_inscription',
+        'inscriptions.email',
+
+        'paiements.reference',
+        'paiements.num_transaction',
+        'paiements.statut_paiement',
+
+        'grilletarifaires.libelle',
+    ])
+    ->addSelect([
+        DB::raw("
+            CASE
+                WHEN paiements.num_transaction IS NOT NULL
+                THEN 1
+                ELSE 0
+            END as checkPaiement
+        "),
+        DB::raw("
+            CASE
+                WHEN paiements.reference IS NOT NULL
+                THEN 1
+                ELSE 0
+            END as checkReferencePaiement
+        "),
+        DB::raw("
+            CASE
+                WHEN inscriptions_dscs.id IS NOT NULL
+                THEN 1
+                ELSE 0
+            END as checkdsc
+        "),
+        DB::raw("
+            CASE
+                WHEN formations.date_debut IS NOT NULL
+                AND YEAR(formations.date_debut) > 2024
+                THEN 1
+                ELSE 0
+            END as checkDsc2024
+        "),
+    ])
+    ->where('inscriptions.email', $request->email)
+    ->orderBy('inscriptions.created_at', 'DESC')
+    ->get();
 
         return  ResponseHandler::success("ok",$data);
     }
@@ -1038,8 +1144,6 @@ class AuditeursService implements AuditeursInterface
                 // return
                 $total_formation  = $total_formation + 1;
                 # code...
-                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
-                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
                 $formation = Formations::where("code_formation", $tarif_formation->code_formation)->get()->first();
 
                 // insert data in table inscrits
@@ -1047,7 +1151,8 @@ class AuditeursService implements AuditeursInterface
 
                 // enregistrement des données dans la table inscrit
                 // vérifier si l'e-mail existe dans la table des inscrits
-                $check_auditeur = Inscriptions::where('email', trim($auditeur->email))->where('code_formation', $formation->code_formation)->exists();
+                $check_auditeur = Inscriptions::where('email', trim($auditeur->email))
+                ->where('code_formation', $formation->code_formation)->exists();
 
                 if ($check_auditeur) {
                     $check_exist  = $check_exist + 1;
@@ -1056,17 +1161,20 @@ class AuditeursService implements AuditeursInterface
                         ->where('code_formation', $formation->code_formation)
                         ->get()
                         ->first();
-                    $generateCode = $get_auditeur->code_inscription;
+                //    $generateCode = $get_auditeur->code_inscription;
                     $listeFmExists[] = $formation->code_formation;
                 } else {
                     // vérifier si la formation est présentiel ou pas
                     $presentiel = 0;
                     $checkExitingFormation = Inscriptions::whereCodeFormation($formation->code_formation)
                         ->whereEmail(trim($auditeur->email))
-                        ->whereTarifFormationId($tarif_formation->id)
+                        //->whereTarifFormationId($tarif_formation->id)
                         ->exists();
 
                     if (!$checkExitingFormation) {
+
+                // récupérer le montant total pour vérifier si la formation est gratuite ou pas
+                $montant_total =  $montant_total + $tarif_formation->getGrilletarifaire->montant;
 
                         $inscrit = new Inscriptions();
                         $inscrit->setAttribute("email", trim($auditeur->email));
@@ -1264,7 +1372,7 @@ class AuditeursService implements AuditeursInterface
 
     public function mesPieces(Request $request): \Illuminate\Http\JsonResponse
     {
-        // TODO: Implement mesPieces() method.
+        // TODO: Implement mesPieces() method. 
         if ($request->has('auditeur_id') && !empty($request->input('auditeur_id'))) {
             # code...
             $auditeur = Auditeurs::find($request->auditeur_id);
@@ -1273,18 +1381,19 @@ class AuditeursService implements AuditeursInterface
         } else {
             # code...
             $user = auth('api')->user();
+            $auditeur = Auditeurs::whereEmail($user->email)->first();
         }
         
         $code_formation = $request->code_formation;
         $listePieces = InscritsTypePieces::leftJoin(
             'auditeurs_pieces',
-            function ($join) use ($user,$code_formation) {
+            function ($join) use ($user,$code_formation, $auditeur) {
                     $join->on(
                         'auditeurs_pieces.inscrits_typespieces_id',
                         '=',
                         'inscrits_type_pieces.id'
                     )
-                        ->where('auditeurs_pieces.created_by', $user->id)
+                        ->where('auditeurs_pieces.auditeur_id', $auditeur->id)
                         ->where('auditeurs_pieces.code_formation', $code_formation);
                 }
             )
@@ -1299,7 +1408,8 @@ class AuditeursService implements AuditeursInterface
             ]);
         $totalPieces = InscritsTypePieces::count();
         $totalPiecesFournies = DB::table('auditeurs_pieces')
-            ->where('created_by', $user->id)
+            //->where('created_by', $user->id)
+            ->where('auditeur_id', $auditeur->id)
             ->where('code_formation', $request->code_formation)
             ->count();
         $dataResponse = [

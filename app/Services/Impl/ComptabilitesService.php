@@ -1914,6 +1914,7 @@ class ComptabilitesService implements ComptabilitesInterface
                 dp.id as detailpaiement_id,
                 dp.reference_paiement,
                 dp.id_tarification_formation,
+                dp.preuve_path,
                 mp.libelle as modepaiement,
                 mp.id as modepaiement_id,
                 dp.statut_paiement,

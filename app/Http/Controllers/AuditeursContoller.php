@@ -1,7 +1,13 @@
 <?php
 
 namespace App\Http\Controllers; 
-use App\Helpers\ResponseHandler; 
+use App\Helpers\ResponseHandler;
+use App\Models\Detailspaiements;
+use App\Models\Inscriptions;
+use App\Models\Paiements;
+use App\Models\Reductions;
+use App\Models\Tarificationsformation;
+use App\Models\Tranches;
 use App\Services\contracts\AuditeursInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +20,7 @@ class AuditeursContoller extends Controller
     public function __construct(AuditeursInterface $auditeurService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['store','getAuditeurByEmail','getListeFormations','inscriptionPaiement','listePays','mesPaiements','checkPieceDsc']]);
+        $this->middleware('auth:api',['except' => ['store','getAuditeurByEmail','getListeFormations','inscriptionPaiement','listePays','mesPaiements','checkPieceDsc','updateTarifAuditeur']]);
         $this->auditeurService = $auditeurService;
     }
 
@@ -428,6 +434,61 @@ class AuditeursContoller extends Controller
         } catch (\Exception $e) {
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
+    }
+
+    public function updateTarifAuditeur($code_formation)
+    {
+        $inscriptions = Inscriptions::whereCodeFormation($code_formation)->get();
+        foreach ($inscriptions as $key => $value) {
+            # code...
+            $detailsPaiements = Detailspaiements::where("code_inscription",$value->code_inscription)->get();
+            foreach ($detailsPaiements as $key => $data) {
+                # code...
+                $updDetail = Detailspaiements::find($data->id);
+                 $red = 0; // mis pour réduction %
+
+                            // vérifier si réduction existe
+                            if ($updDetail->have_reduction_dsc) {
+                                # code...
+                                $reduction = Reductions::find($updDetail->have_reduction_dsc);
+                                $red = 5; //$reduction->pourcentage;
+                            } 
+                $tarif = Tarificationsformation::find($updDetail->id_tarification_formation);
+                            $montant = $tarif->getGrilletarifaire->montant;
+                            $montantOk = $montant - ($montant * ($red/100));
+                            $updDetail->setAttribute('montant_restant',$montantOk);
+                            $updDetail->update();
+            }
+
+            // update paiement
+               // update billing
+                        $getOneDetailPaiement = Detailspaiements::where('code_inscription',$value->code_inscription)->first();
+                        $getMontantTotalDetailPaiement = Detailspaiements::where('code_inscription',$value->code_inscription)->sum('montant_restant');
+                        $paiement = Paiements::whereReference($getOneDetailPaiement->reference_paiement)->first();
+                        $updPaiement = Paiements::find($paiement->id);
+                        $updPaiement->setAttribute('montant_total',$getMontantTotalDetailPaiement);
+                        $updPaiement->setAttribute('montant_restant',$getMontantTotalDetailPaiement);
+                        $updPaiement->update();
+
+                        // mise à jour de ma tranche
+                        $checkTranche = Tranches::where("code_inscription",$value->code_inscription)->exists();
+                        if($checkTranche){
+                            $getTranche = Tranches::where("code_inscription",$value->code_inscription)->first();
+                            if($getTranche->tranche_2 > 0){ // double tranche
+                            $updTranche = Tranches::find($getTranche->id);
+                            $updTranche->setAttribute("tranche_1", $updPaiement->montant_total/2);
+                            $updTranche->setAttribute("tranche_2", $updPaiement->montant_total/2);
+                            $updTranche->update();
+
+                            }else{ // tranche unique
+                            $updTranche = Tranches::find($getTranche->id);
+                            $updTranche->setAttribute("tranche_1", $updPaiement->montant_total);
+                            $updTranche->update();
+                            }
+                        }
+        }
+        return ResponseHandler::success("Ok for update");
+ 
     }
 
 }

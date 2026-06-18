@@ -91,7 +91,7 @@ class UsersService implements UsersInterface
         $filterActif = $request->input('filter_actif');
         $filterUpdatedAt = $request->input('filter_updated_at');
 
-        $queryData = User::select('users.id','users.code_user','users.name','users.username','users.email','users.actif','users.login_count','users.first_login','users.last_login')
+        $queryData = User::select('users.id','users.code_user','users.name','users.username','users.email','users.actif','users.login_count','users.first_login','users.last_login','users.updated_at')
             ->with('roles:id,libelle')
             ->whereDoesntHave('roles', function ($q) {
                 $q->where('roles.id', 6);

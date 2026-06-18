@@ -15,6 +15,7 @@ use App\Models\Paiements;
 use App\Models\Reductions;
 use App\Models\ReductionsFormations;
 use App\Models\Tarificationsformation;
+use App\Models\Tranches;
 use App\Services\contracts\FormationsInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
@@ -517,8 +518,20 @@ class FormationsService implements FormationsInterface
 
                     // vérifier s'il y a des inscriptions pour faire la mise à jour
                     // 1- récupérer la liste des inscriptions
-                    $listeInscriptions = Inscriptions::where('code_formation',$request->code_formation)->get();
+                    $idTarif = $item['id_tarif'];
+                    $getTarif = Tarificationsformation::find($idTarif);
+
+                    if ($formation->is_formation_dsc) {
+                        # code...
+
+                        // vérifier s'il ne s'agit du montant d'inscription
+                        if ($getTarif->getGrille->type_tarif != "INSCRIPTION") {
+                            # code...
+                             $listeInscriptions = Inscriptions::where('code_formation',$request->code_formation)->where("tarif_formation_id",$idTarif)->get();
                     foreach ($listeInscriptions as $key => $data) {
+                    
+                        // CAS DES FORMATIONS NON DSC
+                        
                         # code...
                         // 1- mise à jour details paiement
                         $getDetailsPaiements = Detailspaiements::where('code_inscription',$data->code_inscription)->get();
@@ -528,14 +541,14 @@ class FormationsService implements FormationsInterface
                             $red = 0; // mis pour réduction %
 
                             // vérifier si réduction existe
-                            if ($updDetailPaiement->id_reduction) {
+                            if ($updDetailPaiement->have_reduction_dsc) {
                                 # code...
-                                $reduction = Reductions::find($updDetailPaiement->id_reduction);
-                                $red = $reduction->pourcentage;
+                                $reduction = Reductions::find($updDetailPaiement->have_reduction_dsc);
+                                $red = 5; //$reduction->pourcentage;
                             } 
 
                             // mise à jour montant restant
-                            $tarif = Tarificationsformation::find($item['id_tarif']);
+                            $tarif = Tarificationsformation::find($updDetailPaiement->id_tarification_formation);
                             $montant = $tarif->getGrilletarifaire->montant;
                             $montantOk = $montant - ($montant * ($red/100));
                             $updDetailPaiement->setAttribute('montant_restant',$montantOk);
@@ -552,8 +565,79 @@ class FormationsService implements FormationsInterface
                         $updPaiement->setAttribute('montant_restant',$getMontantTotalDetailPaiement);
                         $updPaiement->update();
 
+                        // mise à jour de ma tranche
+                        $checkTranche = Tranches::where("code_inscription",$data->code_inscription)->exists();
+                        if($checkTranche){
+                            $getTranche = Tranches::where("code_inscription",$data->code_inscription)->first();
+                            if($getTranche->tranche_2 > 0){ // double tranche
+                            $updTranche = Tranches::find($getTranche->id);
+                            $updTranche->setAttribute("tranche_1", $updPaiement->montant_total/2);
+                            $updTranche->setAttribute("tranche_2", $updPaiement->montant_total/2);
+                            $updTranche->update();
+
+                            }else{ // tranche unique
+                            $updTranche = Tranches::find($getTranche->id);
+                            $updTranche->setAttribute("tranche_1", $updPaiement->montant_total);
+                            $updTranche->update();
+                            }
+                        }
                         // send mail for auditeur to notify for price change
                     }
+
+                        } else {
+                            # code... montant inscription à mettre à jour
+                        } 
+
+                    } else {
+                        # code... IL S'AGIT DES FORMATIONS CLASSIQUES
+
+                    $listeInscriptions = Inscriptions::where('code_formation',$request->code_formation)->where("tarif_formation_id",$idTarif)->get();
+                    foreach ($listeInscriptions as $key => $data) {
+                    
+                        // CAS DES FORMATIONS NON DSC
+                        
+                        # code...
+                        // 1- mise à jour details paiement
+                        $getDetailsPaiements = Detailspaiements::where('code_inscription',$data->code_inscription)->get();
+                        foreach ($getDetailsPaiements as $key => $value) {
+                            # code...
+                            $updDetailPaiement = Detailspaiements::find($value->id);
+                            $red = 0; // mis pour réduction %
+
+                            // vérifier si réduction existe
+                            if ($updDetailPaiement->id_reduction) {
+                                # code...
+                                $reduction = Reductions::find($updDetailPaiement->id_reduction);
+                                $red = $reduction->pourcentage;
+                            } 
+
+                            // mise à jour montant restant
+                            $tarif = Tarificationsformation::find($updDetailPaiement->id_tarification_formation);
+                            $montant = $tarif->getGrilletarifaire->montant;
+                            $montantOk = $montant - ($montant * ($red/100));
+                            $updDetailPaiement->setAttribute('montant_restant',$montantOk);
+                            $updDetailPaiement->update();
+                            
+                        }
+
+                        // update billing
+                        $getOneDetailPaiement = Detailspaiements::where('code_inscription',$data->code_inscription)->first();
+                        if($getOneDetailPaiement){
+                            $getMontantTotalDetailPaiement = Detailspaiements::where('code_inscription',$data->code_inscription)->sum('montant_restant');
+                            $paiement = Paiements::whereReference($getOneDetailPaiement->reference_paiement)->first();
+                            $updPaiement = Paiements::find($paiement->id);
+                            $updPaiement->setAttribute('montant_total',$getMontantTotalDetailPaiement);
+                            $updPaiement->setAttribute('montant_restant',$getMontantTotalDetailPaiement);
+                            $updPaiement->update();
+
+                        }
+
+                        // send mail for auditeur to notify for price change
+                    }
+
+                    }
+                    
+                  
 
                 } else {
 
@@ -762,7 +846,7 @@ class FormationsService implements FormationsInterface
             ->where('inscriptions.is_delete', false)
             ->select(['inscriptions.id','inscriptions.sync_zoom','inscriptions.code_inscription', 'inscriptions.created_at',
                 'auditeurs.nom', 'auditeurs.prenoms', 'formations.fm_presentielle', 'formations.fm_visio', 'auditeurs.email',
-                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode', 'inscriptions.type_formation as mode','grilletarifaires.montant',
+                'auditeurs.telephone', 'grilletarifaires.type_tarif as mode_tarif', 'inscriptions.type_formation as mode','grilletarifaires.montant',
                 'inscriptions.type_formation', 'detailspaiements.statut_paiement','detailspaiements.reference_paiement', 'auditeurs.id as id_auditeur',
                 'inscriptions.is_formation_dsc', 'inscriptions.is_delete','inscriptions.code_formation','formations.is_formation_dsc'])
             ->selectRaw(
@@ -771,6 +855,75 @@ class FormationsService implements FormationsInterface
                 WHERE auditeurs_pieces.auditeur_id = auditeurs.id
             )) as check_dossier'
             );
+
+            // AUDITEUR UNIQUE PAR EMAIL (évite doublons)
+            /*$subAuditeur = DB::table('auditeurs as a')
+                ->select([
+                    'a.email',
+                    'a.nom',
+                    'a.prenoms',
+                    'a.telephone',
+                    'a.id as id_auditeur'
+                ])
+                ->join(DB::raw('(
+                    SELECT email, MAX(id) as max_id
+                    FROM auditeurs
+                    GROUP BY email
+                ) last'), function ($join) {
+                    $join->on('a.id', '=', 'last.max_id');
+                });
+
+            $liste_inscrits = Inscriptions::query()
+
+    ->leftJoin('tarificationsformations', 'inscriptions.tarif_formation_id', '=', 'tarificationsformations.id')
+    ->leftJoin('formations', 'inscriptions.code_formation', '=', 'formations.code_formation')
+    ->leftJoin('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
+
+    //  auditeur unique (anti doublon email)
+    ->leftJoinSub($subAuditeur, 'auditeurs', function ($join) {
+        $join->on('inscriptions.email', '=', 'auditeurs.email');
+    })
+ 
+
+    ->where('inscriptions.code_formation', $code_formation)
+    ->where('inscriptions.is_delete', false)
+
+    ->select([
+        'inscriptions.id',
+        'inscriptions.sync_zoom',
+        'inscriptions.code_inscription',
+        'inscriptions.created_at',
+
+        'auditeurs.nom',
+        'auditeurs.prenoms',
+        'auditeurs.email',
+        'auditeurs.telephone',
+        'auditeurs.id_auditeur',
+
+        'formations.fm_presentielle',
+        'formations.fm_visio',
+        'formations.is_formation_dsc',
+ 
+        'grilletarifaires.type_tarif as mode_tarif',
+        'inscriptions.type_formation as mode',
+
+        'grilletarifaires.montant',
+
+        'inscriptions.type_formation',
+
+        'inscriptions.is_formation_dsc',
+        'inscriptions.is_delete',
+        'inscriptions.code_formation',
+    ])
+
+    //  dossier check corrigé
+    ->selectRaw("
+        EXISTS (
+            SELECT 1
+            FROM auditeurs_pieces
+            WHERE auditeurs_pieces.auditeur_id = auditeurs.id_auditeur
+        ) as check_dossier
+    ");*/
 
         // Recherche globale sur plusieurs champs
         if ($search) {
