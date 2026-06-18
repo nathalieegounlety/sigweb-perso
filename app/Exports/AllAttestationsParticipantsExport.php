@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithMapping; 
 
-class AllAttestationsParticipantsExport implements FromQuery, WithHeadings, WithChunkReading
+class AllAttestationsParticipantsExport implements FromQuery, WithHeadings, WithChunkReading, ShouldAutoSize, WithMapping 
 {
     private $code_formation;
 
@@ -27,12 +29,10 @@ class AllAttestationsParticipantsExport implements FromQuery, WithHeadings, With
         if ($check_duree_formation) {
             $nbr_duree_enregistrement = $check_duree_formation->duree_enregistrement;
         } else {
-            # code... create durée
             $nbr_duree_enregistrement = 0;
         }
-        //variable temps de latence
-        $temps_latence = 90; // par jour de formation ||
-        // récupérer le nbre de jour de formation pour la formation en cours 
+        
+        $temps_latence = 90; 
 
         $duree_formation = DB::table('sessionformations')
             ->select(DB::raw('sum(duree_reel - ' . $temps_latence . ') as duree_session'))
@@ -83,7 +83,22 @@ class AllAttestationsParticipantsExport implements FromQuery, WithHeadings, With
         return ['Code formation','Nom','Prénoms','Email','Temps présence','Attestation envoyée','Statut paiement'];
     }
 
-    
+    /**
+    * Cette méthode va maintenant être correctement exécutée pour chaque ligne
+    */
+    public function map($row): array
+    {
+        return [
+            $row->code_formation,
+            $row->nom ?? '',
+            $row->prenoms ?? '',
+            $row->email,
+            (int) $row->temps_presence,
+            // Conversion propre du booléen / entier en texte lisible
+            $row->attestation_send ? 'Oui' : 'Non', 
+            $row->statut_paiement ?? '',
+        ];
+    }
 
     public function chunkSize(): int
     {
