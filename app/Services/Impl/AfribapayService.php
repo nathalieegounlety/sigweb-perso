@@ -3,19 +3,25 @@
 namespace App\Services\Impl;
 
 use App\Helpers\ResponseHandler;
+use App\Mail\NotificationComptable;
+use App\Mail\Paiementattente;
+use App\Models\Auditeurs;
+use App\Models\Modepaiements;
+use App\Models\Paiements;
+use App\Models\User;
 use App\Services\contracts\AfribapayInterface;  
 use Illuminate\Support\Facades\Cache; 
 use \GuzzleHttp\Client;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AfribapayService implements AfribapayInterface
 {  
     public function getToken()
 {
     // Récupérer le tableau {access_token, expires_at} depuis le cache
-    $cached = Cache::get('afribapay_token');
-
-    Log::info($cached);
+    $cached = Cache::get('afribapay_token'); 
 
     // Pas de cache → générer
     if (!$cached) {
@@ -74,16 +80,180 @@ public function generateToken()
         // TODO: Implement listeVariables() method. 
         $token = $this->getToken();
         $url = config('services.afribapay.base_url'); 
+        $merchant_key = config('services.afribapay.merchant_id'); 
 
         $dataResponse = [
             'token' => $token, 
-            'url' => $url,
+            'url' => $url,  
+            'merchant_key' => $merchant_key,
             'success' => true
         ];
 
         return ResponseHandler::success("ok",$dataResponse);
     }
 
+    public function payIn(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement payIn() method. 
+        $token = $this->getToken();
+        //$url = config('services.afribapay.base_url'); 
+        $merchant_key = config('services.afribapay.merchant_id'); 
+        $operation = [
+            "operator" => $request->operator,
+            "country" => $request->country,
+            "phone_number" => $request->phone_number,
+            "amount" => $request->amount,
+            "currency" => $request->currency,
+            "merchant_key" => $merchant_key,
+            "reference_id" => $request->reference_id,
+            "lang" => "fr",
+            "return_url" => env("AFRIBAPAY_CALLBACK"),
+            "cancel_url" => env("AFRIBAPAY_CALLBACK"),
+            "notify_url" => env("AFRIBAPAY_CALLBACK"),
+        ]; 
+
+        // initialiser la requete
+
+         $client = new Client([
+            'verify'  => false, // désactiver en production
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type'  => 'application/json'
+            ]
+        ]);
+
+        // Log::info(json_encode($operation));
+        $response = $client->request('POST', config('services.afribapay.base_url') . '/v1/pay/payin', ['json' => $operation]);
+        $body = json_decode($response->getBody(), true);
+        
+        // Log::info($response->getBody());
+
+        if ($response->getStatusCode() === 200) {
+            return ResponseHandler::success("ok",$body);
+        }else{
+            return ResponseHandler::error("echec de la création du paiement");
+        }  
+    }
+
     
+
+    public function checkPayIn(Request $request, $id): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement payIn() method. 
+        $token = $this->getToken();
+        //$url = config('services.afribapay.base_url'); 
+        $merchant_key = config('services.afribapay.merchant_id');  
+
+        // initialiser la requete
+
+         $client = new Client([
+                'verify'  => false, // désactiver en production
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'application/json'
+                ]
+            ]);
+ 
+            $response = $client->request('GET', config('services.afribapay.base_url') . '/v1/status?transaction_id='.$id, []);
+            $body = json_decode($response->getBody(), true);
+            
+            //Log::info($response->getBody());
+
+            if ($response->getStatusCode() === 200) {
+                // procéder à l'enregistrement des données 
+                $statut = $body['data']['status'];
+                $reference = $body['data']['reference_id'];
+                    $montant_paye = $body['data']['amount_total']; 
+
+                    // mise à jour de la table paiement
+                    $getPaiement = Paiements::whereReference($reference)->first();
+                    $montant_restant = $getPaiement->montant_restant;
+                    // mise à jour du montant paye
+                    $paiement = Paiements::find($getPaiement->id);
+                    $paiement->setAttribute('num_transaction', $id);
+                    $paiement->setAttribute('statut_transaction', $statut);
+                    $paiement->setAttribute('updated_at', date('Y-m-d H:i:s'));
+                    $mp = Modepaiements::where('libelle','AfribaPay')->first();
+                    $paiement->setAttribute('id_modepaiement', $mp->id);
+                    if($montant_paye < $montant_restant){ // il s'agit d'un paiement partiel
+                        $paiement->setAttribute('is_paiementpartiel', 1);
+                    }
+                    $paiement->update();
+                    // récupérer le mode de paiement
+                    $libelle_mode_paiement = Modepaiements::find($paiement->id_modepaiement);
+
+                    // envoie de mail pour notification paiement en attente
+                    // envoie de mail pour notifier l'enregistrement du paiement
+                    $auditeur = Auditeurs::where("email",$paiement->email)->first();
+                    if ($auditeur) {
+                        # code...
+                        $contenu = [
+                            'nom' => $auditeur->nom,
+                            'prenoms' => $auditeur->prenoms,
+                            'reference_paiement' => $reference,
+                            'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$reference,
+                            'email' => $paiement->email,
+                            'montant' => $montant_paye,
+                            'mode_paiement' => $libelle_mode_paiement->libelle
+                        ];
+                    } else {
+                        # code...
+                        $contenu = [
+                            'nom' => "",
+                            'prenoms' => "",
+                            'reference_paiement' => $reference,
+                            'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$reference,
+                            'email' => $paiement->email,
+                            'montant' => $montant_paye,
+                            'mode_paiement' => $libelle_mode_paiement->libelle
+                        ];
+                    }
+                    try {
+                        # code...
+                        Mail::to($paiement->email)->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new Paiementattente($contenu));
+                    } catch (\Exception $e) {
+                        // Get error here
+                        Log::info('echec de l\'envoi du mail');
+                    }
+
+                    if(env('PAIEMENT_NOTIFIER_COMPTABLE')){
+
+                        $liste_comptable = User::whereHas('roles', function ($q) {
+                            $q->where('libelle', 'COMPTABLE');
+                        })->pluck('email');
+
+                        //foreach ($liste_comptable as $comptable) {
+                        $contenu = [
+                            'name' => 'COMPTABLE',
+                            'reference_paiement' => $reference,
+                            'email_auditeur' => $paiement->email,
+                            'nom_auditeur' => $auditeur->prenoms.' '.$auditeur->nom,
+                            'subject' => 'NOUVEAU PAIEMENT ' . date('d-m-Y H:i:s'),
+                            'email' => '',
+                            'montant' => $montant_paye,
+                            'mode_paiement' => $libelle_mode_paiement->libelle
+                        ];
+                        try {
+                            # code...
+                            Mail::to(env('MAIL_CC'))->cc($liste_comptable)->queue(new NotificationComptable($contenu));
+                        } catch (\Exception $e) {
+                            // Get error here
+                        }
+                    }
+
+                    //}
+
+                    $dataResponse = [
+                        'reference' => $paiement->reference,
+                        'success' => true,
+                    ];
+
+                    return  ResponseHandler::success("ok",$dataResponse); 
+    }else{
+        return ResponseHandler::error("echec de la création du paiement");
+    } 
+
+        
+    }
      
 }

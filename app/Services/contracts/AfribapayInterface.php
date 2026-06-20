@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Services\contracts;  
+namespace App\Services\contracts;
+
+use Illuminate\Http\Request;
 
 interface AfribapayInterface
 {
@@ -8,5 +10,7 @@ interface AfribapayInterface
     public function getToken();
     public function generateToken(); 
     public function listeVariables(): \Illuminate\Http\JsonResponse; 
+    public function payIn(Request $request): \Illuminate\Http\JsonResponse; 
+    public function checkPayIn(Request $request, String $id): \Illuminate\Http\JsonResponse; 
 
 }
