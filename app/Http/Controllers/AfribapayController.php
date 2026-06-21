@@ -16,7 +16,7 @@ class AfribapayController extends Controller
     public function __construct(AfribapayInterface $afribapayService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['generateToken','getListeVar','sendPayIn','checkPayIn']]);
+        $this->middleware('auth:api',['except' => ['generateToken','getListeVar','sendPayIn','checkPayIn','webhook']]);
         $this->afribapayService = $afribapayService;
     }
 
