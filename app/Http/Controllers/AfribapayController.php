@@ -221,8 +221,7 @@ class AfribapayController extends Controller
                             // si la validation est déjà faite on fait simplement une redirection de sortie                            
                             if ($updatePaiement->statut_traitement == "VALIDER") {
                                 # code...
-                                return response()->json(["data" => $dataAP, "statut" => "approved"], 200);
-                                break;
+                                return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
                             }
                             # code...
                             $updatePaiement->setAttribute("num_transaction",$dataAP['transaction_id']);
@@ -273,8 +272,7 @@ class AfribapayController extends Controller
 
                         if ($checkValidation) {
                             # code...
-                            return response()->json(["data" => $dataAP, "statut" => "approved"], 200);
-                            break;
+                            return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
                         }
 
                          // send mail paiement validé 
@@ -348,8 +346,7 @@ class AfribapayController extends Controller
 
                            if ($checkValidation) { // paiement déjà validé
                             # code...
-                                return response()->json(["data" => $dataAP, "statut" => "approved"], 200);
-                                break;
+                                return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
                             }
 
                              // send mail paiement validé 
@@ -382,8 +379,7 @@ class AfribapayController extends Controller
 
                             if ($paiement->statut_traitement == "VALIDER") {
                                 # code...
-                                return response()->json(["data" => $dataAP, "statut" => "approved"], 200);
-                                break;
+                                return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
                             }
  
                                 $paiement->setAttribute('num_transaction', $dataAP['transaction_id']);
