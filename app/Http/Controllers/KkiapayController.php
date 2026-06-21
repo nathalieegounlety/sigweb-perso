@@ -276,18 +276,18 @@ class KkiapayController extends Controller
                              // send mail paiement validé 
                             $auditeur = Auditeurs::where("email",$paiement->email)->first();
                             // envoie de mail pour la reférence de la facture
-                            $modepaiement = Modepaiements::find($request->modepaiement_id);
+                            $modepaiement = Modepaiements::find(1);
                             $contenu = [
                                 'nom' => $auditeur->nom ,
                                 'prenoms' => $auditeur->prenoms,
-                                'reference_paiement' => $request->reference,
-                                'subject' => 'TRAITEMENT DE VOTRE PAIEMENT '.$request->reference,
+                                'reference_paiement' => $get_reference,
+                                'subject' => 'TRAITEMENT DE VOTRE PAIEMENT '.$get_reference,
                                 'commentaire' => "Paiement validé",
                                 'email'=>$paiement->email,
                                 'mode_paiement'=>$modepaiement->libelle,
                                 'montant'=>$montant_paye, 
                                 'type'=>$paiement->type,
-                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$request->reference])
+                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$get_reference])
                             ];
 
                             try {

@@ -25,6 +25,7 @@ class FedapayController extends Controller
 
     public function __construct(FedapayInterfarce $fedapayInterferce, GenarateurCodeService $genarateurCodeService)
     {
+        // $this->middleware('auth:api',['except' => ['webhook']]);
         $this->fedapayInterferce = $fedapayInterferce;
         $this->genarateurCodeService = $genarateurCodeService;
     }
@@ -97,7 +98,7 @@ class FedapayController extends Controller
 
      // webhook
     public function webhook(Request $request)
-    {
+    { 
         // You can find your endpoint's secret key in your webhook settings
         $endpoint_secret = env("FEDAPAY_WEBHOOK");
         //$data = $request->name;
@@ -252,11 +253,11 @@ class FedapayController extends Controller
                         $checkPaiementPartiel = Detailspaiements::where("reference_paiement_partiel",$event->entity->id)->where("reference_paiement",$paiement->reference)->exists();
                         if ($checkPaiementPartiel) {
                             # code... // il s'agit d'un paiement partiel
-                             $dtPaiementPariel = Detailspaiements::where("reference_paiement_partiel",$event->entity->id)->where("reference_paiement",$paiement->reference)->first();
-                             $getDetailPaiement = Detailspaiements::find($dtPaiementPariel->id);
+                            $dtPaiementPartiel = Detailspaiements::where("reference_paiement_partiel",$event->entity->id)->where("reference_paiement",$paiement->reference)->first();
+                            $getDetailPaiement = Detailspaiements::find($dtPaiementPartiel->id);
                             $montant_paye = getMontantFormation($getDetailPaiement->id);
                             // ! (vérifier si tous les autres occurences disponibles dans la table détailspaiements sont validées)
-                            $checkPaiementNonSolde = Detailspaiements::where("id","!=",$dtPaiementPariel->id)
+                            $checkPaiementNonSolde = Detailspaiements::where("id","!=",$dtPaiementPartiel->id)
                             ->where("reference_paiement",$paiement->reference)
                             ->where("statut_traitement","ATTENTE")
                             ->exists();
@@ -298,18 +299,18 @@ class FedapayController extends Controller
                              // send mail paiement validé 
                             $auditeur = Auditeurs::where("email",$paiement->email)->first();
                             // envoie de mail pour la reférence de la facture
-                            $modepaiement = Modepaiements::find($request->modepaiement_id);
+                            $modepaiement = Modepaiements::find(2);
                             $contenu = [
                                 'nom' => $auditeur->nom ,
                                 'prenoms' => $auditeur->prenoms,
-                                'reference_paiement' => $request->reference,
-                                'subject' => 'TRAITEMENT DE VOTRE PAIEMENT '.$request->reference,
+                                'reference_paiement' => $get_reference,
+                                'subject' => 'TRAITEMENT DE VOTRE PAIEMENT '.$get_reference,
                                 'commentaire' => "Paiement validé",
                                 'email'=>$paiement->email,
                                 'mode_paiement'=>$modepaiement->libelle,
                                 'montant'=>$montant_paye, 
                                 'type'=>$paiement->type,
-                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$request->reference])
+                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$get_reference])
                             ];
 
                             try {
