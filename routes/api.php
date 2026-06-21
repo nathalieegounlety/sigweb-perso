@@ -531,7 +531,7 @@ Route::prefix('v1/scolarites')->controller(CandidaturesController::class)->group
 Route::prefix('v1/afribapay')->controller(\App\Http\Controllers\AfribapayController::class)->group(function () {
     Route::get('token', 'generateToken'); 
     Route::get('liste/variable', 'getListeVar'); 
-    Route::get('webhook', 'webhook'); 
+    Route::post('webhook', 'webhook'); 
     Route::post('sendPayIn','sendPayIn');
     Route::post('checkPayIn/{id}','checkPayIn');
 });
