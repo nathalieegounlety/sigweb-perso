@@ -361,6 +361,7 @@ Route::prefix('v1/fedapay')->controller(\App\Http\Controllers\FedapayController:
     Route::post('store/paiement/partiel', 'savePaiementPartiel');
     Route::post('store/paiement/ouvrage', 'savePaiementOuvrage');
     Route::post('store/paiement/dsc', 'savePaiementDsc');
+    Route::post('store/paiement/partiel/dsc', 'savePaiementPartielDsc');
     Route::post('webhook/paiements', 'webhook');
 });
 
@@ -370,6 +371,7 @@ Route::prefix('v1/kkiapay')->controller(\App\Http\Controllers\KkiapayController:
     Route::post('store/paiement/partiel', 'savePaiementPartiel');
     Route::post('store/paiement/ouvrage', 'savePaiementOuvrage');
     Route::post('store/paiement/dsc', 'savePaiementDsc');
+    Route::post('store/paiement/partiel/dsc', 'savePaiementPartielDsc');
     Route::post('webhook', 'webhook'); 
 });
 
@@ -534,4 +536,5 @@ Route::prefix('v1/afribapay')->controller(\App\Http\Controllers\AfribapayControl
     Route::post('webhook', 'webhook'); 
     Route::post('sendPayIn','sendPayIn');
     Route::post('checkPayIn/{id}','checkPayIn');
+    Route::post('paiement/partiel/{id}','savePaiementPartiel');
 });

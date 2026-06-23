@@ -328,7 +328,7 @@ class FormationsService implements FormationsInterface
 
         // sauvegarde du visuel
         $name_visuel = null;
-        $haveVisuel = false;
+        $haveVisuel = false; 
         if ($request->file) {
             $visuel = $request->file;
             $extension = $visuel->getClientOriginalExtension();
@@ -525,7 +525,7 @@ class FormationsService implements FormationsInterface
                         # code...
 
                         // vérifier s'il ne s'agit du montant d'inscription
-                        if ($getTarif->getGrille->type_tarif != "INSCRIPTION") {
+                        if ($getTarif->getGrilletarifaire->type_tarif != "INSCRIPTION") {
                             # code...
                              $listeInscriptions = Inscriptions::where('code_formation',$request->code_formation)->where("tarif_formation_id",$idTarif)->get();
                     foreach ($listeInscriptions as $key => $data) {

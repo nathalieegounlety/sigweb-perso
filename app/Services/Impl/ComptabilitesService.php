@@ -1997,6 +1997,22 @@ class ComptabilitesService implements ComptabilitesInterface
             $date_limite_inscription = $getDateInsc->date_limite_paiement_inscription;
         }
 
+        $update_reference = $paiement->reference;
+
+        if($checkPaiementTranche){
+            // vérifier le dernier enregistrement portant la référence de paiement pour incrémenter 
+        $getPTranche = PaiementsTranche::where("reference","like","%$paiement->reference%")->latest()->first();
+        //dd($getPTranche);
+        if ($getPTranche) { 
+            # code...
+            $ref = explode("_",$getPTranche->reference)[1]+1;
+            $update_reference = $paiement->reference."_".$ref;
+        } else {
+            # code...
+            $update_reference = $paiement->reference."_1";
+        }
+        }
+
         if($paiement){
             $details_paiement = Detailspaiements::join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
                 ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
@@ -2035,7 +2051,8 @@ class ComptabilitesService implements ComptabilitesInterface
                 'frais_scolarite' => $frais_scolarite,
                 'frais_inscription' => $frais_inscription,
                 'refP' => $refP,
-                'checkPaiementTranche' => $checkPaiementTranche
+                'checkPaiementTranche' => $checkPaiementTranche,
+                'update_reference' => $update_reference
             ];
             return  ResponseHandler::success("ok",$data);
         }else{

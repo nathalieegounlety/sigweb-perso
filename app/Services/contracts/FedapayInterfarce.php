@@ -10,5 +10,6 @@ interface FedapayInterfarce
     public function storePaiementPartielFedapay(Request $request): \Illuminate\Http\JsonResponse;
     public function storePaiementOuvrageFedapay(Request $request): \Illuminate\Http\JsonResponse;
     public function storePaiementDscFedaPay(Request $request): \Illuminate\Http\JsonResponse;
+    public function storePaiementPartielDscFedaPay(Request $request): \Illuminate\Http\JsonResponse;
 
 }

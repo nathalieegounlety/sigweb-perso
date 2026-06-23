@@ -10,5 +10,6 @@ interface KkiapayInterfarce
     public function storePaiementPartielKkiapay(Request $request): \Illuminate\Http\JsonResponse;
     public function storePaiementOuvrageKkiapay(Request $request): \Illuminate\Http\JsonResponse;
     public function storePaiementDscKkiapay(Request $request): \Illuminate\Http\JsonResponse;
+    public function storePaiementPartielDscKkiapay(Request $request): \Illuminate\Http\JsonResponse;
 
 }

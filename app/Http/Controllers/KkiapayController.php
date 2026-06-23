@@ -92,6 +92,21 @@ class KkiapayController extends Controller
         }
     }
 
+    public function savePaiementPartielDsc(Request $request){
+        try {
+            $validated = $request->validate([
+                'transaction_id' => 'required|string'
+            ]);
+
+            return $data = $this->kkiapayservice->storePaiementPartielDscKkiapay($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
     public function webhook(Request $request)
     {  
         // Répondez à Kkiapay avec un statut HTTP 200 OK 

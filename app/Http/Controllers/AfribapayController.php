@@ -27,7 +27,7 @@ class AfribapayController extends Controller
     public function __construct(AfribapayInterface $afribapayService, GenarateurCodeService $genarateurCodeService)
     {
         // restriction des accès
-        $this->middleware('auth:api',['except' => ['generateToken','getListeVar','sendPayIn','checkPayIn','webhook']]);
+        $this->middleware('auth:api',['except' => ['generateToken','getListeVar','sendPayIn','checkPayIn','webhook','savePaiementPartiel']]);
         $this->afribapayService = $afribapayService;
         $this->genarateurCodeService = $genarateurCodeService;
 
@@ -473,4 +473,20 @@ class AfribapayController extends Controller
         } 
     }
 
+    public function savePaiementPartiel(Request $request, $id){
+        try {
+            $validated = $request->validate([ 
+                'formations' => 'required',
+                'amount' => 'required', 
+                'reference_id' => 'required'
+            ]);
+
+            return $data = $this->afribapayService->storePaiementPartielAFB($request, $id);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 }
