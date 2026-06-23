@@ -62,8 +62,8 @@ class FormationsController extends Controller
                 'typeformation_id' => 'required',
                 'is_event' => 'required',
                 'is_coorganisation' => 'required',
-                'visuel' => 'mimes:jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP|nullable'
-                // 'date_limite'=>'required',
+                'visuel' => 'mimes:jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP|nullable',
+                'cout_formation'=>'required'
                 // 'file'=>'required|mimes:jpg,jpeg,png,JPG,JPEG,PNG'
             ]);
 
@@ -96,8 +96,8 @@ class FormationsController extends Controller
                 'typeformation_id' => 'required',
                 'is_event' => 'required',
                 'is_coorganisation' => 'required',
-                'visuel' => 'mimes:jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP|nullable'
-                // 'date_limite'=>'required',
+                'visuel' => 'mimes:jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP|nullable',
+                'cout_formation'=>'required',
                 // 'file'=>'required|mimes:jpg,jpeg,png,JPG,JPEG,PNG'
             ]);
 
