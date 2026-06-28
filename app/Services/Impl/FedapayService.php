@@ -466,6 +466,11 @@ class FedapayService implements  FedapayInterfarce
                 foreach ($liste_details as $detail){
                     if($detail->type_tarif == 'INSCRIPTION' && $detail->choix && $detail->montant_paye > 0){
                         // paiement effectué pour inscription
+                        $checkData =  Detailspaiements::where('id',$detail->detail_id)
+                        ->where('reference_paiement_partiel',$transactionId->id)
+                        ->exists();
+                        
+                        if(!$checkData){
                         $detailPaiement = Detailspaiements::find($detail->detail_id);
                         $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                         $detailPaiement->setAttribute('montant_restant',$detail->montant_restant-$detail->montant_paye);
@@ -491,6 +496,7 @@ class FedapayService implements  FedapayInterfarce
                         $tranche_paiement->setAttribute('created_by',$user->id);
                         $tranche_paiement->setAttribute('updated_by',$user->id);
                         $tranche_paiement->save();
+                        }
 
                     }else{
                         if($request->tranche == 'tranche_unique'){ // tranche unique
@@ -532,6 +538,12 @@ class FedapayService implements  FedapayInterfarce
                             }
                             // vérifier si paiement enregistré
                             if($detail->choix && $detail->montant_paye > 0){
+                                $checkData =  Detailspaiements::where('id',$detail->detail_id)
+                        ->where('reference_paiement_partiel',$transactionId->id)
+                        ->exists();
+                        
+                        if(!$checkData){
+
                                 $baseMontantRestant = $detail->montant_restant*0.95;
                                 $mtRestant =  $baseMontantRestant - $detail->montant_paye;
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
@@ -560,7 +572,7 @@ class FedapayService implements  FedapayInterfarce
                                 $tranche_paiement->setAttribute('created_by',$user->id);
                                 $tranche_paiement->setAttribute('updated_by',$user->id);
                                 $tranche_paiement->save();
-
+                        }
                             }else{
                                 $detailPaiement->setAttribute('montant_restant',$detail->montant_restant*0.95);
                                 $detailPaiement->setAttribute('have_reduction_dsc',true);
@@ -603,6 +615,11 @@ class FedapayService implements  FedapayInterfarce
 
                             // vérifier si paiement enregistré
                             if($detail->choix && $detail->montant_paye > 0){
+                                $checkData =  Detailspaiements::where('id',$detail->detail_id)
+                        ->where('reference_paiement_partiel',$transactionId->id)
+                        ->exists();
+                        
+                        if(!$checkData){
                                 $mtRestant = $detail->montant_restant - $detail->montant_paye;
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                                 $detailPaiement->setAttribute('montant_restant',$mtRestant);
@@ -630,7 +647,7 @@ class FedapayService implements  FedapayInterfarce
                                 $tranche_paiement->setAttribute('created_by',$user->id);
                                 $tranche_paiement->setAttribute('updated_by',$user->id);
                                 $tranche_paiement->save();
-
+                        }
                             }else{
                                 $detailPaiement->setAttribute('montant_restant',$detail->montant_restant);
                                 $detailPaiement->setAttribute('have_reduction_dsc',false);
@@ -760,8 +777,7 @@ class FedapayService implements  FedapayInterfarce
 
         }
     }
-
-
+ 
 
     public function storePaiementPartielDscFedaPay(Request $request): \Illuminate\Http\JsonResponse
     {

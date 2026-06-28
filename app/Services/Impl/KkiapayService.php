@@ -589,11 +589,16 @@ class KkiapayService implements  KkiapayInterfarce
                     # code...
                     $update_reference = $paiement->reference."_1";
                 }
+ 
 
                 foreach ($liste_details as $detail){
                     if($detail->type_tarif == 'INSCRIPTION' && $detail->choix && $detail->montant_paye > 0){
                         // paiement effectué pour inscription
-                        $detailPaiement = Detailspaiements::find($detail->detail_id);
+                        $checkData = Detailspaiements::where('id',$detail->detail_id)
+                        ->where('reference_paiement_partiel',$transactionId)
+                        ->exists();
+                        if(!$checkData){
+                            $detailPaiement = Detailspaiements::find($detail->detail_id);
                         $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                         $detailPaiement->setAttribute('montant_restant',$detail->montant_restant-$detail->montant_paye);
                         $detailPaiement->setAttribute('reference_paiement_partiel',$transactionId);
@@ -618,6 +623,8 @@ class KkiapayService implements  KkiapayInterfarce
                         $tranche_paiement->setAttribute('created_by',$user->id);
                         $tranche_paiement->setAttribute('updated_by',$user->id);
                         $tranche_paiement->save();
+                        }
+                        
 
                     }else{
                         if($request->tranche == 'tranche_unique'){ // tranche unique
@@ -658,6 +665,10 @@ class KkiapayService implements  KkiapayInterfarce
                             }
                             // vérifier si paiement enregistré
                             if($detail->choix && $detail->montant_paye > 0){
+                                 $checkData = Detailspaiements::where('id',$detail->detail_id)
+                        ->where('reference_paiement_partiel',$transactionId)
+                        ->exists();
+                        if(!$checkData){
                                 $baseMontantRestant = $detail->montant_restant*0.95;
                                 $mtRestant =  $baseMontantRestant - $detail->montant_paye;
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
@@ -686,7 +697,7 @@ class KkiapayService implements  KkiapayInterfarce
                                 $tranche_paiement->setAttribute('created_by',$user->id);
                                 $tranche_paiement->setAttribute('updated_by',$user->id);
                                 $tranche_paiement->save();
-
+                        }
                             }else{
                                 $detailPaiement->setAttribute('montant_restant',$detail->montant_restant*0.95);
                                 $detailPaiement->setAttribute('have_reduction_dsc',true);
@@ -728,6 +739,10 @@ class KkiapayService implements  KkiapayInterfarce
 
                             // vérifier si paiement enregistré
                             if($detail->choix && $detail->montant_paye > 0){
+                                 $checkData = Detailspaiements::where('id',$detail->detail_id)
+                        ->where('reference_paiement_partiel',$transactionId)
+                        ->exists();
+                        if(!$checkData){
                                 $mtRestant = $detail->montant_restant - $detail->montant_paye;
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                                 $detailPaiement->setAttribute('montant_restant',$mtRestant);
@@ -755,7 +770,7 @@ class KkiapayService implements  KkiapayInterfarce
                                 $tranche_paiement->setAttribute('created_by',$user->id);
                                 $tranche_paiement->setAttribute('updated_by',$user->id);
                                 $tranche_paiement->save();
-
+                        }
                             }else{
                                 $detailPaiement->setAttribute('montant_restant',$detail->montant_restant);
                                 $detailPaiement->setAttribute('have_reduction_dsc',false);
@@ -950,19 +965,31 @@ class KkiapayService implements  KkiapayInterfarce
                 // 2- update details paiement
                 $getPTranche = PaiementsTranche::where("reference","like","%$paiement->reference%")->latest()->first();
                 //dd($getPTranche);
-                if ($getPTranche) {
+                /*if ($getPTranche) {
                     # code...
                     $ref = explode("_",$getPTranche->reference)[1]+1;
                     $update_reference = $paiement->reference."_".$ref;
                 } else {
                     # code...
                     $update_reference = $paiement->reference."_1";
-                }
+                }*/
+
+                $update_reference = $request->reference;
+
+                $checkDoublon = false;
 
                 foreach ($liste_details as $detail){
+
                     if($detail->type_tarif == 'INSCRIPTION' && $detail->choix && $detail->montant_paye > 0){
                         // paiement effectué pour inscription
-                        $detailPaiement = Detailspaiements::find($detail->detail_id);
+                       
+                        $checkData = Detailspaiements::where('id',$detail->detail_id)
+                        ->where('reference_paiement_partiel',$transactionId)
+                        ->exists();
+
+                        if(!$checkData){
+
+                         $detailPaiement = Detailspaiements::find($detail->detail_id);
                         $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
                         $detailPaiement->setAttribute('montant_restant',$detail->montant_restant-$detail->montant_paye);
                         $detailPaiement->setAttribute('reference_paiement_partiel',$transactionId);
@@ -972,7 +999,8 @@ class KkiapayService implements  KkiapayInterfarce
                         $detailPaiement->setAttribute("commentaire","Validation automatique webhook KKiaPay");
                         $detailPaiement->update();
 
-                        $tranche_paiement = new PaiementsTranche();
+
+                             $tranche_paiement = new PaiementsTranche();
                         $tranche_paiement->setAttribute('details_paiements_id',$detailPaiement->id);
                         $tranche_paiement->setAttribute('montant_paye',$detail->montant_paye);
                         $tranche_paiement->setAttribute('montant_restant',$detailPaiement->montant_restant);
@@ -987,6 +1015,7 @@ class KkiapayService implements  KkiapayInterfarce
                         $tranche_paiement->setAttribute('created_by',$user->id);
                         $tranche_paiement->setAttribute('updated_by',$user->id);
                         $tranche_paiement->save();
+                        } 
 
                     }else{
                         if($request->tranche == 'tranche_unique'){ // tranche unique
@@ -1027,6 +1056,13 @@ class KkiapayService implements  KkiapayInterfarce
                             }
                             // vérifier si paiement enregistré
                             if($detail->choix && $detail->montant_paye > 0){
+                                // vérifier si le paiement est déjà valider
+                                $checkData = Detailspaiements::where('id',$detail->detail_id)
+                                ->where('reference_paiement_partiel',$transactionId)
+                                ->exists();
+
+                                if(!$checkData){
+
                                 $baseMontantRestant = $detail->montant_restant; // *0.95;
                                 $mtRestant =  $baseMontantRestant - $detail->montant_paye;
                                 $detailPaiement->setAttribute('montant_paye',$detail->montant_paye);
@@ -1055,6 +1091,8 @@ class KkiapayService implements  KkiapayInterfarce
                                 $tranche_paiement->setAttribute('created_by',$user->id);
                                 $tranche_paiement->setAttribute('updated_by',$user->id);
                                 $tranche_paiement->save();
+
+                                } 
 
                             }else{
                                 //$detailPaiement->setAttribute('montant_restant',$detail->montant_restant*0.95);
@@ -1097,6 +1135,13 @@ class KkiapayService implements  KkiapayInterfarce
 
                             // vérifier si paiement enregistré
                             if($detail->choix && $detail->montant_paye > 0){
+                                 // vérifier si le paiement est déjà valider
+                                $checkData = Detailspaiements::where('id',$detail->detail_id)
+                                ->where('reference_paiement_partiel',$transactionId)
+                                ->exists();
+                                
+                                if(!$checkData){
+
                                 $mtRestant = $detail->montant_restant - $detail->montant_paye;
                                 $detailPaiement->setAttribute('montant_paye',$detailPaiement->montant_paye + $detail->montant_paye);
                                 $detailPaiement->setAttribute('montant_restant',$mtRestant);
@@ -1124,7 +1169,7 @@ class KkiapayService implements  KkiapayInterfarce
                                 $tranche_paiement->setAttribute('created_by',$user->id);
                                 $tranche_paiement->setAttribute('updated_by',$user->id);
                                 $tranche_paiement->save();
-
+                                }
                             }else{
                                 //$detailPaiement->setAttribute('montant_restant',$detail->montant_restant);
                                // $detailPaiement->setAttribute('have_reduction_dsc',false);
