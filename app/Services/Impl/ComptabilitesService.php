@@ -1581,6 +1581,7 @@ class ComptabilitesService implements ComptabilitesInterface
         // update statut paiement
         $user = auth('api')->user();
         $paiement = Paiements::where("reference",$request->reference)->get()->first();
+        $updPaiement = Paiements::find($paiement->id);
         $getDetailPaiement = Detailspaiements::find($request->identifiant);
 
         // ! (vérifier si tous les autres occurences disponibles dans la table détailspaiements sont validées)
@@ -1590,17 +1591,22 @@ class ComptabilitesService implements ComptabilitesInterface
             ->exists();
 
         $montant_paye = $request->montant_total; // getMontantFormation($request->identifiant);
+        // récupérer le nombre de formation
+        $nbrFormation = Detailspaiements::where('reference_paiement',$request->reference)->count();
 
         if ($montant_paye == 0) { // facture soldée
             # code...
             if ($request->statut_traitement == "VALIDER") {
 
-                // update detailspaiements
+                // update detailspaiements 
                 $getDetailPaiement->setAttribute('statut_traitement',trim($request->statut_traitement));
                 $getDetailPaiement->setAttribute('statut_paiement', "PAYE");
                 $getDetailPaiement->setAttribute("montant_paye",$getDetailPaiement->montant_restant);
                 $getDetailPaiement->setAttribute("montant_restant",0);
                 $getDetailPaiement->setAttribute("commentaire",$request->commentaire);
+                if($paiement->is_paiement_partiel){
+                    $getDetailPaiement->setAttribute("reference_paiement_partiel",$request->num_transaction);
+                }
                 // si preuve de paiement on sauvegarde
                 if (!empty($request->preuve)) {
                     $preuve_paiement = $request->preuve;
@@ -1610,20 +1616,85 @@ class ComptabilitesService implements ComptabilitesInterface
                     $getDetailPaiement->setAttribute('preuve_path', $preuve_name);
                 }
                 $getDetailPaiement->update();
-
-                // si facture soldée update paiements
-                if (!$checkPaiementNonSolde) {
-                    # code...
-                    if ($paiement->montant_restant == 0) {
-                        $paiement->setAttribute("statut_paiement","PAYE");
-                        $paiement->setAttribute("commentaire",$request->commentaire);
-                        $paiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                        $paiement->setAttribute('agent_traiteur', $user->id);
-                        $paiement->setAttribute('date_traitement', new \DateTime());
-                        $paiement->update();
+                
+                // vérifier si le nombre de formation est unique
+                if($nbrFormation > 1){ // il s'agit d'un paiement avec plusieurs formation
+                    // vérifier s'il s'agit du paiement partiel
+                    // si oui on ne met pas à jour les montants dans la table paiement
+                    // Car c'est déjà fait lors de l'enregistrement du paiement
+                    if($paiement->is_paiement_partiel){
+                            // pas d'update sauf en cas de solde
+                            // si facture soldée update paiements 
+                            if (!$checkPaiementNonSolde) {
+                                # code...
+                                if ($paiement->montant_restant == 0) {
+                                    $updPaiement->setAttribute("statut_paiement","PAYE");
+                                    $updPaiement->setAttribute("commentaire",$request->commentaire);
+                                    $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                                    $updPaiement->setAttribute('agent_traiteur', $user->id);
+                                    $updPaiement->setAttribute('date_traitement', new \DateTime());
+                                    $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                                    $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                                    $updPaiement->update();
+                                }
+                            }
+                    }else{ // il ne s'agit pas d'un paiement partiel et nbre formation > 1
+                            // On fait une mise à jour du montant 
+                            if ($paiement->montant_restant == 0) {
+                                    $updPaiement->setAttribute("statut_paiement","PAYE");
+                                    $updPaiement->setAttribute("commentaire",$request->commentaire);
+                                    $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                                    $updPaiement->setAttribute('agent_traiteur', $user->id);
+                                    $updPaiement->setAttribute('date_traitement', new \DateTime());
+                                    $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                                    $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                                    $updPaiement->update();
+                                }else{
+                                    if($paiement->montant_paye == 0){ 
+                                        // il s'agit du premier paiement
+                                        $updPaiement->setAttribute("montant_paye",$montant_paye);
+                                        $updPaiement->setAttribute("montant_restant",$paiement->montant_total - $montant_paye);
+                                        if(($paiement->montant_total - $montant_paye) == 0){
+                                        $updPaiement->setAttribute("commentaire",$request->commentaire);
+                                        $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                                        $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                                        $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                                        }
+                                        $updPaiement->setAttribute('agent_traiteur', $user->id);
+                                        $updPaiement->setAttribute('date_traitement', new \DateTime());
+                                        $updPaiement->update(); 
+                                    }{ 
+                                        // il s'agit d'un complément
+                                        if(($paiement->montant_restant - $montant_paye) == 0){
+                                            $updPaiement->setAttribute("commentaire",$request->commentaire);
+                                            $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                                            $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                                            $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                                        }
+                                        $updPaiement->setAttribute("montant_paye",$paiement->montant_paye + $montant_paye);
+                                        $updPaiement->setAttribute("montant_restant",$paiement->montant_restant - $montant_paye);
+                                        
+                                        $updPaiement->setAttribute('agent_traiteur', $user->id);
+                                        $updPaiement->setAttribute('date_traitement', new \DateTime());
+                                        $updPaiement->update(); 
+                                    }
+                                  
+                                }
                     }
+                }else{ // il s'agit d'une seule formation
+                     if(($paiement->montant_restant - $montant_paye) == 0){
+                            $updPaiement->setAttribute("commentaire",$request->commentaire);
+                            $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                            $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                            $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                        }
+                    $updPaiement->setAttribute("montant_paye",$paiement->montant_paye + $montant_paye);
+                    $updPaiement->setAttribute("montant_restant",$paiement->montant_restant - $montant_paye);
+                                        
+                    $updPaiement->setAttribute('agent_traiteur', $user->id);
+                    $updPaiement->setAttribute('date_traitement', new \DateTime());
+                    $updPaiement->update(); 
                 }
-
             }
 
             return  ResponseHandler::success("Opération effectuée avec succès.");
@@ -1638,6 +1709,9 @@ class ComptabilitesService implements ComptabilitesInterface
             $getDetailPaiement->setAttribute("montant_paye",$getDetailPaiement->montant_restant);
             $getDetailPaiement->setAttribute("montant_restant",0);
             $getDetailPaiement->setAttribute("commentaire",$request->commentaire);
+            if($paiement->is_paiement_partiel){
+                    $getDetailPaiement->setAttribute("reference_paiement_partiel",$request->num_transaction);
+            }
             // si preuve de paiement on sauvegarde
             if (!empty($request->preuve)) {
                 $preuve_paiement = $request->preuve;
@@ -1649,7 +1723,7 @@ class ComptabilitesService implements ComptabilitesInterface
             $getDetailPaiement->update();
 
             // si facture soldée update paiements
-            if (!$checkPaiementNonSolde) {
+            /*if (!$checkPaiementNonSolde) {
                 # code...
                 if ($paiement->montant_restant == 0) {
                     $paiement->setAttribute("num_transaction",trim($request->num_transaction));
@@ -1661,7 +1735,86 @@ class ComptabilitesService implements ComptabilitesInterface
                     $paiement->setAttribute('date_traitement', new \DateTime());
                     $paiement->update();
                 }
-            }
+            }*/
+
+            // vérifier si le nombre de formation est unique
+                if($nbrFormation > 1){ // il s'agit d'un paiement avec plusieurs formation
+                    // vérifier s'il s'agit du paiement partiel
+                    // si oui on ne met pas à jour les montants dans la table paiement
+                    // Car c'est déjà fait lors de l'enregistrement du paiement
+                    if($paiement->is_paiement_partiel){
+                            // pas d'update sauf en cas de solde
+                            // si facture soldée update paiements 
+                            if (!$checkPaiementNonSolde) {
+                                # code...
+                                if ($paiement->montant_restant == 0) {
+                                    $updPaiement->setAttribute("statut_paiement","PAYE");
+                                    $updPaiement->setAttribute("commentaire",$request->commentaire);
+                                    $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                                    $updPaiement->setAttribute('agent_traiteur', $user->id);
+                                    $updPaiement->setAttribute('date_traitement', new \DateTime());
+                                    $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                                    $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                                    $updPaiement->update();
+                                }
+                            }
+                    }else{ // il ne s'agit pas d'un paiement partiel et nbre formation > 1
+                            // On fait une mise à jour du montant 
+                            if ($paiement->montant_restant == 0) {
+                                    $updPaiement->setAttribute("statut_paiement","PAYE");
+                                    $updPaiement->setAttribute("commentaire",$request->commentaire);
+                                    $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                                    $updPaiement->setAttribute('agent_traiteur', $user->id);
+                                    $updPaiement->setAttribute('date_traitement', new \DateTime());
+                                    $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                                    $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                                    $updPaiement->update();
+                                }else{
+                                    if($paiement->montant_paye == 0){ 
+                                        // il s'agit du premier paiement
+                                        $updPaiement->setAttribute("montant_paye",$montant_paye);
+                                        $updPaiement->setAttribute("montant_restant",$paiement->montant_total - $montant_paye);
+                                        if(($paiement->montant_total - $montant_paye) == 0){
+                                        $updPaiement->setAttribute("commentaire",$request->commentaire);
+                                        $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                                        $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                                        $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                                        }
+                                        $updPaiement->setAttribute('agent_traiteur', $user->id);
+                                        $updPaiement->setAttribute('date_traitement', new \DateTime());
+                                        $updPaiement->update(); 
+                                    }{ 
+                                        // il s'agit d'un complément
+                                        if(($paiement->montant_restant - $montant_paye) == 0){
+                                            $updPaiement->setAttribute("commentaire",$request->commentaire);
+                                            $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                                            $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                                            $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                                        }
+                                        $updPaiement->setAttribute("montant_paye",$paiement->montant_paye + $montant_paye);
+                                        $updPaiement->setAttribute("montant_restant",$paiement->montant_restant - $montant_paye);
+                                        
+                                        $updPaiement->setAttribute('agent_traiteur', $user->id);
+                                        $updPaiement->setAttribute('date_traitement', new \DateTime());
+                                        $updPaiement->update(); 
+                                    }
+                                  
+                                }
+                    }
+                }else{ // il s'agit d'une seule formation
+                     if(($paiement->montant_restant - $montant_paye) == 0){
+                            $updPaiement->setAttribute("commentaire",$request->commentaire);
+                            $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
+                            $updPaiement->setAttribute("num_transaction",$request->num_transaction);
+                            $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
+                        }
+                    $updPaiement->setAttribute("montant_paye",$paiement->montant_paye + $montant_paye);
+                    $updPaiement->setAttribute("montant_restant",$paiement->montant_restant - $montant_paye);
+                                        
+                    $updPaiement->setAttribute('agent_traiteur', $user->id);
+                    $updPaiement->setAttribute('date_traitement', new \DateTime());
+                    $updPaiement->update(); 
+                }
 
 
 
