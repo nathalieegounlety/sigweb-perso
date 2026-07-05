@@ -15,7 +15,7 @@
             <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align: center;" width="150px"><b>Formation</b></th>  
             <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align: center;" width="220px"><b>Statut</b></th> 
             <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align: center;" width="300px"><b>Mode</b></th>   
-            <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align: center;" width="300px"><b>Date</b></th>    
+            <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align: center;" width="300px"><b>Date insc</b></th>    
         </tr> 
     </thead>
 

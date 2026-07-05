@@ -335,7 +335,7 @@
         <th>Formation</th> 
         <th>Statut</th>
         <th>Mode</th>
-        <th>Date</th>
+        <th>Date insc</th>
       </tr>
       </thead>
       <tbody>
