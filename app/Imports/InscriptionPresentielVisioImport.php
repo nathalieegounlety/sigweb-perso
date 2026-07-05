@@ -220,6 +220,14 @@ class InscriptionPresentielVisioImport implements ToCollection
                     $id_tarif = 0;
 
                     $generateCodeInscription = $this->genererCodeAlphaNumeric(8);
+                    // vérifier si l'inscription n'existe pas
+                    $checkInscription = Inscriptions::whereEmail(trim($email))->whereCodeFormation($this->code_formation)->exists();
+                    if ($checkInscription) {
+                        # code...
+                        $insert_inscription = Inscriptions::whereEmail(trim($email))->whereCodeFormation($this->code_formation)->first();
+                    } else {
+                        # code...
+                        
                     $insert_inscription = new Inscriptions();
                     $insert_inscription->setAttribute("email",trim($email));
                     $insert_inscription->setAttribute("id_webinaire",$this->code_formation);
@@ -254,6 +262,9 @@ class InscriptionPresentielVisioImport implements ToCollection
                     }
 
                     $insert_inscription->save();
+
+                    }
+                    
 
                     if ($tarif == true) {
                         # code...
@@ -298,7 +309,12 @@ class InscriptionPresentielVisioImport implements ToCollection
                         // enregistrement du paiement
                         $statut_details_paiement = "IMPAYE";
                         $statut_paiement = "EN ATTENTE";
-
+                        // vérifier que le paiement n'existe pas
+                        $checkPaiement = Paiements::where('code_inscription',$insert_inscription->code_inscription)
+                        ->where('email',$email)->exists();
+                        if (!$checkPaiement) {
+                            # code...
+                            
                         $paiement = new Paiements();
                         $paiement->setAttribute('reference', $reference_paiement);
                         $paiement->setAttribute('email', $email);
@@ -321,6 +337,7 @@ class InscriptionPresentielVisioImport implements ToCollection
                         $details_paiement->setAttribute('montant_restant', $montant);
                         $details_paiement->setAttribute('statut_paiement', 'IMPAYE');
                         $details_paiement->save();
+                        }
 
                     }
 

@@ -198,6 +198,12 @@ class PresentielImport implements ToCollection
                         $pays = "";
                     }
                     // dd("test");
+                     $checkInscription = Inscriptions::whereEmail(trim($email))
+                     ->whereCodeFormation($this->code_formation)
+                     ->exists();
+                    if (!$checkInscription) {
+                        # code...
+                        
                     $insert_inscription = new Inscriptions();
                     $insert_inscription->setAttribute("email",trim($email));
                     $insert_inscription->setAttribute("id_webinaire",$this->code_formation);
@@ -205,6 +211,7 @@ class PresentielImport implements ToCollection
                     $insert_inscription->setAttribute("presentiel",1);
                     $insert_inscription->setAttribute("type_formation",'PRESENTIEL');
                     $insert_inscription->save(); 
+                    }
 
                 }
 
