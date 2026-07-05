@@ -54,7 +54,11 @@ class FormationsService implements FormationsInterface
             // erreur les coût associés à une formation ne peut pas dépassé trois rubriques
             return ResponseHandler::error("les coûts associés à la formation ne peut pas dépassé trois rubriques.", 401);
         }else{
-
+            // vérifier si le mode de formation est chosir
+            if(($request->get('fm_visio') === false || $request->get('fm_visio') === 'false') && ($request->get('fm_presentielle') === false || $request->get('fm_presentielle') === 'false') && ($request->get('is_formation_dsc') === false || $request->get('is_formation_dsc') === 'false')){
+                return ResponseHandler::error("Attention vous devez chosir un mode de formation.", 401);
+            }
+            
             // enregistrement des données de la formation
             $formation = new Formations();
             $formation->setAttribute('code_formation',$request->get('code_formation')) ;

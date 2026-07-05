@@ -538,3 +538,8 @@ Route::prefix('v1/afribapay')->controller(\App\Http\Controllers\AfribapayControl
     Route::post('checkPayIn/{id}','checkPayIn');
     Route::post('paiement/partiel/{id}','savePaiementPartiel');
 });
+
+// gestion des exportations periodiques
+Route::prefix('v1/exportationperiodique')->controller(\App\Http\Controllers\ExportperiodiquesController::class)->group(function () {
+    Route::post('liste/paiements', 'listePaiements'); 
+});
