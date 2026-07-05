@@ -328,8 +328,8 @@ class AuditeursService implements AuditeursInterface
                                     $response_zoom = $zoom_inscription->request('POST', 'https://api.zoom.us/v2/webinars/' . $formation->id_webinaire . '/registrants', [
                                         'body'    => json_encode($data)
                                     ]);
-                                    Log::info($response_zoom);
-                                    
+                                    //Log::info($response_zoom);
+
                                     $statusCode = $response_zoom->getStatusCode();
 
                                     if($statusCode === 201){

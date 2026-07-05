@@ -168,7 +168,7 @@ private GenarateurCodeService $genarateurCodeService;
                                 'body'    => json_encode($data)
                             ]);*/
                             // mise à jour statut dans la table inscrit
-                            Log::info($response_zoom);
+                            //Log::info($response_zoom);
                             //
                              $statusCode = $response_zoom->getStatusCode();
 
@@ -275,7 +275,7 @@ private GenarateurCodeService $genarateurCodeService;
                         'body'    => json_encode($data)
                     ]);
                     // mise à jour statut dans la table inscrit
-                    Log::info($response_zoom);
+                    //Log::info($response_zoom);
                                     
                                     $statusCode = $response_zoom->getStatusCode();
 
