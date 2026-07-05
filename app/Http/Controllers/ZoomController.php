@@ -201,11 +201,24 @@ private GenarateurCodeService $genarateurCodeService;
 
             return  ResponseHandler::success('Synchronisation terminée',['success'=> true, 'code_formation'=>$request->code_formation, 'nbre' => $compteur]);
 
-        } catch (\Throwable $th) {
-            //throw $th;
+        }  
+        catch (ClientException $e) {
+                                    // Erreurs 4xx (ex: 400 déjà inscrit, 404 webinaire introuvable)
+                                    $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                                    Log::error('Zoom API erreur client: ' . json_encode($errorBody)); 
+            return  ResponseHandler::success('Echec de syncronisation',['success'=> false, 'code_formation'=>$request->code_formation, 'error' => $e->getMessage()]);
 
-            return  ResponseHandler::success('Echec de syncronisation',['success'=> false, 'code_formation'=>$request->code_formation, 'error' => $th->getMessage()]);
-        }
+                                } catch (ServerException $e) {
+                                    // Erreurs 5xx côté Zoom
+                                    Log::error('Zoom API erreur serveur: ' . $e->getMessage());
+            return  ResponseHandler::success('Echec de syncronisation',['success'=> false, 'code_formation'=>$request->code_formation, 'error' => $e->getMessage()]);
+
+                                } catch (RequestException $e) {
+                                    // Timeout, connexion refusée, etc.
+                                    Log::error('Zoom API erreur requête: ' . $e->getMessage());
+                                                return  ResponseHandler::success('Echec de syncronisation',['success'=> false, 'code_formation'=>$request->code_formation, 'error' => $e->getMessage()]);
+
+                                }
 
     }
 
