@@ -55,18 +55,18 @@ class AuditeursService implements AuditeursInterface
         $user = auth('api')->user();
         // generator password
         $generate_password = $this->genarateurCodeService->genererCodeAlphaNumeric(8);
-        $check_auditeur = Auditeurs::where("email", $request->email)->exists();
-        $check_user = User::where("email", $request->email)->exists();
+        $check_auditeur = Auditeurs::where("email", trim($request->email))->exists();
+        $check_user = User::where("email", trim($request->email))->exists();
 
         if ($check_user == true && $check_auditeur == true) {
             return ResponseHandler::success("Cet auditeur existe déjà");
         }
         // create user acount
-        $dataUser = ['email' => $request->email, 'password' => $request->password,'name' => $request->nom.' '.$request->prenoms];
+        $dataUser = ['email' => trim($request->email), 'password' => $request->password,'name' => $request->nom.' '.$request->prenoms];
         $userRequest = new Request($dataUser);
         $this->usersService->saveUser($userRequest);
 
-        $user = User::whereEmail($request->email)->first();
+        $user = User::whereEmail(trim($request->email))->first();
 
         // register data into auditeur table
         $auditeur = new Auditeurs();
