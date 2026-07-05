@@ -6,11 +6,24 @@ use App\Helpers\ResponseHandler;
 use App\Models\Auditeurs;
 use App\Models\Formations;
 use App\Models\Inscriptions;
+use App\Services\util\GenarateurCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\RequestException;
 
 class ZoomController extends Controller
 {
+
+private GenarateurCodeService $genarateurCodeService; 
+
+    public function __construct(GenarateurCodeService $genarateurCodeService)
+    {
+        $this->genarateurCodeService = $genarateurCodeService; 
+    }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -155,10 +168,28 @@ class ZoomController extends Controller
                                 'body'    => json_encode($data)
                             ]);*/
                             // mise à jour statut dans la table inscrit
-                            $inscrit->setAttribute("sync_zoom",true);
-                            $inscrit->update();
-                            $compteur = $compteur + 1;
+                            Log::info($response_zoom);
                             //
+                             $statusCode = $response_zoom->getStatusCode();
+
+                                    if($statusCode === 201){
+                                        // mise à jour inscrit 
+                                    $inscrit->setAttribute("sync_zoom",true);
+                                    $inscrit->update();
+                                    $compteur = $compteur + 1;
+                                    // historique des action
+                                    $action = 'SUCCES SYNCHRO ZOOM '.$formation->code_formation;
+                                    $description = "Synchronisation zoom de l'auditeur : ".$auditeur->nom." ".$auditeur->prenoms." email : ".$auditeur->email." CODE FM : ".$formation->code_formation;
+                                    $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+
+
+                                    }else{
+                                    // historique des action
+                                    $action = 'ECHEC SYNCHRO ZOOM '.$formation->code_formation;
+                                    $description = "Synchronisation zoom de l'auditeur : ".$auditeur->nom." ".$auditeur->prenoms." email : ".$auditeur->email." CODE FM : ".$formation->code_formation;
+                                    $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+
+                                    }
 
                         }
                     }
@@ -183,7 +214,7 @@ class ZoomController extends Controller
     {
         $code_formation = $request->code_formation;
         $formation = Formations::where("code_formation", $code_formation)->first();
-        $inscrits = Inscription::where("code_formation", $code_formation)->where("type_formation", "VISIO")->where("sync_zoom", 0)->get();
+        $inscrits = Inscriptions::where("code_formation", $code_formation)->where("type_formation", "VISIO")->where("sync_zoom", 0)->get();
         $compteur = 0;
 
         // inscription sur zoom
@@ -231,9 +262,30 @@ class ZoomController extends Controller
                         'body'    => json_encode($data)
                     ]);
                     // mise à jour statut dans la table inscrit
-                    $inscrit->setAttribute("sync_zoom",true);
-                    $inscrit->update();
-                    $compteur = $compteur + 1;
+                    Log::info($response_zoom);
+                                    
+                                    $statusCode = $response_zoom->getStatusCode();
+
+                                    if($statusCode === 201){
+                                        // mise à jour inscrit
+                                     $inscrit->setAttribute("sync_zoom",true);
+                                        $inscrit->update();
+                                        $compteur = $compteur + 1;
+                                    // historique des action
+                                    $action = 'SUCCES SYNCHRO ZOOM '.$code_formation;
+                                    $description = "Synchronisation zoom de l'auditeur : ".$auditeur->nom." ".$auditeur->prenoms." email : ".$auditeur->email." CODE FM : ".$code_formation;
+                                    $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+
+
+                                    }else{
+                                    // historique des action
+                                    $action = 'ECHEC SYNCHRO ZOOM '.$formation->code_formation;
+                                    $description = "Synchronisation zoom de l'auditeur : ".$auditeur->nom." ".$auditeur->prenoms." email : ".$auditeur->email." CODE FM : ".$formation->code_formation;
+                                    $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+
+                                    }
+
+                   
                     //
                 }
             }
@@ -243,15 +295,35 @@ class ZoomController extends Controller
             ];
 
             return response()->json($response, 200);
-        } catch (\Throwable $th) {
-            //throw $th;
+        }  
+        catch (ClientException $e) {
+                                    // Erreurs 4xx (ex: 400 déjà inscrit, 404 webinaire introuvable)
+                                    $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                                    Log::error('Zoom API erreur client: ' . json_encode($errorBody)); 
+                                     $response = [
+                                            'data'    => $e->getMessage(),
+                                        ];
 
-            $response = [
-                'data'    => $th->getMessage(),
-            ];
+                                        return response()->json($response, 200);
 
-            return response()->json($response, 200);
-        }
+                                } catch (ServerException $e) {
+                                    // Erreurs 5xx côté Zoom
+                                    Log::error('Zoom API erreur serveur: ' . $e->getMessage());
+                                     $response = [
+                                        'data'    => $e->getMessage(),
+                                    ];
+
+                                    return response()->json($response, 200);
+
+                                } catch (RequestException $e) {
+                                    // Timeout, connexion refusée, etc.
+                                    Log::error('Zoom API erreur requête: ' . $e->getMessage());
+                                    $response = [
+                                        'data'    => $e->getMessage(),
+                                    ];
+
+                                    return response()->json($response, 200);
+                                }
 
         // end inscription sur zoom
 

@@ -34,6 +34,10 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\RequestException;
 
 class AuditeursService implements AuditeursInterface
 {
@@ -286,7 +290,17 @@ class AuditeursService implements AuditeursInterface
 
                                 try {
 
-                                    // inscription sur zoom
+                                 $dataM = [
+                                    'email' => $auditeur->email,
+                                ];
+
+                    $validator = Validator::make($dataM, [
+                        'email' => ['required', 'email:rfc,dns'],
+                    ]);
+
+                    if ($validator->passes()) {
+                        if (!empty($auditeur->nom)) {
+                            // inscription sur zoom
                                     $data = array(
                                         'first_name' => $auditeur->prenoms,
                                         'last_name' => $auditeur->nom,
@@ -314,11 +328,45 @@ class AuditeursService implements AuditeursInterface
                                     $response_zoom = $zoom_inscription->request('POST', 'https://api.zoom.us/v2/webinars/' . $formation->id_webinaire . '/registrants', [
                                         'body'    => json_encode($data)
                                     ]);
-                                    // mise à jour inscrit
+                                    Log::info($response_zoom);
+                                    
+                                    $statusCode = $response_zoom->getStatusCode();
+
+                                    if($statusCode === 201){
+                                        // mise à jour inscrit
                                     $inscrit->setAttribute("sync_zoom", true);
                                     $inscrit->update();
-                                } catch (\Throwable $th) {
-                                    //throw $th;
+                                    // historique des action
+                                    $action = 'SUCCES SYNCHRO ZOOM '.$formation->code_formation;
+                                    $description = "Synchronisation zoom de l'auditeur : ".$auditeur->nom." ".$auditeur->prenoms." email : ".$auditeur->email." CODE FM : ".$formation->code_formation;
+                                    $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+
+
+                                    }else{
+                                    // historique des action
+                                    $action = 'ECHEC SYNCHRO ZOOM '.$formation->code_formation;
+                                    $description = "Synchronisation zoom de l'auditeur : ".$auditeur->nom." ".$auditeur->prenoms." email : ".$auditeur->email." CODE FM : ".$formation->code_formation;
+                                    $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+
+                                    }
+
+                                    
+                        }
+                    }
+
+                                    
+                                } catch (ClientException $e) {
+                                    // Erreurs 4xx (ex: 400 déjà inscrit, 404 webinaire introuvable)
+                                    $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                                    Log::error('Zoom API erreur client: ' . json_encode($errorBody)); 
+
+                                } catch (ServerException $e) {
+                                    // Erreurs 5xx côté Zoom
+                                    Log::error('Zoom API erreur serveur: ' . $e->getMessage());
+
+                                } catch (RequestException $e) {
+                                    // Timeout, connexion refusée, etc.
+                                    Log::error('Zoom API erreur requête: ' . $e->getMessage());
                                 }
                                 // end inscription sur zoom
                             }
