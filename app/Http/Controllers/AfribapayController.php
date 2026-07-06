@@ -180,6 +180,7 @@ class AfribapayController extends Controller
         // Extract important data from the decoded payload
         $orderId = $dataAP['order_id'] ?? null;
         $status = $dataAP['status'] ?? null;
+        $idTransaction = $dataAP['transaction_id'] ?? null;
         // Optional: Log the data for troubleshooting or record-keeping purposes
         // file_put_contents("webhook_log.txt", date('Y-m-d H:i:s') . " - Received webhook: " . json_encode($data) . PHP_EOL, FILE_APPEND);
         // Process the transaction status
@@ -201,7 +202,8 @@ class AfribapayController extends Controller
 
                 $check_paiement = Paiements::where("reference", $reference)->exists();
 
-                if ($check_paiement) {
+                if ($check_paiement) { 
+                    
 
                     $paiement = Paiements::where("reference", $reference)->first();
 
@@ -209,8 +211,7 @@ class AfribapayController extends Controller
                         # code...
                         // Process validation des paiements DSC
                          // récupérer la référence de la table paiement
-                        $getOneTranchePaiement = PaiementsTranche::where('reference',$get_reference)->first();
-
+                        $getOneTranchePaiement = PaiementsTranche::where('reference',$get_reference)->first();                            
                         $getOneDtPaiement = Detailspaiements::find($getOneTranchePaiement->details_paiements_id);
                         $getPaiement = Paiements::where('reference',$getOneDtPaiement->reference_paiement)->first();
                     
@@ -221,12 +222,14 @@ class AfribapayController extends Controller
                             // si la validation est déjà faite on fait simplement une redirection de sortie                            
                             if ($updatePaiement->statut_traitement == "VALIDER") {
                                 # code...
-                                return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
+                                // Répondez à AfribaPay avec un statut HTTP 200 OK
+                               return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
+                                
                             }
                             # code...
-                            $updatePaiement->setAttribute("num_transaction",$dataAP['transaction_id']);
-                            $updatePaiement->setAttribute("statut_transaction",trim($status));
-                            $updatePaiement->setAttribute("id_modepaiement",$mp->id); // 
+                            $updatePaiement->setAttribute("num_transaction",$idTransaction);
+                            $updatePaiement->setAttribute("statut_transaction",$status);
+                            $updatePaiement->setAttribute("id_modepaiement",$mp->id); 
                             $updatePaiement->setAttribute("statut_paiement","PAYE");
                             $updatePaiement->setAttribute("statut_traitement","VALIDER");
                             $updatePaiement->setAttribute("commentaire","Validation automatique webhook AfribaPay");
@@ -239,27 +242,27 @@ class AfribapayController extends Controller
                         $checkValidation = true;
                         // update table paiement tranche
                         $getAllPaiementTranche = PaiementsTranche::where('reference',$get_reference)->get();
+
                         foreach ($getAllPaiementTranche as $key => $data) {
                             # code...
                             $paiementTranche = PaiementsTranche::find($data->id);
                             $detailPaiementTranche = Detailspaiements::find($paiementTranche->details_paiements_id);
-
+                        Log::info('paiement tranche statut before', ['request' => $paiementTranche->statut_traitement]);  
                             if ($paiementTranche->statut_traitement != "VALIDER") {
                                 # code...
                                 // update each table $item->getTarification->getGrilletarifaire->type_tarif == 'INSCRIPTION'
-                                $paiementTranche->setAttribute("num_transaction",$dataAP['transaction_id']);
-                                $paiementTranche->setAttribute("statut_transaction",trim($status));
-                                $paiementTranche->setAttribute("modepaiement_id",$mp->id); // FedaPay
+                                $paiementTranche->setAttribute("num_transaction",$idTransaction);
+                                $paiementTranche->setAttribute("statut_transaction",$status);
+                                $paiementTranche->setAttribute("modepaiement_id",$mp->id); 
                                 $paiementTranche->setAttribute("statut_traitement","VALIDER");
                                 $paiementTranche->setAttribute('traiter_par', $user->id);
                                 $paiementTranche->update();
                                 // update details paiements
                                 // if rest amount equal to 0, do update
                                 if ($detailPaiementTranche->montant_restant == 0) {
-                                    # code...
                                     $detailPaiementTranche->setAttribute('statut_traitement',"VALIDER");
-                                    $detailPaiementTranche->setAttribute('statut_paiement', "PAYE"); 
-                                    $detailPaiementTranche->setAttribute("commentaire","Validation automatique webhook FedaPay");
+                                    $detailPaiementTranche->setAttribute('statut_paiement', "PAYE");
+                                    $detailPaiementTranche->setAttribute("commentaire","Validation automatique webhook AfribaPay");
                                     $detailPaiementTranche->update();
                                 }
                                 // update etat 
@@ -272,25 +275,26 @@ class AfribapayController extends Controller
 
                         if ($checkValidation) {
                             # code...
+                            // Répondez à AfribaPay avec un statut HTTP 200 OK
                             return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
+
                         }
 
                          // send mail paiement validé 
                         $auditeur = Auditeurs::where("email",$paiement->email)->first();
-                        // envoie de mail pour la reférence de la facture
-                        $modepaiement = Modepaiements::whereLibelle('AfribaPay')->first(); 
+                        // envoie de mail pour la reférence de la facture 
                         $contenu = [
                             'nom' => $auditeur->nom ,
                             'prenoms' => $auditeur->prenoms,
                             'reference_paiement' => $get_reference,
-                            'subject' => 'TRAITEMENT DE VOTRE PAIEMENT '.$get_reference,
+                            'subject' => 'TRAITEMENT DE VOTRE PAIEMENT',
                             'commentaire' => "Paiement validé",
                             'email'=>$paiement->email,
-                            'mode_paiement'=>$modepaiement->libelle,
+                            'mode_paiement'=>$mp->libelle,
                             'montant'=>$dataAP['amount_total'], 
                             'montant_restant'=>$paiement->montant_restant, 
                             'type'=>$paiement->type,
-                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$get_reference])
+                            'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$get_reference])
                         ];
 
                         try {
@@ -300,18 +304,19 @@ class AfribapayController extends Controller
                         } catch (\Exception $e) {
                             //throw $th;
                         }
+ 
 
                     } else { // IL S'AGIT DE FORMATION CLASSIQUE ET NON FORMATION DSC
 
                         // vérifier s'il s'agit d'un paiement partiel
-                        $checkPaiementPartiel = Detailspaiements::where("reference_paiement_partiel",$dataAP['transaction_id'])->where("reference_paiement",$paiement->reference)->exists();
+                        $checkPaiementPartiel = Detailspaiements::where("reference_paiement_partiel",$idTransaction)->where("reference_paiement",$paiement->reference)->exists();
                         if ($checkPaiementPartiel) {
                             # code... // il s'agit d'un paiement partiel
-                            $dtPaiementPartiel = Detailspaiements::where("reference_paiement_partiel",$dataAP['transaction_id'])->where("reference_paiement",$paiement->reference)->first();
-                            $getDetailPaiement = Detailspaiements::find($dtPaiementPartiel->id);
+                            $dtPaiementPariel = Detailspaiements::where("reference_paiement_partiel",$idTransaction)->where("reference_paiement",$paiement->reference)->first();
+                            $getDetailPaiement = Detailspaiements::find($dtPaiementPariel->id);
                             $montant_paye = getMontantFormation($getDetailPaiement->id);
                             // ! (vérifier si tous les autres occurences disponibles dans la table détailspaiements sont validées)
-                            $checkPaiementNonSolde = Detailspaiements::where("id","!=",$dtPaiementPartiel->id)
+                            $checkPaiementNonSolde = Detailspaiements::where("id","!=",$dtPaiementPariel->id)
                             ->where("reference_paiement",$paiement->reference)
                             ->where("statut_traitement","ATTENTE")
                             ->exists();
@@ -330,8 +335,8 @@ class AfribapayController extends Controller
                                 if (!$checkPaiementNonSolde) {
                                     # code...
                                     if ($paiement->montant_restant == 0) {
-                                        $paiement->setAttribute("num_transaction",$dataAP['transaction_id']);
-                                        $paiement->setAttribute("statut_transaction",trim($status));
+                                        $paiement->setAttribute("num_transaction",$idTransaction);
+                                        $paiement->setAttribute("statut_transaction",$status);
                                         $paiement->setAttribute("id_modepaiement",$mp->id); 
                                         $paiement->setAttribute("statut_paiement","PAYE");
                                         $paiement->setAttribute("statut_traitement","VALIDER"); 
@@ -346,24 +351,24 @@ class AfribapayController extends Controller
 
                            if ($checkValidation) { // paiement déjà validé
                             # code...
-                                return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
+                                // Répondez à AfribaPay avec un statut HTTP 200 OK
+                               return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
                             }
 
                              // send mail paiement validé 
                             $auditeur = Auditeurs::where("email",$paiement->email)->first();
                             // envoie de mail pour la reférence de la facture
-                            // $modepaiement = Modepaiements::find($request->modepaiement_id);
                             $contenu = [
                                 'nom' => $auditeur->nom ,
                                 'prenoms' => $auditeur->prenoms,
-                                'reference_paiement' => $dataAP['reference_id'],
-                                'subject' => 'TRAITEMENT DE VOTRE PAIEMENT '.$dataAP['reference_id'],
+                                'reference_paiement' => $get_reference,
+                                'subject' => 'TRAITEMENT DE VOTRE PAIEMENT '.$get_reference,
                                 'commentaire' => "Paiement validé",
                                 'email'=>$paiement->email,
                                 'mode_paiement'=>$mp->libelle,
                                 'montant'=>$montant_paye, 
                                 'type'=>$paiement->type,
-                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$dataAP['reference_id']])
+                                'url_recu'=> $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$get_reference])
                             ];
 
                             try {
@@ -379,17 +384,18 @@ class AfribapayController extends Controller
 
                             if ($paiement->statut_traitement == "VALIDER") {
                                 # code...
+                               // Répondez à AfribaPay avec un statut HTTP 200 OK
                                 return response()->json(["data" => $dataAP, "statut" => "approved"], 200); 
                             }
  
-                                $paiement->setAttribute('num_transaction', $dataAP['transaction_id']);
+                                $paiement->setAttribute('num_transaction', $idTransaction);
                                 $paiement->setAttribute('statut_transaction', $status);   
                                 $paiement->setAttribute("statut_paiement","PAYE");
                                 $paiement->setAttribute("montant_paye",$paiement->montant_restant);
                                 $paiement->setAttribute("montant_restant",0);
                                 $paiement->setAttribute("statut_traitement","VALIDER");
                                 $paiement->setAttribute("commentaire","Validation automatique webhook AfribaPay");
-                                $paiement->setAttribute("id_modepaiement",$mp->id); // 
+                                $paiement->setAttribute("id_modepaiement",$mp->id);  
                                 $paiement->setAttribute('agent_traiteur', $user->id);
                                 $paiement->setAttribute('date_traitement', new \DateTime());
                                 $paiement->update();
@@ -421,7 +427,6 @@ class AfribapayController extends Controller
                                     }else{
                                         $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu-ouvrage',['reference'=>$paiement->reference]);
                                     }
-                                
                                 $contenu = [
                                     'nom' => $nom,
                                     'prenoms' => $prenoms,
@@ -429,7 +434,7 @@ class AfribapayController extends Controller
                                     'subject' => 'TRAITEMENT DE VOTRE PAIEMENT '.$paiement->reference,
                                     'commentaire' => "Paiement validé",
                                     'email'=>$paiement->email,
-                                    'mode_paiement'=>$modepaiement->libelle,
+                                    'mode_paiement'=>$mp->libelle,
                                     'montant'=>$paiement->montant_total, 
                                     'type'=>$paiement->type,
                                     'url_recu'=> $url
@@ -442,17 +447,10 @@ class AfribapayController extends Controller
                                 } catch (\Exception $e) {
                                     //throw $th;
                                 }
-                        }
-                        
-                        # code...
-                        
-                        // validation automatique du paiement
-                        // vérifier 
+                        } 
                     }
                     
-                    
-                } 
-
+                }
 //************************************* end process  *****************************************/
             // procéder à la validation et notification de l'utilisateur
 
