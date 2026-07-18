@@ -141,7 +141,7 @@ class DocumentsService implements DocumentsInterface
                     ->join('tarificationsformations', 'tarificationsformations.id', '=', 'detailspaiements.id_tarification_formation')
                     ->join('grilletarifaires', 'tarificationsformations.id_grilletarifaire', '=', 'grilletarifaires.id')
                     ->join('formations', 'formations.code_formation', '=', 'tarificationsformations.code_formation')
-                    ->select('formations.code_formation', 'formations.theme', 'formations.date_debut', 'grilletarifaires.montant', 'grilletarifaires.libelle', 'reductions.pourcentage', 'detailspaiements.statut_paiement', 'detailspaiements.preuve_path', 'paiements.num_transaction')
+                    ->select('formations.code_formation', 'formations.theme', 'formations.date_debut', 'grilletarifaires.montant', 'grilletarifaires.libelle', 'reductions.pourcentage', 'detailspaiements.statut_paiement', 'detailspaiements.preuve_path', 'paiements.num_transaction','detailspaiements.is_paiement_partiel as dt_paiement_partiel','paiements.is_paiement_partiel','detailspaiements.reference_paiement_partiel')
                     ->where('detailspaiements.reference_paiement', $reference)
                     ->orderBy('detailspaiements.id', 'DESC')
                     ->get();

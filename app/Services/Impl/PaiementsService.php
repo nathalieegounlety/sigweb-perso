@@ -37,7 +37,7 @@ class PaiementsService implements PaiementsInterface
             $code_fedapay = env('FEDAPAY_CLE_PUBLIQUE');
             $code_pawapay = env('PAWAPAY_SANDBOX_TOKEN_ID');
             $code_cinetpay = env('CINETPAY_APIKEY');
-            $env_fedapay = env('FEDAPAY_ENVIRONNEMENT');
+            $env_fedapay = env('FEDAPAY_ENVIRONNEMENT'); 
             $env_kkiapay = env('KKIAPAY_SANDBOX');
         }else{
             $code_kkiapay = env('KKIAPAY_LIVE_PUBLIC_KEY');
@@ -335,7 +335,10 @@ class PaiementsService implements PaiementsInterface
         $formation = Formations::where("code_formation", $codeFormation)->first();
         $totalInscGratuite = Detailspaiements::where("code_formation",$codeFormation)->where("id_reduction",3)->count();
 
-        // Détails des participants
+        // vérifier s'il s'agit d'une formation dsc
+        if ($formation->is_formation_dsc) {
+            # code...
+              // Détails des participants
        $liste_participants = DB::table('inscriptions')
             ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
             ->leftJoin('paiements', 'paiements.code_inscription', '=', 'inscriptions.code_inscription')
@@ -451,10 +454,17 @@ class PaiementsService implements PaiementsInterface
             ->where('inscriptions.code_formation', $codeFormation)
             ->orderBy('auditeurs.nom', 'ASC')
             ->get(); 
-            /*->leftJoin('detailspaiements as dp', function ($join) {
-                $join->on('dp.reference_paiement', '=', 'paiements.reference')
-                    ->where('paiements.type', '=', 'DSC');
+
+        } else {
+            # code...
+              // Détails des participants
+       $liste_participants = DB::table('inscriptions')
+            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+            ->leftJoin('detailspaiements', function ($join) {
+                $join->on('detailspaiements.code_formation', '=', 'inscriptions.code_formation')
+                    ->on('detailspaiements.code_inscription', '=', 'inscriptions.code_inscription'); 
             })
+            ->leftJoin('reductions', 'reductions.id', '=', 'detailspaiements.id_reduction') 
             ->select(
                 'inscriptions.email',
                 'auditeurs.nom as nom',
@@ -464,13 +474,25 @@ class PaiementsService implements PaiementsInterface
                 'inscriptions.tarif_formation_id',
                 'inscriptions.type_formation',
                 'inscriptions.presentiel',
-                'paiements.montant_total',
-                'paiements.montant_restant',
-                'paiements.montant_paye',
+                'inscriptions.observations', 
+                'detailspaiements.montant_restant',
+                'detailspaiements.montant_paye',
+                'detailspaiements.statut_paiement', 
+                'reductions.pourcentage' 
             )
-            ->where('inscriptions.code_formation', $codeFormation)
+            ->selectRaw(
+                '(EXISTS (
+                    SELECT 1 FROM rapports
+                    WHERE rapports.email = inscriptions.email 
+                    AND rapports.code_formation = ?
+                )) as a_participe',
+                [$codeFormation]
+            )
+            ->where('inscriptions.code_formation', $codeFormation) 
             ->orderBy('auditeurs.nom', 'ASC')
-            ->get();*/
+            ->get(); 
+        }
+         
 
         // Total des participants
         $total_participant = Rapports::where("code_formation", $codeFormation)->count();

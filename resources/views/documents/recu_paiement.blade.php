@@ -190,7 +190,13 @@
                             <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;"><b>{{ $i }}</b></td>
                             <td style="margin:0; padding:5px; border: 1px solid black;"><b>{{ $item->code_formation }}</b> - {{ $item->theme }}</td>
                             <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{ $item->libelle }}</td>
-                            <td style="margin:0; padding:5px; border: 1px solid black;">{{ $item->num_transaction }}</td>
+                            <td style="margin:0; padding:5px; border: 1px solid black;">
+                                @if (($item->dt_paiement_partiel || $item->is_paiement_partiel) && !empty($item->reference_paiement_partiel))
+                                    {{ $item->reference_paiement_partiel }}
+                                @else
+                                    {{ $item->num_transaction }}
+                                @endif
+                            </td>
                             <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
                                 @if ($item->pourcentage != '')
                                     {{ $item->pourcentage }}
