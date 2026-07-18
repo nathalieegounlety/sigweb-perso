@@ -543,3 +543,24 @@ Route::prefix('v1/afribapay')->controller(\App\Http\Controllers\AfribapayControl
 Route::prefix('v1/exportationperiodique')->controller(\App\Http\Controllers\ExportperiodiquesController::class)->group(function () {
     Route::post('liste/paiements', 'listePaiements'); 
 });
+
+// gestion des modepays
+Route::prefix('v1/modepays')->group(function () {
+    Route::post('store', [\App\Http\Controllers\ModepaysController::class, 'store']);
+    Route::get('/', [\App\Http\Controllers\ModepaysController::class, 'index']);
+    Route::post('unique', [\App\Http\Controllers\ModepaysController::class, 'getModepays']);
+    Route::post('update', [\App\Http\Controllers\ModepaysController::class, 'update']);
+    Route::post('remove', [\App\Http\Controllers\ModepaysController::class, 'remove']);
+    Route::get('obj', [\App\Http\Controllers\ModepaysController::class, 'getModepaysObj']);
+});
+
+// gestion des operateurs
+Route::prefix('v1/operateurs')->group(function () {
+    Route::post('store', [\App\Http\Controllers\OperateursController::class, 'store']);
+    Route::get('/', [\App\Http\Controllers\OperateursController::class, 'index']);
+    Route::post('unique', [\App\Http\Controllers\OperateursController::class, 'getModepays']);
+    Route::post('update', [\App\Http\Controllers\OperateursController::class, 'update']);
+    Route::post('remove', [\App\Http\Controllers\OperateursController::class, 'remove']);
+    Route::get('obj', [\App\Http\Controllers\OperateursController::class, 'getModepaysObj']);
+});
+

@@ -1594,6 +1594,15 @@ class ComptabilitesService implements ComptabilitesInterface
         // récupérer le nombre de formation
         $nbrFormation = Detailspaiements::where('reference_paiement',$request->reference)->count();
 
+        if($nbrFormation > 1){ // il s'agit de paiement partiel
+             // mettre à jour le champ is_paiement_partiel dans la table paiement 
+            $updPaiement->setAttribute("is_paiement_partiel",true);
+            $updPaiement->update();
+            // actualisé l'objet paiement
+            $paiement->setAttribute("is_paiement_partiel",true);
+            $paiement->update();
+        }
+
         if ($montant_paye == 0) { // facture soldée
             # code...
             if ($request->statut_traitement == "VALIDER") {
@@ -1606,6 +1615,8 @@ class ComptabilitesService implements ComptabilitesInterface
                 $getDetailPaiement->setAttribute("commentaire",$request->commentaire);
                 if($paiement->is_paiement_partiel){
                     $getDetailPaiement->setAttribute("reference_paiement_partiel",$request->num_transaction);
+                    $getDetailPaiement->setAttribute("is_paiement_partiel",true);
+                    $getDetailPaiement->setAttribute("modepaiement_id",$request->modepaiement_id);
                 }
                 // si preuve de paiement on sauvegarde
                 if (!empty($request->preuve)) {
@@ -1711,6 +1722,8 @@ class ComptabilitesService implements ComptabilitesInterface
             $getDetailPaiement->setAttribute("commentaire",$request->commentaire);
             if($paiement->is_paiement_partiel){
                     $getDetailPaiement->setAttribute("reference_paiement_partiel",$request->num_transaction);
+                    $getDetailPaiement->setAttribute("is_paiement_partiel",true);
+                    $getDetailPaiement->setAttribute("modepaiement_id",$request->modepaiement_id);
             }
             // si preuve de paiement on sauvegarde
             if (!empty($request->preuve)) {
