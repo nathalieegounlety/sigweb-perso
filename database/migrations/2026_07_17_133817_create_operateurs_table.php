@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('operateurs', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->id()->autoIncrement();
             $table->unsignedBigInteger('modepays_id');
             $table->string('operateur',20);
