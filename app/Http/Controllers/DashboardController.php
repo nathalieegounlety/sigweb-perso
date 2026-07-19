@@ -29,4 +29,17 @@ class DashboardController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
+    public function adminIndicateurStats(Request $request)
+    {
+        try {
+             $data = $this->dashboardService->getAdminIndicateurStats();
+             return ResponseHandler::success('ok',$data);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation ".$request, 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 }

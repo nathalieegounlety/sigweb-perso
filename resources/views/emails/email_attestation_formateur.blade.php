@@ -28,7 +28,7 @@
       <strong style="font-size: 120%;"><a href="{{$signedUrl}}">Télécharger l'attestation {{$contenu['code_formation']}} de {{$contenu['nom_prenoms']}}</a></strong>
       
      </p>
-     <p>Votre mot de passe pour l'ouverture de l'attestation est : <b> {{$contenu['password']}}</b></p>
+     {{-- <p>Votre mot de passe pour l'ouverture de l'attestation est : <b> {{$contenu['password']}}</b></p> --}}
    
     <p>Nous vous remercions de votre confiance et de votre fidélité à l'ERSUMA. <br>
     <center>« L’ERSUMA, pour une règle de droit effective, efficace et efficiente »</center>

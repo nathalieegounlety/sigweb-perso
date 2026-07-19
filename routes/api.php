@@ -402,10 +402,10 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
 // gestion des dashboard
 Route::prefix('v1/dashboard')->controller(\App\Http\Controllers\DashboardController::class)->group(function () {
     Route::get('admin/indicateurs', 'adminIndicateurs');
+    Route::get('admin/indicateurs/stats', 'adminIndicateurStats');
 });
 
-// gestion api zoom
-//
+// gestion api zoom 
 Route::prefix('v1/zoom')->controller(\App\Http\Controllers\ZoomController::class)->group(function () {
     Route::get('reunion/auth/callback', 'indexReunion')->name('zoom.reunion-auth');
     //

@@ -525,7 +525,7 @@ class DocumentsService implements DocumentsInterface
             'signedUrl' => $signedUrl,
             'code_formation' => $code_formation,
             'theme' => $liste_participant->theme,
-            'password' => substr(md5($code_formation . '' . $rapport->email), 0, 8),
+            //'password' => substr(md5($code_formation . '' . $rapport->email), 0, 8),
             'subject' => 'ATTESTATION ' . $code_formation . ' ' . $liste_participant->nom,
             'visio' => $checkvisio
         ];
@@ -616,7 +616,7 @@ class DocumentsService implements DocumentsInterface
 
         $password = substr(md5($code_formation . '' . $rapport->email), 0, 8);
         $pdf->setPaper('A4', 'landscape');
-        $pdf->setEncryption($password);
+        //$pdf->setEncryption($password);
         $date = date('d_m_Y_His');
         $auditeur = Auditeurs::whereEmail($rapport->email)->first();
         $participant_name = $auditeur->nom . ' ' . $auditeur->prenoms;
@@ -902,7 +902,7 @@ class DocumentsService implements DocumentsInterface
                             'code_formation' => $code_formation,
                             'signedUrl' => $signedUrl,
                             'theme' => $formation->theme,
-                            'password' => substr(md5($code_formation . '' . $inscrit->email), 0, 8),
+                            //'password' => substr(md5($code_formation . '' . $inscrit->email), 0, 8),
                             'subject' => 'ATTESTATION ' . $code_formation . ' ' . $auditeur->nom,
                             'visio' => 'non'
                         ];
@@ -927,7 +927,7 @@ class DocumentsService implements DocumentsInterface
                             'signedUrl' => $signedUrl,
                             'code_formation' => $code_formation,
                             'theme' => $formation->theme,
-                            'password' => substr(md5($code_formation . '' . $inscrit->email), 0, 8),
+                            //'password' => substr(md5($code_formation . '' . $inscrit->email), 0, 8),
                             'subject' => 'ATTESTATION ' . $code_formation . ' ' . $auditeur->nom,
                             'visio' => 'oui'
                         ];
@@ -1050,9 +1050,8 @@ class DocumentsService implements DocumentsInterface
 
         $password = substr(md5($getFormateur->getFormation->code_formation . '' . $getFormateur->getFormateur->email), 0, 8);
         
-
         $pdf->setPaper('A4', 'landscape');
-        $pdf->setEncryption($password);
+        //$pdf->setEncryption($password);
         $date = date('d_m_Y_His');
         $formateur_name = $getFormateur->getFormateur->nom . ' ' . $getFormateur->getFormateur->prenoms;
         $fichier_name = Str::slug($formateur_name);
@@ -1121,7 +1120,7 @@ class DocumentsService implements DocumentsInterface
             'signedUrl' => $signedUrl,
             'code_formation' => $formateur->getFormation->code_formation,
             'theme' => $formateur->getFormation->theme,
-            'password' => substr(md5($formateur->getFormation->code_formation . '' . $formateur->getFormateur->email), 0, 8),
+            //'password' => substr(md5($formateur->getFormation->code_formation . '' . $formateur->getFormateur->email), 0, 8),
             'subject' => 'ATTESTATION ' . $formateur->getFormation->code_formation . ' ' . $formateur->getFormateur->nom
         ];
         // send mail
@@ -1167,7 +1166,7 @@ class DocumentsService implements DocumentsInterface
                         'signedUrl' => $signedUrl,
                         'code_formation' => $formateurs->code_formation,
                         'theme' => $formateurs->theme,
-                        'password' => substr(md5($formateurs->code_formation . '' . $formateurs->email), 0, 8),
+                        //'password' => substr(md5($formateurs->code_formation . '' . $formateurs->email), 0, 8),
                         'subject' => 'ATTESTATION ' . $formateurs->code_formation . ' ' . $formateurs->nom
                     ];
                     // send mail
