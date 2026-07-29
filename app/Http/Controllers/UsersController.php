@@ -6,6 +6,7 @@ use App\Helpers\ResponseHandler;
 use App\Services\contracts\UsersInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 
 class UsersController extends Controller
 {
@@ -14,7 +15,7 @@ class UsersController extends Controller
     public function __construct(UsersInterface $usersInterface)
     {
         // restriction des accès
-        // $this->middleware('auth:api', ['except' => ['store','index','update','remove']]);
+         $this->middleware('auth:api', ['except' => ['store']]);
 
         $this->usersInterface = $usersInterface;
         //$this->middleware('role:ADMINISTRATEUR,USER')->only(['index']);
@@ -23,6 +24,23 @@ class UsersController extends Controller
 
     }
 
+    #[OA\Get(
+        path: "/v1/utilisateurs",
+        summary: "Liste des utilisateurs",
+        security: [["bearerAuth" => []]],
+        tags: ["Users"],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Succès",
+                content: new OA\JsonContent(
+                    type: "array",
+                    items: new OA\Items(ref: "#/components/schemas/User")
+                )
+            ),
+            new OA\Response(response: 401, description: "Non authentifié"),
+        ]
+    )]
     public function index(Request $request)
     {
         // récupérer la liste

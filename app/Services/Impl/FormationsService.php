@@ -245,12 +245,7 @@ class FormationsService implements FormationsInterface
         }
         // return
         return ResponseHandler::success("Enregistrement effectuée.");
-    }
-
-    public function getFormation(int $id): Formations
-    {
-        // TODO: Implement getFormation() method.
-    }
+    } 
 
     public function getFormations(Request $request): LengthAwarePaginator
     {
@@ -702,12 +697,7 @@ class FormationsService implements FormationsInterface
 
         // return
         return ResponseHandler::success("Modification effectuée.");
-    }
-
-    public function remove(int $idRole): \Illuminate\Http\JsonResponse
-    {
-        // TODO: Implement remove() method.
-    }
+    } 
 
     public function getRecentFormations(Request $request)
     {

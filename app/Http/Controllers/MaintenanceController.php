@@ -48,7 +48,7 @@ class MaintenanceController extends Controller
                 $champUpdate = 'is_enable';
             }
             $update_table = DB::table(trim($request->table))->where('id', $request->identifiant)
-                ->update([$champUpdate =>$request->actif, 'updated_by' => auth()->user()->id, 'updated_at' => new \DateTime()]);
+                ->update([$champUpdate =>$request->actif, 'updated_by' => auth('api')->user()->id, 'updated_at' => new \DateTime()]);
             return response()->json([
                 'message' => "Mise à jour effectuée avec succès.",
                 'status' => true

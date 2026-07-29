@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class ModepaiementsController extends Controller
 {
-private ModepaiementsInterface $modepaiementInterface;
+    private ModepaiementsInterface $modepaiementInterface;
 
     public function __construct(ModepaiementsInterface $modepaiementInterface)
     {

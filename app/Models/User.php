@@ -7,7 +7,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use OpenApi\Attributes as OA;
 
+#[OA\Schema(
+    schema: "User",
+    type: "object",
+    title: "User",
+    properties: [
+        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "name", type: "string", example: "Jean"),
+        new OA\Property(property: "email", type: "string", example: "jean@example.com"),
+        new OA\Property(property: "password", type: "string", example: "12345678"),
+    ]
+)]
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

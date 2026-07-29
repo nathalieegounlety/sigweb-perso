@@ -1,8 +1,7 @@
 <?php
 
 namespace App\Services\contracts;
-
-use App\Models\Operateurs;
+ 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 

@@ -37,7 +37,11 @@ class ModepaysService implements ModepaysInterface
     public function getOneModepays(int $id)
     {
         // TODO: Implement getOneModepays() method.
-        $data = Modepays::find($id);
+        $data = Modepays::join("pays","pays.id","=","modepays.pays_id")
+        ->join("modepaiements","modepaiements.id","=","modepays.modepaiement_id")
+        ->select(["modepays.pays_id","modepays.modepaiement_id","pays.nom_pays","pays.code_iso",
+        "modepaiements.libelle"])
+        ->whereId($id)->first();
         if (!$data) {
             return ResponseHandler::error("La données n'existe pas", 409);
         }
@@ -143,7 +147,7 @@ class ModepaysService implements ModepaysInterface
         if ($delete) {
             return ResponseHandler::success("Suppression effectuée.");
         } else {
-            return ResponseHandler::error("Echec lors de la suppression, vous ne pouvez pas surpprimer cette modepaiement : $modepaiement->libelle.",401);
+            return ResponseHandler::error("Echec lors de la suppression, vous ne pouvez pas surpprimer cette données.",401);
         }
     }
 

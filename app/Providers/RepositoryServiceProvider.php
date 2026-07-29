@@ -21,8 +21,10 @@ use App\Services\contracts\GrilletarifairesInterface;
 use App\Services\contracts\InscritstypepiecesInterface;
 use App\Services\contracts\KkiapayInterfarce;
 use App\Services\contracts\ModepaiementsInterface;
+use App\Services\contracts\ModepaysInterface;
 use App\Services\contracts\MoodlesmodulesInterface;
 use App\Services\contracts\MoodletypeexamensInterface;
+use App\Services\contracts\OperateursInterface;
 use App\Services\contracts\OuvragesInterface;
 use App\Services\contracts\PaiementsInterface;
 use App\Services\contracts\ReductionsInterface;
@@ -49,8 +51,10 @@ use App\Services\Impl\GrilletarifairesService;
 use App\Services\Impl\InscritstypepiecesService;
 use App\Services\Impl\KkiapayService;
 use App\Services\Impl\ModepaiementsService;
+use App\Services\Impl\ModepaysService;
 use App\Services\Impl\MoodlesmodulesService;
 use App\Services\Impl\MoodletypeexamensService;
+use App\Services\Impl\OperateursService;
 use App\Services\Impl\OuvragesService;
 use App\Services\Impl\PaiementsService;
 use App\Services\Impl\PermissionsService;
@@ -100,6 +104,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ZoomRecordInterface::class, ZoomRecordService::class);
         $this->app->bind(CandidaturesInterface::class, CandidaturesService::class);
         $this->app->bind(AfribapayInterface::class, AfribapayService::class);
+        $this->app->bind(ModepaysInterface::class, ModepaysService::class);
+        $this->app->bind(OperateursInterface::class, OperateursService::class);
     }
 
     /**
