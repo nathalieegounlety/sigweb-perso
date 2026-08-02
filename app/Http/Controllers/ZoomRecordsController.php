@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHandler;
-use App\Services\Contracts\ZoomRecordInterface;
+use App\Services\contracts\ZoomRecordInterface;
 use Illuminate\Http\Request;
 
 class ZoomRecordsController extends Controller
@@ -36,12 +36,11 @@ class ZoomRecordsController extends Controller
     /**
      * Récupère les sessions de formation pour une formation donnée.
      */
-    public function getSessions(Request $request, $formationId)
+    public function getSessions(Request $request, $code_formation)
 {
-    try {
-        $request->merge(['formation_id' => $formationId]);
+    try { 
 
-        return $this->zoomRecordService->getSessions($request);
+        return $this->zoomRecordService->getSessions($code_formation);
     } catch (\Illuminate\Validation\ValidationException $e) {
         return ResponseHandler::error("Erreur de validation", 422, $e->errors());
     } catch (\Exception $e) {
@@ -55,8 +54,7 @@ class ZoomRecordsController extends Controller
     public function store(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'formation_id' => 'required|integer',
+            $validated = $request->validate([ 
                 'titre' => 'required|string|max:255',
                 'url_youtube' => 'required|string',
                 'session_formation_id' => 'nullable|integer',

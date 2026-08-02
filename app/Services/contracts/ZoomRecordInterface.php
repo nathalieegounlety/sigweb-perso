@@ -2,8 +2,7 @@
 
 namespace App\Services\contracts;
 
-use Illuminate\Http\Request;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request; 
 
 interface ZoomRecordInterface
 {
@@ -11,5 +10,5 @@ interface ZoomRecordInterface
     public function store(Request $request);
     public function update(Request $request);
     public function remove(Request $request);
-    public function getSessions(Request $request);
+    public function getSessions(string $code_formation);
 }

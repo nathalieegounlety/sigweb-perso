@@ -489,6 +489,20 @@ class AuditeursContoller extends Controller
         }
         return ResponseHandler::success("Ok for update");
  
+    } 
+
+    public function getAttestionsAudtieur(Request $request){
+        try {
+            $validatedData = $request->validate([ 
+                'email' => 'required'
+            ]);
+            return $data = $this->auditeurService->getMyAttestions($request->email);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
     }
 
 }

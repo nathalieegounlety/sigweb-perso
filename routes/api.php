@@ -8,6 +8,7 @@ use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StatistiquesController;
+use App\Http\Controllers\ZoomRecordsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -265,6 +266,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('update/email', 'updateEmailAuditeur');
     Route::post('delete/compte', 'deleteCompteAuditeur');
     Route::get('update/tarif/{code_formation}', 'updateTarifAuditeur');
+    Route::post('mes/atestations', 'getAttestionsAudtieur');
 });
 
 // gestion des api du frontoffice
@@ -476,7 +478,7 @@ Route::prefix('v1/formateurs')->controller(\App\Http\Controllers\FormateursContr
 });
 
 // routes/api.php
-Route::prefix('v1/zoom-records')->controller(\App\Http\Controllers\ZoomRecordsController::class)->group(function () {
+Route::prefix('v1/zoom-records')->controller(ZoomRecordsController::class)->group(function () {
     Route::post('get/details', 'getDetails');         
     Route::get('get/sessions/{formationId}', 'getSessions'); 
     Route::post('store', 'store');

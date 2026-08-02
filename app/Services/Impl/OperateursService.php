@@ -23,6 +23,8 @@ class OperateursService implements OperateursInterface
         $saveData = new Operateurs();
         $saveData->setAttribute('modepays_id', $data->modepays_id);
         $saveData->setAttribute('operateur', $data->operateur);
+        $saveData->setAttribute('devise', $data->devise);
+        $saveData->setAttribute('logo_path', 'N/A');
 
         if (auth('api')->user()) {
             $user = auth('api')->user();
@@ -38,9 +40,9 @@ class OperateursService implements OperateursInterface
     public function getOneOperateurs(int $id)
     {
         // TODO: Implement getOneOperateurs() method.
-        $data = Operateurs::innerJoin("modepays","modepays.id","=","operateurs.modepays_id")
-        ->innerJoin("pays","pays.id","=","modepays.pays_id")
-        ->innerJoin("modepaiements","modepaiements.id","=","modepays.modepaiement_id")
+        $data = Operateurs::join("modepays","modepays.id","=","operateurs.modepays_id")
+        ->join("pays","pays.id","=","modepays.pays_id")
+        ->join("modepaiements","modepaiements.id","=","modepays.modepaiement_id")
         ->select(["operateurs.id","operateurs.operateur", "modepays.pays_id","modepays.modepaiement_id","pays.nom_pays","pays.code_iso",
         "modepaiements.libelle"])
         ->whereId($id)->first();
@@ -68,10 +70,10 @@ class OperateursService implements OperateursInterface
             $query = Operateurs::with(['getUserUpdated' => function($query) {
                 $query->select('id', 'name', 'email', 'code_user');
             }])
-            ->innerJoin('modepays', 'modepays.id', '=', 'operateurs.modepays_id')
-            ->innerJoin('pays', 'pays.id', '=', 'modepays.pays_id')
-            ->innerJoin('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
-            ->select('operateurs.id','operateurs.operateur','modepays.modepaiement_id','modepays.pays_id','modepaiements.libelle','pays.nom_pays'); // Sélectionnez toutes les colonnes de modepays
+            ->join('modepays', 'modepays.id', '=', 'operateurs.modepays_id')
+            ->join('pays', 'pays.id', '=', 'modepays.pays_id')
+            ->join('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
+            ->select('operateurs.id','operateurs.is_enable','operateurs.devise','operateurs.modepays_id','operateurs.operateur','modepays.modepaiement_id','modepays.pays_id','modepaiements.libelle','pays.nom_pays'); // Sélectionnez toutes les colonnes de modepays
 
         // On fait la jointure
         $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';
@@ -160,9 +162,9 @@ class OperateursService implements OperateursInterface
     public function getOperateursObj(): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getOperateurObj() method.
-        $data = Operateurs::innerJoin('modepays', 'modepays.id', '=', 'operateurs.modepays_id')
-        ->innerJoin('pays', 'pays.id', '=', 'modepays.pays_id')
-        ->innerJoin('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
+        $data = Operateurs::join('modepays', 'modepays.id', '=', 'operateurs.modepays_id')
+        ->join('pays', 'pays.id', '=', 'modepays.pays_id')
+        ->join('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
         ->where('is_enable', true)
         ->get(['operateurs.id','operateurs.operateur', 'operateurs.modepays_id','modepays.pays_id','modepays.modepaiement_id', 'modepaiements.libelle','pays.nom_pays']);
         return ResponseHandler::success("ok",$data);

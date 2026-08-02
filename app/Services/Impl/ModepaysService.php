@@ -7,6 +7,7 @@ use App\Models\Modepays;
 use App\Services\contracts\ModepaysInterface; 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ModepaysService implements ModepaysInterface
 {
@@ -66,8 +67,8 @@ class ModepaysService implements ModepaysInterface
             $query = Modepays::with(['getUserUpdated' => function($query) {
                 $query->select('id', 'name', 'email', 'code_user');
             }])
-            ->innerJoin('pays', 'pays.id', '=', 'modepays.pays_id')
-            ->innerJoin('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
+            ->join('pays', 'pays.id', '=', 'modepays.pays_id')
+            ->join('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
             ->select('modepays.*','modepaiements.libelle','pays.nom_pays'); // Sélectionnez toutes les colonnes de modepays
 
         // On fait la jointure
@@ -154,10 +155,11 @@ class ModepaysService implements ModepaysInterface
     public function getModepaysObj(): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getModepaysObj() method.
-        $data = Modepays::innerJoin('pays', 'pays.id', '=', 'modepays.pays_id')
-        ->innerJoin('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
-        ->where('is_enable', true)
-        ->get(['modepays.id','modepays.pays_id','modepays.modepaiement_id', 'modepaiements.libelle','pays.nom_pays']);
+        $data = Modepays::join('pays', 'pays.id', '=', 'modepays.pays_id')
+        ->join('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
+        ->where('modepays.is_enable', true)
+        ->get(['modepays.id as code',
+        DB::raw("CONCAT(modepaiements.libelle, ' - ', pays.nom_pays) AS name")]);
         return ResponseHandler::success("ok",$data);
     }
 }

@@ -28,7 +28,7 @@ class Enregistrementszooms extends Model
 
     public function sessionFormation()
     {
-        return $this->belongsTo(SessionFormation::class, 'sessionformation_id'); // Sans "s"
+        return $this->belongsTo(Sessionformations::class, 'sessionformation_id'); // Sans "s"
     }
 
     public function updatedBy()

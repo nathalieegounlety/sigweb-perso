@@ -2,15 +2,14 @@
 
 namespace App\Services\Impl;
 
-use App\Helpers\ResponseHandler;
-use App\Models\Enregistrementszoom; // Utilisez UNIQUEMENT ce nom (sans "s")
-use App\Models\Enregistrementszooms;
-use App\Models\SessionFormation;    // Utilisez UNIQUEMENT ce nom (sans "s")
+use App\Helpers\ResponseHandler; 
+use App\Models\Enregistrementszooms; 
 use App\Models\Formations;
 use App\Models\Sessionformations;
 use App\Services\Contracts\ZoomRecordInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ZoomRecordService implements ZoomRecordInterface
 {
@@ -33,11 +32,15 @@ class ZoomRecordService implements ZoomRecordInterface
     /**
      * Récupère les sessions de formation pour une formation donnée.
      */
-    public function getSessions(Request $request)
+    public function getSessions(string $code_formation)
     {
-        // Récupérez les sessions liées à formation_id
-        $sessions = Sessionformations::where('formation_id', $request->formation_id)
-            ->get(['id', 'id_webinaire', 'duree_reelle']);
+        // Récupérez les sessions liées à formation_id 
+        // $sessions = Sessionformations::where('code_formation', $code_formation)
+        //     ->get(['id', 'id_webinaire', 'duree_reel']);
+
+        $sessions = Sessionformations::where('code_formation', $code_formation)
+            ->get(["id as code", DB::raw("CONCAT(id_webinaire, ' - ', duree_reel) AS name")]);
+            // 
 
         return ResponseHandler::success('Liste des sessions', $sessions);
     }
@@ -48,7 +51,8 @@ class ZoomRecordService implements ZoomRecordInterface
     public function store(Request $request)
     {
         // Vérifier si l'enregistrement existe déjà
-        $checkRecord = Enregistrementszoom::where('formation_id', $request->formation_id)
+        $formation = Formations::whereCodeFormation($request->code_formation)->first();
+        $checkRecord = Enregistrementszooms::where('formation_id', $formation->id)
             ->where('titre', $request->titre)
             ->where('url_youtube', $request->url_youtube)
             ->exists();
@@ -57,10 +61,18 @@ class ZoomRecordService implements ZoomRecordInterface
             return ResponseHandler::error("L'enregistrement existe déjà", 409);
         }
 
-        $enregistrement = new Enregistrementszoom();
-        $enregistrement->fill($request->all());
-        $enregistrement->updated_by = Auth::id();
-        $enregistrement->created_by = Auth::id();
+        $enregistrement = new Enregistrementszooms();
+        $enregistrement->setAttribute("formation_id",$formation->id);
+        $enregistrement->setAttribute("code_formation",$formation->code_formation);
+        $enregistrement->setAttribute("titre",$request->titre);
+        if ($request->session_formation_id && !empty($request->session_formation_id)) {
+            # code...
+            $enregistrement->setAttribute("sessionformation_id",$request->session_formation_id);
+        }
+        $enregistrement->setAttribute("url_youtube",$request->url_youtube);
+        $user = auth('api')->user();
+        $enregistrement->setAttribute("updated_by",$user->id);
+        $enregistrement->setAttribute("created_by",$user->id);  
         $enregistrement->save();
 
         return ResponseHandler::success('Enregistrement ajouté avec succès', $enregistrement);
@@ -71,11 +83,12 @@ class ZoomRecordService implements ZoomRecordInterface
      */
     public function update(Request $request)
     {
-        $enregistrement = Enregistrementszoom::findOrFail($request->id);
+        $formation = Formations::whereCodeFormation($request->code_formation)->first();
+        $enregistrement = Enregistrementszooms::findOrFail($request->id);
 
         // Vérifier si le nouvel enregistrement existe déjà (hors mise à jour)
-        $checkRecord = Enregistrementszoom::where('id', '!=', $request->id)
-            ->where('formation_id', $request->formation_id)
+        $checkRecord = Enregistrementszooms::where('id', '!=', $request->id)
+            ->where('formation_id', $formation->id)
             ->where('titre', $request->titre)
             ->where('url_youtube', $request->url_youtube)
             ->exists();
@@ -84,9 +97,17 @@ class ZoomRecordService implements ZoomRecordInterface
             return ResponseHandler::error("L'enregistrement existe déjà", 409);
         }
 
-        $enregistrement->update($request->all());
-        $enregistrement->updated_by = Auth::id();
-        $enregistrement->save();
+        $enregistrement->setAttribute("formation_id",$formation->id);
+        $enregistrement->setAttribute("code_formation",$formation->code_formation);
+        $enregistrement->setAttribute("titre",$request->titre);
+        if ($request->session_formation_id && !empty($request->session_formation_id)) {
+            # code...
+            $enregistrement->setAttribute("sessionformation_id",$request->session_formation_id);
+        }
+        $enregistrement->setAttribute("url_youtube",$request->url_youtube);
+        $user = auth('api')->user();
+        $enregistrement->setAttribute("updated_by",$user->id);  
+        $enregistrement->update();
 
         return ResponseHandler::success('Enregistrement mis à jour avec succès', $enregistrement);
     }
@@ -96,7 +117,7 @@ class ZoomRecordService implements ZoomRecordInterface
      */
     public function remove(Request $request)
     {
-        $enregistrement = Enregistrementszoom::findOrFail($request->id);
+        $enregistrement = Enregistrementszooms::findOrFail($request->id);
         $enregistrement->delete();
 
         return ResponseHandler::success('Enregistrement supprimé avec succès');

@@ -2707,4 +2707,14 @@ $data = Inscriptions::query()
         
 
     }
+
+    public function getMyAttestions(string $email): \Illuminate\Http\JsonResponse
+    {
+        $auditeur = Auditeurs::whereEmail($email)->first();
+        $listeAttestation = Rapports::join("formations","formations.code_formation","=","rapports.code_formation")
+        ->where("email", $auditeur->email) 
+        ->get(["rapports.email", "formations.code_formation", "rapports.id","formations.theme"]);
+            $response["listeAttestation"] = $listeAttestation; 
+        return  ResponseHandler::success("ok",$listeAttestation);
+    }
 }
