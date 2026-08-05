@@ -47,7 +47,8 @@ class Paiements extends Model
         'nim',
         'compteur',
         'qrcode',
-        'heurenormalisation'
+        'heurenormalisation',
+        'code_remise_dsc'
     ];
 
 

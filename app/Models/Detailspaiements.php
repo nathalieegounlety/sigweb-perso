@@ -41,7 +41,9 @@ class Detailspaiements extends Model
         'modepaiement_id',
         'is_paiement_partiel',
         'reference_paiement_partiel',
-        'commentaire'
+        'commentaire',
+        'have_reduction_dsc',
+        'code_remise_dsc'
     ];
 
     public function getReduction()
