@@ -1004,7 +1004,8 @@ $data = Inscriptions::query()
             ->leftJoin('inscriptions_dscs', 'inscriptions_dscs.code_inscription', '=', 'inscriptions.code_inscription')
             ->where("paiements.email", $request->email)
             ->whereNull('num_transaction')
-            ->where('montant_restant', '>', 0)
+            ->where('montant_restant', '>=', 0)
+            ->where('statut_paiement', '=', 'EN ATENTE')
             ->where('paiements.type', '=', 'dsc')
             ->orderBy('paiements.updated_at', 'desc')
             ->select([
@@ -1024,7 +1025,7 @@ $data = Inscriptions::query()
                 DB::raw('CASE WHEN inscriptions_dscs.id IS NOT NULL THEN 1 ELSE 0 END as checkValidationDsc'),
 
                 // checkdate : true si l'année de date_paiement > 2024
-                \DB::raw('CASE
+                DB::raw('CASE
                     WHEN formations.date_debut IS NOT NULL
                      AND YEAR(formations.date_debut) > 2024
                     THEN 1 ELSE 0
@@ -1089,7 +1090,7 @@ $data = Inscriptions::query()
             ->where('statut_paiement', 'PAYE')
             ->where('statut_traitement', 'VALIDER')
             ->where('is_paiement_partiel', true)
-            ->get(["detailspaiements.id", "detailspaiements.reference_paiement as reference", "modepaiements.libelle as mode_paiement", "detailspaiements.updated_at"]);
+            ->get(["detailspaiements.id", "detailspaiements.reference_paiement as reference", "modepaiements.libelle as mode_paiement","detailspaiements.montant_paye", "detailspaiements.updated_at"]);
 
 
         $data = [
@@ -1880,6 +1881,7 @@ $data = Inscriptions::query()
                         $action = 'CHANGEMENT MODE FORMATION';
                         $description = "Changement mode de formation : ".$request->code_formation;
                         $this->genarateurCodeService->saveHistoriqueAction($action, $description, auth('api')->user()->id);
+                        // don't send mail 
 
                         // return success msg 
                         return  ResponseHandler::success("Mise à jour effectuée avec succès ok");
@@ -1924,7 +1926,7 @@ $data = Inscriptions::query()
                                         $getDetailsP = Detailspaiements::where("reference_paiement", $paiement->reference)->get();
                                         
                                         foreach($getDetailsP as $detail){ // mettre à jour les frais de scolarité avec la remise
-                                            if($detail->id_tarification_formation == $new_tarif->id){
+                                            if($detail->id_tarification_formation == $new_tarif->id){ // price for scolarite
                                                 // il s'agit des frais de scolarité
                                                 $rem_mt_scolarite = $remiseDsc * $new_price;
                                                 $updDetail = Detailspaiements::find($detail->id);
@@ -1953,6 +1955,9 @@ $data = Inscriptions::query()
                                         $updateDetailPaiementInsc->setAttribute("id_tarification_formation", $priceInscription->id);
                                         $updateDetailPaiementInsc->setAttribute("montant_paye", 0);
                                         $updateDetailPaiementInsc->setAttribute("montant_restant", $getGrille->montant);
+                                        $updateDetailPaiementInsc->setAttribute("id_reduction", null);
+                                        $updateDetailPaiementInsc->setAttribute('have_reduction_dsc', false);
+                                        $updateDetailPaiementInsc->setAttribute('code_remise_dsc',null);
                                         $updateDetailPaiementInsc->setAttribute("statut_paiement", "IMPAYE");
                                         $updateDetailPaiementInsc->setAttribute("statut_traitement", "ATTENTE");
                                         $updateDetailPaiementInsc->update();
@@ -1965,6 +1970,8 @@ $data = Inscriptions::query()
                                         $updPaiement->setAttribute("montant_paye", 0);
                                         $updPaiement->setAttribute("statut_paiement", "EN ATTENTE");
                                         $updPaiement->setAttribute("statut_traitement", "ATTENTE");
+                                        $updPaiement->update();
+                                        Log::info("Update tarif for existing paiement tranche unique ok : ".($mtTotal - $rem_mt_scolarite));  
 
                                     } 
 
@@ -1981,9 +1988,9 @@ $data = Inscriptions::query()
 
                                         foreach($getDetailsP as $detail){ // mettre à jour les frais de scolarité et d'inscription avec la remise
                                                 $rem_mt = 0;
-                                                $rem_mt = $remiseDsc * $detail->montant_restant;
-                                                $totalRemiseDsc = $totalRemiseDsc + $rem_mt;
                                                 if($detail->id_tarification_formation == $new_tarif->id){
+                                                $rem_mt = $remiseDsc * $new_price;
+                                                $totalRemiseDsc = $totalRemiseDsc + $rem_mt;
                                                     // il s'agit des frais de scolarité
                                                     $updDetail = Detailspaiements::find($detail->id);
                                                     $updDetail->setAttribute("id_tarification_formation", $new_tarification_id); 
@@ -1993,9 +2000,11 @@ $data = Inscriptions::query()
                                                     $updDetail->setAttribute("statut_traitement", "ATTENTE"); 
                                                     $updDetail->setAttribute('have_reduction_dsc', true);
                                                     $updDetail->setAttribute('code_remise_dsc', trim($request->reduction_id));
-                                                    $updDetail->setAttribute('montant_restant', $detail->montant_restant - $rem_mt);
+                                                    $updDetail->setAttribute('montant_restant', $new_price - $rem_mt);
                                                     $updDetail->save();
                                                 }else{ // il s'agit des frais d'inscription
+                                                    $rem_mt = $remiseDsc * $getGrille->montant;
+                                                    $totalRemiseDsc = $totalRemiseDsc + $rem_mt;
                                                     $updDetail = Detailspaiements::find($detail->id);
                                                     $updDetail->setAttribute("id_reduction", null);
                                                     $updDetail->setAttribute("montant_paye", 0); 
@@ -2003,7 +2012,7 @@ $data = Inscriptions::query()
                                                     $updDetail->setAttribute("statut_traitement", "ATTENTE"); 
                                                     $updDetail->setAttribute('have_reduction_dsc', true);
                                                     $updDetail->setAttribute('code_remise_dsc', trim($request->reduction_id));
-                                                    $updDetail->setAttribute('montant_restant', $detail->montant_restant - $rem_mt);
+                                                    $updDetail->setAttribute('montant_restant', $getGrille->montant - $rem_mt);
                                                     $updDetail->save();
                                                 }
                                             }
@@ -2017,10 +2026,11 @@ $data = Inscriptions::query()
                                                 $updPaiement->setAttribute("statut_paiement", "EN ATTENTE");
                                                 $updPaiement->setAttribute("statut_traitement", "ATTENTE");
                                                 $updPaiement->update(); 
+                                        Log::info("Update tarif for existing paiement bourse complete ok"); 
                                                 
                                     }
 
-                                }else{
+                                }else{ // pas de réduction
                                     // update ligne scolarité
                                     $details_paiement->setAttribute("id_tarification_formation", $new_tarification_id);
                                     $details_paiement->setAttribute("have_reduction_dsc", false);
@@ -2029,6 +2039,7 @@ $data = Inscriptions::query()
                                     $details_paiement->setAttribute("montant_restant", $new_price);
                                     $details_paiement->setAttribute("statut_paiement", "IMPAYE");
                                     $details_paiement->setAttribute("statut_traitement", "ATTENTE");
+                                    $details_paiement->setAttribute('code_remise_dsc',null);
                                     $details_paiement->update();
 
                                     // delete paiement tranche 
@@ -2055,6 +2066,9 @@ $data = Inscriptions::query()
                                         $updateDetailPaiementInsc->setAttribute("montant_restant", $getGrille->montant);
                                         $updateDetailPaiementInsc->setAttribute("statut_paiement", "IMPAYE");
                                         $updateDetailPaiementInsc->setAttribute("statut_traitement", "ATTENTE");
+                                        $updateDetailPaiementInsc->setAttribute('code_remise_dsc',null); 
+                                        $updateDetailPaiementInsc->setAttribute("have_reduction_dsc", false);
+                                        $updateDetailPaiementInsc->setAttribute("id_reduction", null);
                                         $updateDetailPaiementInsc->update();
 
                                         // delete paiement tranche 
@@ -2072,7 +2086,9 @@ $data = Inscriptions::query()
                             $paiement->setAttribute("montant_restant", $new_montant_total);
                             $paiement->setAttribute("statut_paiement", "EN ATTENTE");
                             $paiement->setAttribute("statut_traitement", "ATTENTE");
+                            $paiement->setAttribute('code_remise_dsc',null); 
                             $paiement->update();
+                            Log::info("Update tarif for existing paiement without ok"); 
 
                             // delete tranche
                             $deleteTranche = Tranches::where("code_inscription", $request->code_inscription)->delete();
@@ -2156,6 +2172,7 @@ $data = Inscriptions::query()
 
                 //############################## end contrôle spécifique pour les formations DSC #############################################
             }
+                //############################## contrôle spécifique pour les formations non DSC #############################################
 
             // récupérer le montant par défaut
             $default_price = $anc_tarif_fm->getTarifFormation->getGrilletarifaire->montant;

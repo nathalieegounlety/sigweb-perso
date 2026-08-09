@@ -217,56 +217,7 @@ class ComptabilitesService implements ComptabilitesInterface
         $sortOrder = $request->input('sort_order', 'desc');
         $filterDate = $request->input('filter_date');
 
-        /** PAIEMENTS CLASSIQUES */
-        /*$classiques = DB::table('paiements')
-            ->leftJoin('auditeurs', 'auditeurs.email', '=', 'paiements.email')
-            ->leftJoin('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
-            ->leftJoin('detailspaiements', 'detailspaiements.reference_paiement', '=', 'paiements.reference')
-            ->leftJoin('reductions','reductions.id','=','detailspaiements.id_reduction')
-            ->where('paiements.statut_paiement', 'EN ATTENTE') 
-            ->where('paiements.type', '!=', 'dsc')
-            ->where('paiements.is_paiement_partiel', false)
-            ->whereNotNull('paiements.num_transaction')
-            ->selectRaw("
-            paiements.id,
-            auditeurs.nom,
-            auditeurs.prenoms,
-            auditeurs.email,
-            paiements.reference, 
-            detailspaiements.montant_restant as montant,
-            paiements.num_transaction,
-            paiements.type,
-            paiements.updated_at AS date,
-            paiements.reference AS action_ref,
-            'classique' AS route_type,
-            modepaiements.id AS id_modepaiement,
-            modepaiements.libelle AS libelle_modepaiement,
-            reductions.id AS id_reduction,
-            reductions.pourcentage AS pourcentage,
-            0 AS have_reduction
-            ")
-            ->selectRaw("
-                (
-                    SELECT i.code_formation
-                    FROM inscriptions i
-                    WHERE i.code_inscription = paiements.code_inscription
-                    LIMIT 1
-                ) AS code_formation
-            ")
-            ->selectRaw("
-                (
-                    SELECT f.theme
-                    FROM formations f
-                    WHERE f.code_formation = (
-                        SELECT i2.code_formation
-                        FROM inscriptions i2
-                        WHERE i2.code_inscription = paiements.code_inscription
-                        LIMIT 1
-                    )
-                    LIMIT 1
-                ) AS theme
-            ");*/
-
+        /** PAIEMENTS CLASSIQUES */  
             
         $classiques = DB::table('detailspaiements')
             ->leftJoin('paiements', 'paiements.reference', '=', 'detailspaiements.reference_paiement')

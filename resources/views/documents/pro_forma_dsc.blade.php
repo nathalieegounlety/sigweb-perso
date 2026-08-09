@@ -282,6 +282,9 @@
                             $frais_scolarite_solde = 0;
                             $libelle_inscription = ''; $libelle_scolarite = '';
                             $have_reduction = false;
+                            $have_reduction_insc = false; // for bourse complete
+                            $code_reduction_insc = "";
+                            $code_reduction_sc = "";
                         @endphp
                         @foreach ($details as $data)
                             @if ($data->getTarification->getGrilletarifaire->type_tarif != 'INSCRIPTION')
@@ -289,15 +292,11 @@
                                     $frais_scolarite = $data->montant_restant;
                                     $frais_scolarite_solde = $data->montant_paye;
                                     $libelle_scolarite = $data->getTarification->getGrilletarifaire->type_tarif;
-                                @endphp
-                                {{--@if ($frais_scolarite == 0)
-                                    @php
-                                        $frais_scolarite = $data->getTarification->getGrilletarifaire->montant;
-                                    @endphp
-                                @endif--}}
+                                @endphp 
                                 @if ($data->have_reduction_dsc)
                                     @php
                                         $have_reduction = true;
+                                        $code_reduction_sc = $data->code_remise_dsc;
                                     @endphp
                                 @endif
                             @else
@@ -306,11 +305,13 @@
                                     $frais_inscription_solde = $data->montant_paye;
                                     $libelle_inscription = $data->getTarification->getGrilletarifaire->type_tarif;
                                 @endphp
-                                {{--@if ($frais_inscription == 0)
+                                
+                                @if ($data->have_reduction_dsc)
                                     @php
-                                        $frais_inscription = $data->getTarification->getGrilletarifaire->montant;
+                                        $have_reduction_insc = true;
+                                        $code_reduction_insc = $data->code_remise_dsc;
                                     @endphp
-                                @endif--}}
+                                @endif
                             @endif
                         @endforeach
 
@@ -327,14 +328,31 @@
                                 {{ $libelle_inscription }} </td>
 
                             <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-
-                                -
+                                @if ($have_reduction_insc)
+                                    @if ($code_reduction_insc == "BOURSE_COMPLET")
+                                        100% (Bourse complète)
+                                    @else
+                                    5%                                        
+                                    @endif
+                                @else
+                                    -
+                                @endif
                             </td>
                             <td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">
                                 @if($frais_inscription == 0)
-                                    {{ number_format($frais_inscription_solde, 0, ',', '.') }} (soldé)
+                                    {{ number_format($frais_inscription_solde, 0, ',', '.') }} 
+                                    @if ($have_reduction_insc)
+                                        
+                                    @else 
+                                     (soldé)
+                                    @endif
                                 @else
-                                    {{ number_format($frais_inscription, 0, ',', '.') }} (impayé)
+                                    {{ number_format($frais_inscription, 0, ',', '.') }} 
+                                    @if ($have_reduction_insc)
+                                        
+                                    @else  
+                                    (impayé)
+                                    @endif
                                 @endif
                             </td>
                         </tr>
@@ -344,19 +362,38 @@
 
                             <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
                                 @if ($have_reduction)
-                                    5%
+                                    @if ($code_reduction_sc == "BOURSE_COMPLET")
+                                        100% (Bourse complète)
+                                    @else
+                                    5%                                        
+                                    @endif
                                 @else
                                     -
                                 @endif
                             </td>
                             <td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">
                                 @if($frais_scolarite == 0)
-                                    {{ number_format($frais_scolarite_solde, 0, ',', '.') }} (soldé)
+                                    {{ number_format($frais_scolarite_solde, 0, ',', '.') }} 
+                                    @if ($have_reduction && $code_reduction_sc == "BOURSE_COMPLET")
+                                        
+                                    @else 
+                                     (soldé)
+                                    @endif
                                 @else
                                     @if($frais_scolarite_solde > 0)
-                                        {{ number_format($frais_scolarite_solde, 0, ',', '.') }} (soldé) <br>
+                                        {{ number_format($frais_scolarite_solde, 0, ',', '.') }} 
+                                        @if ($have_reduction && $code_reduction_sc == "BOURSE_COMPLET")
+                                        
+                                        @else 
+                                        (soldé)
+                                        @endif  <br>
                                     @endif
-                                    {{ number_format($frais_scolarite, 0, ',', '.') }} (impayé)
+                                    {{ number_format($frais_scolarite, 0, ',', '.') }} 
+                                    @if ($have_reduction && $code_reduction_sc == "BOURSE_COMPLET")
+                                        
+                                    @else  
+                                    (impayé)
+                                    @endif
                                 @endif
                             </td>
                         </tr>

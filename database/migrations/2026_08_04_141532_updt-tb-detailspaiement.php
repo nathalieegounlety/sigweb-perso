@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('code_remise_dsc',30)->after('have_reduction_dsc')->nullable();
         });
         Schema::table('paiements', function (Blueprint $table) {  
-            $table->string('code_remise_dsc',30)->after('montant_a_payer')->nullable();
+            $table->string('code_remise_dsc',30)->after('montant_paye')->nullable();
         });
     }
 
