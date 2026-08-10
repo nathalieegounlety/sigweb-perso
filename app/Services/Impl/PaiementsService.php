@@ -430,6 +430,7 @@ class PaiementsService implements PaiementsInterface
                 'paiements.montant_restant',
                 'paiements.montant_paye',
                 'paiements.statut_paiement',
+                'paiements.code_remise_dsc',
                 
                 // Frais calculés via grille
                 DB::raw('COALESCE(dp_calc.frais_inscription_paye, 0) as frais_inscription_paye'),

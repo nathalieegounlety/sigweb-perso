@@ -60,6 +60,7 @@ class ModepaysService implements ModepaysInterface
 
         // Filtres spécifiques
         $filterLibelle = $request->input('filter_libelle');
+        $filterNomPays = $request->input('filter_nom_pays');
         $filterIsEnable = $request->input('filter_is_enable');
         $filterUpdatedAt = $request->input('filter_updated_at');
         $filterAuthor = $request->input('filter_author');
@@ -88,6 +89,12 @@ class ModepaysService implements ModepaysInterface
         }
 
         // Filtres par colonne 
+        if ($filterLibelle !== null && $filterLibelle !== '') {
+            $query->where('modepaiements.libelle', $filterLibelle); // 0 ou 1
+        }
+        if ($filterNomPays !== null && $filterNomPays !== '') {
+            $query->where('pays.nom_pays', $filterNomPays); // 0 ou 1
+        }
         if ($filterIsEnable !== null && $filterIsEnable !== '') {
             $query->where('modepays.is_enable', $filterIsEnable); // 0 ou 1
         }
@@ -105,7 +112,7 @@ class ModepaysService implements ModepaysInterface
             $query->orderBy("modepays.{$sortField}", $sortOrder);
         }
 
-        $query->orderBy($sortField, $sortOrder);
+        //$query->orderBy($sortField, $sortOrder);
 
         return $query->paginate($perPage);
     }
