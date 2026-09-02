@@ -93,7 +93,7 @@ class KkiapayController extends Controller
     }
 
     public function savePaiementPartielDsc(Request $request){
-        try {
+        try {   
             $validated = $request->validate([
                 'transaction_id' => 'required|string'
             ]);
@@ -107,7 +107,21 @@ class KkiapayController extends Controller
         }
     }
 
-    public function webhook(Request $request)
+    public function webhook(Request $request){ 
+        try {      
+
+            return $data = $this->kkiapayservice->startWebook($request);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            //return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+            return response()->json(['status' => 'error webook'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error webook'], 200);
+            //return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    public function webhookOld(Request $request)
     {  
         // Répondez à Kkiapay avec un statut HTTP 200 OK 
 		// Capture et traiter les données de la requête du webhook
@@ -146,7 +160,6 @@ class KkiapayController extends Controller
                         $getOneTranchePaiement = PaiementsTranche::where('reference',$get_reference)->first();                            
                         $getOneDtPaiement = Detailspaiements::find($getOneTranchePaiement->details_paiements_id);
                         $getPaiement = Paiements::where('reference',$getOneDtPaiement->reference_paiement)->first();
-                    
                         $updatePaiement = Paiements::find($getPaiement->id);
 
                          // update statut paiement si montant restant = 0
@@ -155,8 +168,7 @@ class KkiapayController extends Controller
                             if ($updatePaiement->statut_traitement == "VALIDER") {
                                 # code...
                                 // Répondez à Kkiapay avec un statut HTTP 200 OK
-                                return response()->json(['status' => 'success'], 200);
-                                
+                                return response()->json(['status' => 'success'], 200); 
                             }
                             # code...
                             $updatePaiement->setAttribute("num_transaction",$transactionId);
@@ -179,7 +191,7 @@ class KkiapayController extends Controller
                             # code...
                             $paiementTranche = PaiementsTranche::find($data->id);
                             $detailPaiementTranche = Detailspaiements::find($paiementTranche->details_paiements_id);
-                        Log::info('paiement tranche statut before', ['request' => $paiementTranche->statut_traitement]);  
+                            Log::info('paiement tranche statut before', ['request' => $paiementTranche->statut_traitement]);  
                             if ($paiementTranche->statut_traitement != "VALIDER") {
                                 # code...
                                 // update each table $item->getTarification->getGrilletarifaire->type_tarif == 'INSCRIPTION'

@@ -64,7 +64,7 @@ class FormationsdscService implements FormationsdscInterface
         return ResponseHandler::success("Création efféctuée");
     }
 
-    public function getFormationDsc(int $id): \App\Models\FormationsDsc
+    public function getFormationDsc(int $id)
     {
         $data = new FormationsDsc();
         return ResponseHandler::success("ok", $data);

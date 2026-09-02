@@ -11,7 +11,7 @@ interface FormationsdscInterface
     // déclaration des interfaces à utiliser
     public function saveFormationdsc(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function getFormationDsc(int $id): FormationsDsc;
+    public function getFormationDsc(int $id);
 
     public function getFormationsDsc(Request $request): LengthAwarePaginator;
 
