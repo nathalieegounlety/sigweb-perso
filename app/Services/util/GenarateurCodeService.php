@@ -1,11 +1,14 @@
 <?php
 namespace App\Services\util;
 
+use App\Models\Detailspaiements;
 use App\Models\Formations;
+use App\Models\FormationsTranches;
 use App\Models\Historiqueactions;
 use App\Models\Moodlemoyennegenerales;
 use App\Models\Moodlemoyennes;
 use App\Models\Paiements;
+use App\Models\Tranches;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -327,6 +330,91 @@ public function startCalculMg(String $code_formation){
             ];
             Log::info('calcul moyenne error ', ['request' => $result]); 
         }
+}
+
+
+/**
+ * Crée ou met à jour l'échéancier (table Tranches) pour la ligne scolarité,
+ * selon le plan choisi (tranche_unique = 1 échéance, tranche_double = 2).
+ * Ne concerne jamais la ligne INSCRIPTION (toujours payée en une fois,
+ * sans échéancier).
+ */
+public function enregistrerEcheancierTranche(Paiements $paiement, Detailspaiements $detailPaiement, string $typeTranche, User $user): ?int
+{
+    $tarification = $detailPaiement->getTarification;
+    $grilletarifaire = $tarification->getGrilletarifaire ?? null;
+
+    if (!$tarification || !$grilletarifaire) {
+        Log::error('Échéancier non créé : tarification/grille tarifaire introuvable', [
+            'detail_id' => $detailPaiement->id,
+            'code_inscription' => $paiement->code_inscription,
+        ]);
+        return null; // on ne bloque pas le paiement déjà validé pour autant
+    }
+
+    $grilletarifaireId = $grilletarifaire->id;
+    $montantGrille = $grilletarifaire->montant;
+
+    if ($typeTranche === 'tranche_unique') {
+        $formationTranche = FormationsTranches::where('tranche', 'tranche 1')
+            ->where('grilletarifaire_id', $grilletarifaireId)
+            ->first();
+
+        if (!$formationTranche) {
+            Log::error('Échéancier non créé : FormationsTranches (tranche 1) introuvable', [
+                'grilletarifaire_id' => $grilletarifaireId,
+                'code_inscription' => $paiement->code_inscription,
+            ]);
+            return null;
+        }
+
+        $attributs = [
+            'code_inscription' => $paiement->code_inscription,
+            'email' => $paiement->email,
+            'tranche_1' => $montantGrille,
+            'tranche_2' => 0,
+            'echeance_1' => $formationTranche->echeance_1,
+            'echeance_2' => $formationTranche->echeance_1,
+            'statut' => 'ATTENTE',
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ];
+    } else {
+        $formationTranche = FormationsTranches::where('tranche', 'tranche 2')
+            ->where('grilletarifaire_id', $grilletarifaireId)
+            ->first();
+
+        if (!$formationTranche) {
+            Log::error('Échéancier non créé : FormationsTranches (tranche 2) introuvable', [
+                'grilletarifaire_id' => $grilletarifaireId,
+                'code_inscription' => $paiement->code_inscription,
+            ]);
+            return null;
+        }
+
+        $attributs = [
+            'code_inscription' => $paiement->code_inscription,
+            'email' => $paiement->email,
+            'tranche_1' => $montantGrille * 0.5,
+            'tranche_2' => $montantGrille * 0.5,
+            'echeance_1' => $formationTranche->echeance_1,
+            'echeance_2' => $formationTranche->echeance_2,
+            'statut' => 'ATTENTE',
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ];
+    }
+
+    $echeancier = Tranches::whereCodeInscription($paiement->code_inscription)->first();
+
+    if ($echeancier) {
+        $echeancier->forceFill($attributs);
+        $echeancier->save();
+    } else {
+        $echeancier = Tranches::forceCreate($attributs);
+    }
+
+    return $echeancier->id;
 }
 
 }

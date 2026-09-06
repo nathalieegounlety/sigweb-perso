@@ -27,10 +27,11 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class ComptabilitesService implements ComptabilitesInterface
 {
-    private GenarateurCodeService $genarateurCodeService;
+    private GenarateurCodeService $genarateurCodeService; 
 
     public function __construct(GenarateurCodeService $genarateurCodeService)
     {
@@ -1270,666 +1271,545 @@ class ComptabilitesService implements ComptabilitesInterface
     }
 
     public function validerPaiement(Request $request): \Illuminate\Http\JsonResponse
-    {
-        // TODO: Implement validerPaiement() method.
-        // update statut paiement
-        $getPaiement = Paiements::where("reference",$request->reference)->get()->first();
-        $paiement = Paiements::find($getPaiement->id);
+{
+    try {
         $user = auth('api')->user();
-
-        if ($paiement->montant_total == 0) {
-            # code...
-            if ($request->statut_traitement == "VALIDER") {
-                # code...
-                $paiement->setAttribute("statut_paiement","PAYE");
-                $paiement->setAttribute("montant_paye",$paiement->montant_restant);
-                $paiement->setAttribute("montant_restant",0);
-                $paiement->setAttribute('modepaiement_id', $request->modepaiement_id); 
-                $paiement->setAttribute("commentaire",$request->commentaire);
-                $paiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                $paiement->setAttribute('agent_traiteur', $user->id);
-                $paiement->setAttribute('date_traitement', new \DateTime());
-                $paiement->update();
-
-                // send mail paiement validé
-
-                if ($paiement->type !== "OUVRAGE") {
-                    # code...
-                    // update table details paiement
-                    $details_paiement = Detailspaiements::where('reference_paiement',$request->reference)->get();
-
-                    foreach($details_paiement as $detail){
-                        $detail->setAttribute('statut_traitement',trim($request->statut_traitement));
-                        $detail->setAttribute('statut_paiement', "PAYE");
-                        $detail->setAttribute("montant_paye",$detail->montant_restant);
-                        $detail->setAttribute("montant_restant",0);
-                        $detail->setAttribute('modepaiement_id', $request->modepaiement_id);
-                        $detail->setAttribute('commentaire', $request->commentaire);
-                        $detail->update();
-                    }
-
-                }
-
-            } else {
-                # code...
-                $paiement->setAttribute("statut_paiement","EN ATTENTE");
-                $paiement->setAttribute("statut_traitement","ATTENTE");
-                $paiement->setAttribute("commentaire",$request->commentaire);
-                $paiement->update();
-            }
-
-            return  ResponseHandler::success("Opération effectuée avec succès");
+        if (!$user) {
+            return ResponseHandler::error('Utilisateur non authentifié',302);
         }
-        //######################################## montant supérieur à 0 ################
-
-        if ($request->statut_traitement == "VALIDER") { // si statut VALIDER et pas de réduction
+ 
+        $paiement = Paiements::where('reference', $request->reference)->first();
+        if (!$paiement) {
+            return ResponseHandler::error('Paiement introuvable',302);
+        }
+ 
+        $statutDemande = $request->statut_traitement === 'VALIDER' ? 'VALIDER' : 'ATTENTE';
+ 
+        // Dossier gratuit / exonéré intégralement — pas de logique de réduction.
+        if ((int) $paiement->montant_total === 0) {
+            DB::transaction(function () use ($paiement, $statutDemande, $request, $user) {
+                if ($statutDemande === 'VALIDER') {
+                    $paiement->statut_paiement = 'PAYE';
+                    $paiement->montant_paye = $paiement->montant_restant;
+                    $paiement->montant_restant = 0;
+                    $paiement->modepaiement_id = $request->modepaiement_id;
+                    $paiement->commentaire = $request->commentaire;
+                    $paiement->statut_traitement = 'VALIDER';
+                    $paiement->agent_traiteur = $user->id;
+                    $paiement->date_traitement = now();
+                    $paiement->save();
+ 
+                    if ($paiement->type !== 'OUVRAGE') {
+                        $details = Detailspaiements::where('reference_paiement', $paiement->reference)->get();
+                        foreach ($details as $detail) {
+                            $detail->statut_traitement = 'VALIDER';
+                            $detail->statut_paiement = 'PAYE';
+                            $detail->montant_paye = $detail->montant_restant;
+                            $detail->montant_restant = 0;
+                            $detail->modepaiement_id = $request->modepaiement_id;
+                            $detail->commentaire = $request->commentaire;
+                            $detail->save();
+                        }
+                    }
+                } else {
+                    $paiement->statut_paiement = 'EN ATTENTE';
+                    $paiement->statut_traitement = 'ATTENTE';
+                    $paiement->commentaire = $request->commentaire;
+                    $paiement->save();
+ 
+                    if ($paiement->type !== 'OUVRAGE') {
+                        Detailspaiements::where('reference_paiement', $paiement->reference)
+                            ->where('statut_traitement', '!=', 'VALIDER')
+                            ->update(['statut_traitement' => 'ATTENTE']);
+                    }
+                }
+            });
+ 
+            return ResponseHandler::success('Opération effectuée avec succès');
+        }
+ 
+        // Cas général (montant_total > 0)
+        $modePaiement = null;
+        if ($statutDemande === 'VALIDER') {
             $request->validate([
-                'modepaiement_id'=>'required',
-                'num_transaction'=>'required',
-                'statut_traitement'=>'required',
+                'modepaiement_id' => 'required',
+                'num_transaction' => 'required',
             ]);
-            # code...
-            $paiement->setAttribute("num_transaction",trim($request->num_transaction));
-            $paiement->setAttribute("statut_transaction",trim($request->num_transaction));
-            $paiement->setAttribute("id_modepaiement",$request->modepaiement_id); 
-            $paiement->setAttribute('commentaire', $request->commentaire);
-            $paiement->setAttribute("statut_paiement","PAYE");
-            $paiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-            $paiement->setAttribute('agent_traiteur', $user->id);
-            $paiement->setAttribute('date_traitement', new \DateTime());
-            // vérifier l'application de la réduction
-            if($request->has('reduction_id') && !empty($request->input('reduction_id'))){
-
-                    if($paiement->montant_total > 0){
-                        // check details paiements
-
-                        $chec_details_paiements = Detailspaiements::where("reference_paiement",$paiement->reference)
-                            ->exists();
-
-                        if($chec_details_paiements){
-                            
-                            $detail_paiement = Detailspaiements::where("reference_paiement",$paiement->reference)
-                                ->get();
-
-                            # code...
-                            $update_montant_paiement = $paiement->montant_total ;
-                            $reduction = Reductions::find($request->reduction_id);
-                            // application reduction au montant existant
-                            $montant_paiement_reduction = $update_montant_paiement - ($update_montant_paiement*($reduction->pourcentage/100));
-
-                            // update table details paiement
-                            foreach ($detail_paiement as $details) {
-                                # code...
-                                $get_detail = Detailspaiements::find($details->id);
-                                $get_detail->setAttribute("id_reduction",$request->reduction_id);
-                                $tarif_formation = Tarificationsformation::find($get_detail->id_tarification_formation);
-                                $montant = $tarif_formation->getGrilletarifaire->montant;
-                                $reduction = Reductions::find($request->reduction_id);
-                                $montant_reduction = ($montant*$reduction->pourcentage)/100; 
-                                    # code...
-                                $get_detail->setAttribute("montant_paye",$montant-$montant_reduction);
-                                $get_detail->setAttribute("montant_restant",0);  
-                                $get_detail->setAttribute('modepaiement_id', $request->modepaiement_id);
-                                $get_detail->setAttribute('commentaire', $request->commentaire);
-                                $get_detail->setAttribute('statut_traitement',trim($request->statut_traitement));
-                                $get_detail->setAttribute('statut_paiement', "PAYE");
-                                $get_detail->update();
-                            }
-                            // update table paiement
-                            $paiement->setAttribute("montant_total",$montant_paiement_reduction); 
-                                # code...
-                            $paiement->setAttribute("montant_paye",$montant_paiement_reduction);
-                            $paiement->setAttribute("montant_restant",0); 
-
-                            $paiement->update();
-
-                        }
-                    }
-                
-            } else {
-                # code...
-                
-            $paiement->setAttribute("montant_paye",$paiement->montant_restant);
-            $paiement->setAttribute("montant_restant",0);
-            $paiement->update();
-
-             if ($paiement->type !== "OUVRAGE") {
-                # code...
-                // update table details paiement
-                $details_paiement = Detailspaiements::where('reference_paiement',$request->reference)->get();
-
-                foreach($details_paiement as $detail){
-                    $detail->setAttribute('statut_traitement',trim($request->statut_traitement));
-                    $detail->setAttribute('statut_paiement', "PAYE");
-                    $detail->setAttribute("montant_paye",$detail->montant_restant);
-                    $detail->setAttribute("montant_restant",0);
-                    $detail->setAttribute('modepaiement_id', $request->modepaiement_id);
-                    $detail->setAttribute('commentaire', $request->commentaire);
-                    $detail->update();
+ 
+            $modePaiement = Modepaiements::find($request->modepaiement_id);
+            if (!$modePaiement) {
+                return ResponseHandler::error('Mode de paiement invalide',302);
+            }
+        }
+ 
+        $reductionId = $request->input('reduction_id');
+        $appliquerReduction = !empty($reductionId);
+ 
+        if ($appliquerReduction) {
+            if ((int) $paiement->montant_paye > 0) {
+                return ResponseHandler::error('Impossible de changer la réduction : un montant a déjà été payé sur ce dossier',302);
+            }
+ 
+            if ($paiement->type === 'OUVRAGE') {
+                return ResponseHandler::error("La réduction ne s'applique pas aux paiements de type OUVRAGE",302);
+            }
+ 
+            $reduction = Reductions::find($reductionId);
+            if (!$reduction) {
+                return ResponseHandler::error('Réduction introuvable',302);
+            }
+ 
+            $details = Detailspaiements::where('reference_paiement', $paiement->reference)->get();
+            if ($details->isEmpty()) {
+                return ResponseHandler::error('Aucune ligne de détail pour appliquer la réduction',302);
+            }
+ 
+            $lignesAvecMontant = [];
+            $nouveauMontantTotal = 0;
+ 
+            foreach ($details as $detail) {
+                $tarifFormation = Tarificationsformation::find($detail->id_tarification_formation);
+                $grille = $tarifFormation->getGrilletarifaire ?? null;
+                if (!$tarifFormation || !$grille) {
+                    return ResponseHandler::error("Grille tarifaire introuvable pour la ligne {$detail->id}",302);
                 }
-
+ 
+                $montantGrille = (int) $grille->montant;
+                $montantReduction = (int) round($montantGrille * $reduction->pourcentage / 100);
+                $montantApresReduction = max(0, $montantGrille - $montantReduction);
+ 
+                $nouveauMontantTotal += $montantApresReduction;
+                $lignesAvecMontant[] = (object) ['detail' => $detail, 'montant' => $montantApresReduction];
             }
-
-            }
-            
-
-            // send mail paiement validé            
-            $auditeur = Auditeurs::where("email",$paiement->email)->first();
-            // envoie de mail pour la reférence de la facture
-            $modepaiement = Modepaiements::find($request->modepaiement_id);
-            $nom = $auditeur->nom ?? '';
-            $prenoms = $auditeur->prenoms ?? '';
-
-            if($paiement->type !== "OUVRAGE"){
-                $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$request->reference]);
-            }else{
-                $url = $this->genarateurCodeService->generateUrlSigned('paiements.recu-ouvrage',['reference'=>$request->reference]);
-            }
-
-            $contenu = [
-                'nom' => $nom,
-                'prenoms' => $prenoms,
-                'reference_paiement' => $request->reference,
-                'subject' => 'TRAITEMENT DE VOTRE PAIEMENT',
-                'commentaire' => "Paiement validé",
-                'email'=>$paiement->email,
-                'mode_paiement'=>$modepaiement->libelle,
-                'montant'=>$paiement->montant_total,
-                'type'=>$paiement->type,
-                'url_recu' => $url
-            ];
-
-            try {
-                # code...
-                Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Paiementvalider($contenu));
-
-            } catch (\Exception $e) {
-                //throw $th;
-            }
-
+ 
+            DB::transaction(function () use (
+                $paiement, $lignesAvecMontant, $nouveauMontantTotal, $reductionId,
+                $statutDemande, $request, $user
+            ) {
+                foreach ($lignesAvecMontant as $item) {
+                    $detail = $item->detail;
+                    $detail->id_reduction = $reductionId;
+                    $detail->modepaiement_id = $request->modepaiement_id;
+                    $detail->commentaire = $request->commentaire;
+ 
+                    if ($statutDemande === 'VALIDER') {
+                        $detail->montant_paye = $item->montant;
+                        $detail->montant_restant = 0;
+                        $detail->statut_traitement = 'VALIDER';
+                        $detail->statut_paiement = 'PAYE';
+                    } else {
+                        $detail->montant_paye = 0;
+                        $detail->montant_restant = $item->montant;
+                        $detail->statut_traitement = 'ATTENTE';
+                    }
+                    $detail->save();
+                }
+ 
+                $paiement->montant_total = $nouveauMontantTotal;
+                $paiement->commentaire = $request->commentaire;
+                $paiement->id_modepaiement = $request->modepaiement_id;
+ 
+                if ($statutDemande === 'VALIDER') {
+                    $paiement->montant_paye = $nouveauMontantTotal;
+                    $paiement->montant_restant = 0;
+                    $paiement->num_transaction = trim($request->num_transaction);
+                    $paiement->statut_transaction = trim($request->num_transaction);
+                    $paiement->statut_paiement = 'PAYE';
+                    $paiement->statut_traitement = 'VALIDER';
+                    $paiement->agent_traiteur = $user->id;
+                    $paiement->date_traitement = now();
+                } else {
+                    $paiement->montant_paye = 0;
+                    $paiement->montant_restant = $nouveauMontantTotal;
+                    $paiement->statut_paiement = 'EN ATTENTE';
+                    $paiement->statut_traitement = 'ATTENTE';
+                }
+                $paiement->save();
+            });
         } else {
-            # code...
-            if($request->has('reduction_id') && !empty($request->input('reduction_id'))){
-
-            }else{
-                $paiement->setAttribute("num_transaction",$request->num_transaction);
-                $paiement->setAttribute("statut_transaction",$request->num_transaction);
-            }
-            $paiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-            $paiement->setAttribute("statut_paiement","EN ATTENTE");
-            $paiement->setAttribute("statut_traitement","ATTENTE");
-            $paiement->update();
-
-            // application réduction
-
-            if ($paiement->type !== "OUVRAGE") {
-                # code...
-                //################# mise à jour reduction #################
-                // mise à jour tarif formation
-                if($request->has('reduction_id') && !empty($request->input('reduction_id'))){
-
-                    if($paiement->montant_total > 0){
-                        // check details paiements
-
-                        $chec_details_paiements = Detailspaiements::where("reference_paiement",$paiement->reference)
-                            ->exists();
-
-                        if($chec_details_paiements){
-                            
-                            $detail_paiement = Detailspaiements::where("reference_paiement",$paiement->reference)
-                                ->get();
-
-                            # code...
-                            $update_montant_paiement = $paiement->montant_total ;
-                            $reduction = Reductions::find($request->reduction_id);
-                            // application reduction au montant existant
-                            $montant_paiement_reduction = $update_montant_paiement - ($update_montant_paiement*($reduction->pourcentage/100));
-
-                            // update table details paiement
-                            foreach ($detail_paiement as $details) {
-                                # code...
-                                $get_detail = Detailspaiements::find($details->id);
-                                $get_detail->setAttribute("id_reduction",$request->reduction_id);
-                                $tarif_formation = Tarificationsformation::find($get_detail->id_tarification_formation);
-                                $montant = $tarif_formation->getGrilletarifaire->montant;
-                                $reduction = Reductions::find($request->reduction_id);
-                                $montant_reduction = ($montant*$reduction->pourcentage)/100;
-                                if ($get_detail->statut_traitement == "VALIDER") {
-                                    # code...
-                                    $get_detail->setAttribute("montant_paye",$montant-$montant_reduction);
-                                    $get_detail->setAttribute("montant_restant",0);
-
-                                } else {
-                                    # code...
-                                    $get_detail->setAttribute("montant_paye",0);
-                                    $get_detail->setAttribute("montant_restant",$montant-$montant_reduction);
-                                }
-
-                                $get_detail->update();
-                            }
-                            // update table paiement
-                            $paiement->setAttribute("montant_total",$montant_paiement_reduction); 
-                                # code...
-                                $paiement->setAttribute("montant_paye",0);
-                                $paiement->setAttribute("montant_restant",$montant_paiement_reduction); 
-
-                            $paiement->update();
-
+            // Pas de réduction — validation ou mise en attente classique
+            DB::transaction(function () use ($paiement, $statutDemande, $request, $user) {
+                if ($statutDemande === 'VALIDER') {
+                    $paiement->num_transaction = trim($request->num_transaction);
+                    $paiement->statut_transaction = trim($request->num_transaction);
+                    $paiement->id_modepaiement = $request->modepaiement_id;
+                    $paiement->commentaire = $request->commentaire;
+                    $paiement->statut_paiement = 'PAYE';
+                    $paiement->statut_traitement = 'VALIDER';
+                    $paiement->agent_traiteur = $user->id;
+                    $paiement->date_traitement = now();
+                    $paiement->montant_paye = $paiement->montant_restant;
+                    $paiement->montant_restant = 0;
+                    $paiement->save();
+ 
+                    if ($paiement->type !== 'OUVRAGE') {
+                        $details = Detailspaiements::where('reference_paiement', $paiement->reference)->get();
+                        foreach ($details as $detail) {
+                            $detail->statut_traitement = 'VALIDER';
+                            $detail->statut_paiement = 'PAYE';
+                            $detail->montant_paye = $detail->montant_restant;
+                            $detail->montant_restant = 0;
+                            $detail->modepaiement_id = $request->modepaiement_id;
+                            $detail->commentaire = $request->commentaire;
+                            $detail->save();
                         }
                     }
+                } else {
+                    $paiement->id_modepaiement = $request->modepaiement_id;
+                    $paiement->statut_paiement = 'EN ATTENTE';
+                    $paiement->statut_traitement = 'ATTENTE';
+                    $paiement->save();
                 }
-
-            }
-            // ################# end mise à jour ####################
+            });
         }
-
-        return  ResponseHandler::success("Opération effectuée avec succès");
-    }
-
-    public function validerPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse
-    {
-        // TODO: Implement validerPaiementPartiel() method.
-        // update statut paiement
-        $user = auth('api')->user();
-        $paiement = Paiements::where("reference",$request->reference)->get()->first();
-        $updPaiement = Paiements::find($paiement->id);
-        $getDetailPaiement = Detailspaiements::find($request->identifiant);
-
-        // ! (vérifier si tous les autres occurences disponibles dans la table détailspaiements sont validées)
-        $checkPaiementNonSolde = Detailspaiements::where("id","!=",$request->identifiant)
-            ->where("reference_paiement",$request->reference)
-            ->where("statut_traitement","ATTENTE")
-            ->exists();
-
-        $montant_paye = $request->montant_total; // getMontantFormation($request->identifiant);
-        // récupérer le nombre de formation
-        $nbrFormation = Detailspaiements::where('reference_paiement',$request->reference)->count();
-
-        if($nbrFormation > 1){ // il s'agit de paiement partiel
-             // mettre à jour le champ is_paiement_partiel dans la table paiement 
-            $updPaiement->setAttribute("is_paiement_partiel",true);
-            $updPaiement->update();
-            // actualisé l'objet paiement
-            $paiement->setAttribute("is_paiement_partiel",true);
-            $paiement->update();
-        }
-
-        if ($montant_paye == 0) { // facture soldée
-            # code...
-            if ($request->statut_traitement == "VALIDER") {
-
-                // update detailspaiements 
-                $getDetailPaiement->setAttribute('statut_traitement',trim($request->statut_traitement));
-                $getDetailPaiement->setAttribute('statut_paiement', "PAYE");
-                $getDetailPaiement->setAttribute("montant_paye",$getDetailPaiement->montant_restant);
-                $getDetailPaiement->setAttribute("montant_restant",0);
-                $getDetailPaiement->setAttribute("commentaire",$request->commentaire);
-                if($paiement->is_paiement_partiel){
-                    $getDetailPaiement->setAttribute("reference_paiement_partiel",$request->num_transaction);
-                    $getDetailPaiement->setAttribute("is_paiement_partiel",true);
-                    $getDetailPaiement->setAttribute("modepaiement_id",$request->modepaiement_id);
-                }
-                // si preuve de paiement on sauvegarde
-                if (!empty($request->preuve)) {
-                    $preuve_paiement = $request->preuve;
-                    $extension = $preuve_paiement->getClientOriginalExtension();
-                    $preuve_name = date('Ymd-His') . '.' . $extension;
-                    $preuve_paiement->move(public_path('preuve'), $preuve_name);
-                    $getDetailPaiement->setAttribute('preuve_path', $preuve_name);
-                }
-                $getDetailPaiement->update();
-                
-                // vérifier si le nombre de formation est unique
-                if($nbrFormation > 1){ // il s'agit d'un paiement avec plusieurs formation
-                    // vérifier s'il s'agit du paiement partiel
-                    // si oui on ne met pas à jour les montants dans la table paiement
-                    // Car c'est déjà fait lors de l'enregistrement du paiement
-                    if($paiement->is_paiement_partiel){
-                            // pas d'update sauf en cas de solde
-                            // si facture soldée update paiements 
-                            if (!$checkPaiementNonSolde) {
-                                # code...
-                                if ($paiement->montant_restant == 0) {
-                                    $updPaiement->setAttribute("statut_paiement","PAYE");
-                                    $updPaiement->setAttribute("commentaire",$request->commentaire);
-                                    $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                                    $updPaiement->setAttribute('agent_traiteur', $user->id);
-                                    $updPaiement->setAttribute('date_traitement', new \DateTime());
-                                    $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                                    $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                                    $updPaiement->update();
-                                }
-                            }
-                    }else{ // il ne s'agit pas d'un paiement partiel et nbre formation > 1
-                            // On fait une mise à jour du montant 
-                            if ($paiement->montant_restant == 0) {
-                                    $updPaiement->setAttribute("statut_paiement","PAYE");
-                                    $updPaiement->setAttribute("commentaire",$request->commentaire);
-                                    $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                                    $updPaiement->setAttribute('agent_traiteur', $user->id);
-                                    $updPaiement->setAttribute('date_traitement', new \DateTime());
-                                    $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                                    $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                                    $updPaiement->update();
-                                }else{
-                                    if($paiement->montant_paye == 0){ 
-                                        // il s'agit du premier paiement
-                                        $updPaiement->setAttribute("montant_paye",$montant_paye);
-                                        $updPaiement->setAttribute("montant_restant",$paiement->montant_total - $montant_paye);
-                                        if(($paiement->montant_total - $montant_paye) == 0){
-                                        $updPaiement->setAttribute("commentaire",$request->commentaire);
-                                        $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                                        $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                                        $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                                        }
-                                        $updPaiement->setAttribute('agent_traiteur', $user->id);
-                                        $updPaiement->setAttribute('date_traitement', new \DateTime());
-                                        $updPaiement->update(); 
-                                    }{ 
-                                        // il s'agit d'un complément
-                                        if(($paiement->montant_restant - $montant_paye) == 0){
-                                            $updPaiement->setAttribute("commentaire",$request->commentaire);
-                                            $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                                            $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                                            $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                                        }
-                                        $updPaiement->setAttribute("montant_paye",$paiement->montant_paye + $montant_paye);
-                                        $updPaiement->setAttribute("montant_restant",$paiement->montant_restant - $montant_paye);
-                                        
-                                        $updPaiement->setAttribute('agent_traiteur', $user->id);
-                                        $updPaiement->setAttribute('date_traitement', new \DateTime());
-                                        $updPaiement->update(); 
-                                    }
-                                  
-                                }
-                    }
-                }else{ // il s'agit d'une seule formation
-                     if(($paiement->montant_restant - $montant_paye) == 0){
-                            $updPaiement->setAttribute("commentaire",$request->commentaire);
-                            $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                            $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                            $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                        }
-                    $updPaiement->setAttribute("montant_paye",$paiement->montant_paye + $montant_paye);
-                    $updPaiement->setAttribute("montant_restant",$paiement->montant_restant - $montant_paye);
-                                        
-                    $updPaiement->setAttribute('agent_traiteur', $user->id);
-                    $updPaiement->setAttribute('date_traitement', new \DateTime());
-                    $updPaiement->update(); 
-                }
-            }
-
-            return  ResponseHandler::success("Opération effectuée avec succès.");
-        }
-        //######################################## montant supérieur à 0 ################
-
-        if ($request->statut_traitement == "VALIDER") {
-            # code...
-            // update detailspaiements
-            $getDetailPaiement->setAttribute('statut_traitement',trim($request->statut_traitement));
-            $getDetailPaiement->setAttribute('statut_paiement', "PAYE");
-            $getDetailPaiement->setAttribute("montant_paye",$getDetailPaiement->montant_restant);
-            $getDetailPaiement->setAttribute("montant_restant",0);
-            $getDetailPaiement->setAttribute("commentaire",$request->commentaire);
-            if($paiement->is_paiement_partiel){
-                    $getDetailPaiement->setAttribute("reference_paiement_partiel",$request->num_transaction);
-                    $getDetailPaiement->setAttribute("is_paiement_partiel",true);
-                    $getDetailPaiement->setAttribute("modepaiement_id",$request->modepaiement_id);
-            }
-            // si preuve de paiement on sauvegarde
-            if (!empty($request->preuve)) {
-                $preuve_paiement = $request->preuve;
-                $extension = $preuve_paiement->getClientOriginalExtension();
-                $preuve_name = date('Ymd-His') . '.' . $extension;
-                $preuve_paiement->move(public_path('preuve'), $preuve_name);
-                $getDetailPaiement->setAttribute('preuve_path', $preuve_name);
-            }
-            $getDetailPaiement->update();
-
-            // si facture soldée update paiements
-            /*if (!$checkPaiementNonSolde) {
-                # code...
-                if ($paiement->montant_restant == 0) {
-                    $paiement->setAttribute("num_transaction",trim($request->num_transaction));
-                    $paiement->setAttribute("statut_transaction",trim($request->num_transaction));
-                    $paiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                    $paiement->setAttribute("statut_paiement","PAYE");
-                    $paiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                    $paiement->setAttribute('agent_traiteur', $user->id);
-                    $paiement->setAttribute('date_traitement', new \DateTime());
-                    $paiement->update();
-                }
-            }*/
-
-            // vérifier si le nombre de formation est unique
-                if($nbrFormation > 1){ // il s'agit d'un paiement avec plusieurs formation
-                    // vérifier s'il s'agit du paiement partiel
-                    // si oui on ne met pas à jour les montants dans la table paiement
-                    // Car c'est déjà fait lors de l'enregistrement du paiement
-                    if($paiement->is_paiement_partiel){
-                            // pas d'update sauf en cas de solde
-                            // si facture soldée update paiements 
-                            if (!$checkPaiementNonSolde) {
-                                # code...
-                                if ($paiement->montant_restant == 0) {
-                                    $updPaiement->setAttribute("statut_paiement","PAYE");
-                                    $updPaiement->setAttribute("commentaire",$request->commentaire);
-                                    $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                                    $updPaiement->setAttribute('agent_traiteur', $user->id);
-                                    $updPaiement->setAttribute('date_traitement', new \DateTime());
-                                    $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                                    $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                                    $updPaiement->update();
-                                }
-                            }
-                    }else{ // il ne s'agit pas d'un paiement partiel et nbre formation > 1
-                            // On fait une mise à jour du montant 
-                            if ($paiement->montant_restant == 0) {
-                                    $updPaiement->setAttribute("statut_paiement","PAYE");
-                                    $updPaiement->setAttribute("commentaire",$request->commentaire);
-                                    $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                                    $updPaiement->setAttribute('agent_traiteur', $user->id);
-                                    $updPaiement->setAttribute('date_traitement', new \DateTime());
-                                    $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                                    $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                                    $updPaiement->update();
-                                }else{
-                                    if($paiement->montant_paye == 0){ 
-                                        // il s'agit du premier paiement
-                                        $updPaiement->setAttribute("montant_paye",$montant_paye);
-                                        $updPaiement->setAttribute("montant_restant",$paiement->montant_total - $montant_paye);
-                                        if(($paiement->montant_total - $montant_paye) == 0){
-                                        $updPaiement->setAttribute("commentaire",$request->commentaire);
-                                        $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                                        $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                                        $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                                        }
-                                        $updPaiement->setAttribute('agent_traiteur', $user->id);
-                                        $updPaiement->setAttribute('date_traitement', new \DateTime());
-                                        $updPaiement->update(); 
-                                    }{ 
-                                        // il s'agit d'un complément
-                                        if(($paiement->montant_restant - $montant_paye) == 0){
-                                            $updPaiement->setAttribute("commentaire",$request->commentaire);
-                                            $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                                            $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                                            $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                                        }
-                                        $updPaiement->setAttribute("montant_paye",$paiement->montant_paye + $montant_paye);
-                                        $updPaiement->setAttribute("montant_restant",$paiement->montant_restant - $montant_paye);
-                                        
-                                        $updPaiement->setAttribute('agent_traiteur', $user->id);
-                                        $updPaiement->setAttribute('date_traitement', new \DateTime());
-                                        $updPaiement->update(); 
-                                    }
-                                  
-                                }
-                    }
-                }else{ // il s'agit d'une seule formation
-                     if(($paiement->montant_restant - $montant_paye) == 0){
-                            $updPaiement->setAttribute("commentaire",$request->commentaire);
-                            $updPaiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                            $updPaiement->setAttribute("num_transaction",$request->num_transaction);
-                            $updPaiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                        }
-                    $updPaiement->setAttribute("montant_paye",$paiement->montant_paye + $montant_paye);
-                    $updPaiement->setAttribute("montant_restant",$paiement->montant_restant - $montant_paye);
-                                        
-                    $updPaiement->setAttribute('agent_traiteur', $user->id);
-                    $updPaiement->setAttribute('date_traitement', new \DateTime());
-                    $updPaiement->update(); 
-                }
-
-
-
-            // send mail paiement validé
-            $auditeur = Auditeurs::where("email",$paiement->email)->first();
-            // envoie de mail pour la reférence de la facture
+ 
+        if ($statutDemande === 'VALIDER') {
+            $auditeur = Auditeurs::where('email', $paiement->email)->first();
             $modepaiement = Modepaiements::find($request->modepaiement_id);
+            $url = $paiement->type !== 'OUVRAGE'
+                ? $this->genarateurCodeService->generateUrlSigned('paiements.recu', ['reference' => $request->reference])
+                : $this->genarateurCodeService->generateUrlSigned('paiements.recu-ouvrage', ['reference' => $request->reference]);
+ 
             $contenu = [
-                'nom' => $auditeur->nom ,
-                'prenoms' => $auditeur->prenoms,
+                'nom' => $auditeur->nom ?? '',
+                'prenoms' => $auditeur->prenoms ?? '',
                 'reference_paiement' => $request->reference,
                 'subject' => 'TRAITEMENT DE VOTRE PAIEMENT',
-                'commentaire' => "Paiement validé",
-                'email'=>$paiement->email,
-                'mode_paiement'=>$modepaiement->libelle,
-                'montant'=>$montant_paye,
-                'type'=>$paiement->type,
-                'url_recu'=>$this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$request->reference])
+                'commentaire' => 'Paiement validé',
+                'email' => $paiement->email,
+                'mode_paiement' => $modepaiement->libelle ?? '',
+                'montant' => $paiement->montant_total,
+                'type' => $paiement->type,
+                'url_recu' => $url,
             ];
-
+ 
             try {
-                # code...
                 Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Paiementvalider($contenu));
-
             } catch (\Exception $e) {
-                //throw $th;
+                Log::error('validerPaiement : échec envoi mail', ['error' => $e->getMessage(), 'reference' => $request->reference]);
             }
-
         }
-
-        return  ResponseHandler::success("Opération effectuée avec succès");
-
+ 
+        return ResponseHandler::success('Opération effectuée avec succès');
+ 
+    } catch (\Exception $e) {
+        Log::error('validerPaiement : exception', ['error' => $e->getMessage(), 'reference' => $request->reference ?? null]);
+        return ResponseHandler::error('Une erreur est survenue lors de la validation du paiement',302);
     }
+}
+
+     public function validerPaiementPartiel(Request $request): \Illuminate\Http\JsonResponse
+{
+    try {
+        $user = auth('api')->user();
+        if (!$user) {
+            return ResponseHandler::error('Utilisateur non authentifié',302);
+        }
+ 
+        $paiement = Paiements::where('reference', $request->reference)->first();
+        if (!$paiement) {
+            return ResponseHandler::error('Paiement introuvable',302);
+        }
+ 
+        $detail = Detailspaiements::find($request->identifiant);
+        if (!$detail || $detail->reference_paiement !== $paiement->reference) {
+            return ResponseHandler::error("Ligne de paiement introuvable ou n'appartenant pas à ce dossier",302);
+        }
+ 
+        if ($request->hasFile('preuve')) {
+            $validation = validator($request->all(), [
+                'preuve' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+            ]);
+            if ($validation->fails()) {
+                return ResponseHandler::error('Fichier de preuve invalide (jpg, jpeg, png ou pdf, 5 Mo max attendu)',302);
+            }
+        }
+ 
+        // Idempotence : ligne déjà validée -> pas de retraitement.
+        if ($detail->statut_traitement === 'VALIDER') {
+            return ResponseHandler::success('Cette ligne a déjà été validée', ['success' => true]);
+        }
+ 
+        $statutDemande = $request->statut_traitement === 'VALIDER' ? 'VALIDER' : 'ATTENTE';
+ 
+        if ($statutDemande !== 'VALIDER') {
+            // "non VALIDER" = remettre/laisser en ATTENTE, cohérent avec le
+            // comportement établi sur validerPaiementDsc. Pas de mouvement
+            // financier dans ce cas.
+            $detail->statut_traitement = 'ATTENTE';
+            $detail->save();
+            return ResponseHandler::success('Opération effectuée avec succès');
+        }
+ 
+        // Règle confirmée : montant déclaré == solde réel de la ligne, exactement.
+        $montantDeclare = (int) $request->montant_total;
+        $soldeLigne = (int) $detail->montant_restant;
+ 
+        if ($soldeLigne <= 0) {
+            return ResponseHandler::error('Cette ligne ne présente plus de solde à régler',302);
+        }
+ 
+        if ($montantDeclare !== $soldeLigne) {
+            return ResponseHandler::error("Le montant déclaré ({$montantDeclare}) doit correspondre exactement au solde dû sur cette ligne ({$soldeLigne})",302);
+        }
+ 
+        $modePaiement = Modepaiements::find($request->modepaiement_id);
+        if (!$modePaiement) {
+            return ResponseHandler::error('Mode de paiement invalide',302);
+        }
+ 
+        $numTransaction = trim((string) ($request->num_transaction ?? ''));
+ 
+        // Fichier de preuve — nom unique garanti, toujours dans public_path.
+        $preuveNameUrl = null;
+        if ($request->hasFile('preuve')) {
+            $preuve = $request->file('preuve');
+            $preuveNameUrl = date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . '.' . $preuve->getClientOriginalExtension();
+            $preuve->move(public_path('preuve'), $preuveNameUrl);
+        }
+ 
+        DB::transaction(function () use (
+            $paiement, $detail, $montantDeclare, $numTransaction, $modePaiement,
+            $preuveNameUrl, $user, $request
+        ) {
+            $detail->statut_traitement = 'VALIDER';
+            $detail->statut_paiement = 'PAYE';
+            $detail->montant_paye = $detail->montant_paye + $montantDeclare;
+            $detail->montant_restant = 0;
+            $detail->commentaire = $request->commentaire;
+            $detail->modepaiement_id = $modePaiement->id;
+            $detail->reference_paiement_partiel = $numTransaction;
+            $detail->is_paiement_partiel = true;
+            if ($preuveNameUrl) {
+                $detail->preuve_path = $preuveNameUrl;
+            }
+            $detail->save();
+ 
+            $nouveauMontantPaye = $paiement->montant_paye + $montantDeclare;
+            $nouveauMontantRestant = $paiement->montant_restant - $montantDeclare;
+ 
+            $paiement->montant_paye = $nouveauMontantPaye;
+            $paiement->montant_restant = $nouveauMontantRestant;
+            $paiement->agent_traiteur = $user->id;
+            $paiement->date_traitement = now();
+ 
+            if ($nouveauMontantRestant > 0) {
+                $paiement->is_paiement_partiel = true;
+            } else {
+                $paiement->statut_paiement = 'PAYE';
+                $paiement->statut_traitement = 'VALIDER';
+                $paiement->commentaire = $request->commentaire;
+                $paiement->num_transaction = $numTransaction;
+                $paiement->id_modepaiement = $modePaiement->id;
+            }
+            $paiement->save();
+        });
+ 
+        $auditeur = Auditeurs::where('email', $paiement->email)->first();
+ 
+        $contenu = [
+            'nom' => $auditeur->nom ?? '',
+            'prenoms' => $auditeur->prenoms ?? '',
+            'reference_paiement' => $paiement->reference,
+            'subject' => 'TRAITEMENT DE VOTRE PAIEMENT',
+            'commentaire' => 'Paiement validé',
+            'email' => $paiement->email,
+            'mode_paiement' => $modePaiement->libelle ?? '',
+            'montant' => $montantDeclare,
+            'type' => $paiement->type,
+            'url_recu' => $this->genarateurCodeService->generateUrlSigned('paiements.recu', ['reference' => $paiement->reference]),
+        ];
+ 
+        try {
+            Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new Paiementvalider($contenu));
+        } catch (\Exception $e) {
+            Log::error('validerPaiementPartiel : échec envoi mail', ['error' => $e->getMessage(), 'reference' => $paiement->reference]);
+        }
+ 
+        return ResponseHandler::success('Opération effectuée avec succès');
+ 
+    } catch (\Exception $e) {
+        Log::error('validerPaiementPartiel : exception', ['error' => $e->getMessage(), 'reference' => $request->reference ?? null]);
+        return ResponseHandler::error('Une erreur est survenue lors de la validation du paiement',302);
+    }
+}
 
     public function validerPaiementDsc(Request $request): \Illuminate\Http\JsonResponse
     {
-        // TODO: Implement validerPaiementDsc() method.
-        $user = auth('api')->user();
-        // récupérer la référence de la table paiement
-        $nbrePaiementAttente = PaiementsTranche::where('reference','like','%'.$request->reference.'%')
-            ->where('statut_traitement','ATTENTE')
-            ->count();
-        $getPaiement = Paiements::where('reference',$request->reference)->first();
-
-        // update table paiement tranche pour le choix des paiements concernés
-        $listePTranches = collect($request->listeTranches)->map(fn($item) => (object) $item);
-        $choixNbrePaiement = count($listePTranches);
-
-        if($nbrePaiementAttente > $choixNbrePaiement){
-            $paiementTotal = false;
-        }else{
-            $paiementTotal = true;
-        }
-
-        $paiement = Paiements::find($getPaiement->id);
-
-        //######################################## montant supérieur à 0 ################
-        //
-        if ($request->statut_traitement == "VALIDER") {
-            // update statut paiement si montant restant = 0
-            if ($paiement->montant_restant == 0 && $paiementTotal) {
-                # code...
-                $paiement->setAttribute("num_transaction",trim($request->num_transaction));
-                $paiement->setAttribute("statut_transaction",trim($request->num_transaction));
-                $paiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-                $paiement->setAttribute("statut_paiement","PAYE");
-                $paiement->setAttribute("statut_traitement",trim($request->statut_traitement));
-                $paiement->setAttribute('agent_traiteur', $user->id);
-                $paiement->setAttribute('date_traitement', new \DateTime());
-                $paiement->update();
+        try {
+            $user = auth('api')->user();
+            if (!$user) {
+                return ResponseHandler::error('Utilisateur non authentifié');
             }
-            # code...
-
-            foreach ($listePTranches as $key => $data) {
-                # code...
-                $paiementTranche = PaiementsTranche::find($data->tranche_id);
-                $detailPaiementTranche = Detailspaiements::find($paiementTranche->details_paiements_id);
-                $paiementTranche->setAttribute("num_transaction",trim($request->num_transaction));
-                $paiementTranche->setAttribute("statut_transaction",trim($request->num_transaction));
-                $paiementTranche->setAttribute("modepaiement_id",$request->modepaiement_id);
-                $paiementTranche->setAttribute("statut_traitement",trim($request->statut_traitement));
-                $paiementTranche->setAttribute('traiter_par', $user->id);
-                $paiementTranche->update();
-                // update details paiements
-                // vérifier si le montant restant = 0
-                if($detailPaiementTranche->montant_restant == 0){
-                    $detailPaiementTranche->setAttribute('statut_traitement',trim($request->statut_traitement));
-                    $detailPaiementTranche->setAttribute('statut_paiement', "PAYE");
+    
+            $reference = $request->reference;
+            $paiement = Paiements::where('reference', $reference)->first();
+            if (!$paiement) {
+                return ResponseHandler::error('Paiement introuvable',302);
+            }
+    
+            if ($request->hasFile('preuve')) {
+                $validation = validator($request->all(), [
+                    'preuve' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+                ]);
+                if ($validation->fails()) {
+                    return ResponseHandler::error('Fichier de preuve invalide (jpg, jpeg, png ou pdf, 5 Mo max attendu)',302);
                 }
-                // si preuve de paiement on sauvegarde
-                if (!empty($request->preuve)) {
-                    $preuve_paiement = $request->preuve;
-                    $extension = $preuve_paiement->getClientOriginalExtension();
-                    $preuve_name = date('Ymd-His') . '.' . $extension;
-                    $preuve_paiement->move(public_path('preuve'), $preuve_name);
-                    $paiementTranche->setAttribute('preuve_path', $preuve_name);
-                    $detailPaiementTranche->setAttribute('preuve_path', $preuve_name);
-                    $paiementTranche->update();
+            }
+    
+            $statutDemande = $request->statut_traitement === 'VALIDER' ? 'VALIDER' : 'ATTENTE';
+            $numTransactionSaisi = trim((string) ($request->num_transaction ?? ''));
+    
+            $listePTranches = collect($request->listeTranches ?? [])->map(fn ($item) => (object) $item);
+            if ($listePTranches->isEmpty()) {
+                return ResponseHandler::error('Aucune tranche sélectionnée',302);
+            }
+    
+            // Fichier de preuve déplacé UNE SEULE FOIS (l'original le faisait dans
+            // la boucle -> échec garanti dès la 2e tranche avec preuve jointe).
+            $preuveNameUrl = null;
+            if ($request->hasFile('preuve')) {
+                $preuve = $request->file('preuve');
+                $preuveNameUrl = date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . '.' . $preuve->getClientOriginalExtension();
+                $preuve->move(public_path('preuve'), $preuveNameUrl);
+            }
+    
+            // Résoudre et vérifier l'appartenance de chaque tranche AVANT toute
+            // écriture — jamais de confiance aveugle sur tranche_id.
+            $tranchesResolues = [];
+            foreach ($listePTranches as $data) {
+                $trancheId = $data->tranche_id ?? null;
+                if (!$trancheId) {
+                    return ResponseHandler::error('tranche_id manquant sur une ligne soumise',302);
                 }
-                $detailPaiementTranche->update();
+    
+                $paiementTranche = PaiementsTranche::find($trancheId);
+                if (!$paiementTranche || strpos($paiementTranche->reference, $paiement->reference) !== 0) {
+                    return ResponseHandler::error("La tranche {$trancheId} est introuvable ou n'appartient pas à ce dossier",302);
+                }
+    
+                $detail = Detailspaiements::find($paiementTranche->details_paiements_id);
+                if (!$detail) {
+                    return ResponseHandler::error("Ligne de détail introuvable pour la tranche {$trancheId}",302);
+                }
+    
+                $tranchesResolues[] = (object) ['tranche' => $paiementTranche, 'detail' => $detail];
             }
-
-            // send mail paiement validé
-            $auditeur = Auditeurs::where("email",$paiement->email)->first();
-            // envoie de mail pour la reférence de la facture
-            $modepaiement = Modepaiements::find($request->modepaiement_id);
-
-            $contenu = [
-                'nom' => $auditeur->nom ,
-                'prenoms' => $auditeur->prenoms,
-                'reference_paiement' => $request->reference,
-                'subject' => 'TRAITEMENT DE VOTRE PAIEMENT',
-                'commentaire' => "Paiement validé",
-                'email'=>$paiement->email,
-                'mode_paiement'=>$modepaiement->libelle,
-                'montant'=>$request->montant_total,
-                'montant_restant'=>$paiement->montant_restant,
-                'type'=>$paiement->type,
-                'url_recu'=>$this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$request->reference])
-            ];
-
-            try {
-                # code...
-                Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new PaiementValideDsc($contenu));
-            } catch (\Exception $e) {
-                //throw $th;
+    
+            $auMoinsUnChangement = false;
+    
+            DB::transaction(function () use (
+                $tranchesResolues, $statutDemande, $numTransactionSaisi, $request,
+                $user, $preuveNameUrl, &$auMoinsUnChangement
+            ) {
+                foreach ($tranchesResolues as $item) {
+                    $tranche = $item->tranche;
+                    $detail = $item->detail;
+    
+                    // déjà VALIDER : on ne rétrograde jamais par erreur, et on
+                    // évite un retraitement inutile (mails en double, etc.)
+                    if ($tranche->statut_traitement === 'VALIDER' && $statutDemande !== 'VALIDER') {
+                        continue;
+                    }
+                    if ($tranche->statut_traitement === $statutDemande) {
+                        continue; // rien à changer
+                    }
+    
+                    $estOrigineKkiapay = (int) $tranche->modepaiement_id === 1;
+    
+                    //if (!$estOrigineKkiapay) {
+                        // saisie manuelle : la référence/mode du comptable s'applique
+                        $tranche->num_transaction = $numTransactionSaisi;
+                        $tranche->statut_transaction = $numTransactionSaisi;
+                        $tranche->modepaiement_id = $request->modepaiement_id;
+                    //}
+                    // sinon (origine KkiaPay) : num_transaction/statut_transaction/
+                    // modepaiement_id restent la vraie référence KkiaPay, intouchés
+    
+                    $tranche->statut_traitement = $statutDemande;
+                    $tranche->traiter_par = $user->id;
+                    if ($preuveNameUrl) {
+                        $tranche->preuve_path = $preuveNameUrl;
+                    }
+                    $tranche->save();
+    
+                    if ($statutDemande === 'VALIDER') {
+                        if ((int) $detail->montant_restant === 0) {
+                            $detail->statut_traitement = 'VALIDER';
+                            $detail->statut_paiement = 'PAYE';
+                        }
+                        if ($preuveNameUrl) {
+                            $detail->preuve_path = $preuveNameUrl;
+                        }
+                    } else {
+                        // cohérence : la ligne redescend en ATTENTE avec sa tranche,
+                        // sauf si elle était déjà validée par ailleurs (protection
+                        // contre une rétrogradation accidentelle)
+                        if ($detail->statut_traitement !== 'VALIDER') {
+                            $detail->statut_traitement = 'ATTENTE';
+                        }
+                    }
+                    $detail->save();
+    
+                    $auMoinsUnChangement = true;
+                }
+            });
+    
+            // Mise à jour du statut global du Paiements — en dehors du closure
+            // précédent pour rester simple, mais toujours dans la même requête,
+            // basée uniquement sur le solde réel.
+            $paiement->refresh();
+            if ($statutDemande === 'VALIDER') {
+                if ((int) $paiement->montant_restant === 0 && $paiement->statut_traitement !== 'VALIDER') {
+                    $paiement->num_transaction = $numTransactionSaisi ?: $paiement->num_transaction;
+                    $paiement->statut_transaction = $numTransactionSaisi ?: $paiement->statut_transaction;
+                    $paiement->id_modepaiement = $request->modepaiement_id ?: $paiement->id_modepaiement;
+                    $paiement->statut_paiement = 'PAYE';
+                    $paiement->statut_traitement = 'VALIDER';
+                    $paiement->agent_traiteur = $user->id;
+                    $paiement->date_traitement = now();
+                    $paiement->save();
+                }
+            } else {
+                if ($paiement->statut_traitement !== 'VALIDER') {
+                    $paiement->id_modepaiement = $request->modepaiement_id ?: $paiement->id_modepaiement;
+                    $paiement->statut_paiement = 'EN ATTENTE';
+                    $paiement->statut_traitement = 'ATTENTE';
+                    $paiement->save();
+                }
             }
-
-        } else {
-            # code...
-            if ($paiement->montant_restant == 0 && $paiementTotal) {
-                # code...
-                $paiement->setAttribute("num_transaction",$request->num_transaction);
-                $paiement->setAttribute("statut_transaction",$request->num_transaction);
+    
+            if ($statutDemande === 'VALIDER' && $auMoinsUnChangement) {
+                $auditeur = Auditeurs::where('email', $paiement->email)->first();
+                $modepaiement = Modepaiements::find($paiement->id_modepaiement);
+    
+                $contenu = [
+                    'nom' => $auditeur->nom ?? '',
+                    'prenoms' => $auditeur->prenoms ?? '',
+                    'reference_paiement' => $reference,
+                    'subject' => 'TRAITEMENT DE VOTRE PAIEMENT',
+                    'commentaire' => 'Paiement validé',
+                    'email' => $paiement->email,
+                    'mode_paiement' => $modepaiement->libelle ?? '',
+                    'montant' => $request->montant_total,
+                    'montant_restant' => $paiement->montant_restant,
+                    'type' => $paiement->type,
+                    'url_recu' => $this->genarateurCodeService->generateUrlSigned('paiements.recu', ['reference' => $reference]),
+                ];
+    
+                try {
+                    Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new PaiementValideDsc($contenu));
+                } catch (\Exception $e) {
+                    Log::error('validerPaiementDsc : échec envoi mail', ['error' => $e->getMessage(), 'reference' => $reference]);
+                }
             }
-            $paiement->setAttribute("id_modepaiement",$request->modepaiement_id);
-            $paiement->setAttribute("statut_paiement","EN ATTENTE");
-            $paiement->setAttribute("statut_traitement","ATTENTE");
-            $paiement->update();
-            // update table paiement tranche
-            foreach ($listePTranches as $key => $data) {
-                # code...
-                $paiementTranche = PaiementsTranche::find($data->tranche_id);
-                // update each table
-                $paiementTranche->setAttribute("modepaiement_id",$request->modepaiement_id);
-                $paiementTranche->setAttribute("statut_traitement","ATTENTE");
-                $paiementTranche->setAttribute('traiter_par', $user->id);
-                $paiementTranche->update();
-            }
+    
+            return ResponseHandler::success('Opération effectuée avec succès');
+    
+        } catch (\Exception $e) {
+            Log::error('validerPaiementDsc : exception', ['error' => $e->getMessage(), 'reference' => $request->reference ?? null]);
+            return ResponseHandler::error('Une erreur est survenue lors de la validation du paiement',302);
         }
-        return  ResponseHandler::success("Opération effectuée avec succès");
     }
 
     public function getDetailsPaiementOuvrage(Request $request): \Illuminate\Http\JsonResponse
@@ -2179,293 +2059,350 @@ class ComptabilitesService implements ComptabilitesInterface
 
     }
 
-    public function validerProcessPaiementDsc(Request $request): \Illuminate\Http\JsonResponse
-    {
-        // TODO: Implement validerPaiementDsc() method.
-        $user = auth('api')->user();
-        // récupérer la référence de la table paiement
-        $getPaiement = Paiements::where('reference',$request->reference)->first();
+     public function validerProcessPaiementDsc(Request $request): \Illuminate\Http\JsonResponse
+        {
+        try {
 
-        // update table paiement tranche pour le choix des paiements concernés
-        $listePTranches = collect($request->listeTranches)->map(fn($item) => (object) $item);
-        $paiement = Paiements::find($getPaiement->id);
-        $montant_total_du = $request->montant_total;
-        $montant_total_recu = $request->montant_total_recu;
-        $codePaiement = $request->code_paiement;
-        $getUser = User::where("email",$paiement->email)->first();
-        $userInfo = User::find($getUser->id);
-        // vérifier le dernier enregistrement portant la référence de paiement pour incrémenter
-        $getPTranche = PaiementsTranche::where("reference","like","%$paiement->reference%")->latest()->first();
-        //dd($getPTranche);
-        if ($getPTranche) {
-            # code...
-            $ref = explode("_",$getPTranche->reference)[1]+1;
-            $update_reference = $paiement->reference."_".$ref;
-        } else {
-            # code...
-            $update_reference = $paiement->reference."_1";
-        }
-
-        // vérifier si le montant reçu est <= montant_total_du
-        if($montant_total_recu > $montant_total_du){
-            // montant invalide
-            return ResponseHandler::error('Montant invalide');
-        }else{
-            $checkInscription = false;
-            // vérifier si le montant payé >= frais inscription
-            foreach ($listePTranches as $key => $data) {
-                # code...
-                if($data->montant_restant > 0 && $data->type_tarif == 'INSCRIPTION'){
-                    $checkInscription = true;
-                    if($montant_total_recu < $data->montant_restant){
-                        return  ResponseHandler::error("Le montant reçu est inférieur au frais d'inscription");
-                    }
+            $user = auth('api')->user();
+            if (!$user) {
+                return ResponseHandler::error('Utilisateur non authentifié');
+            }
+            Log::info("begin validation paiement {$request->reference} montant reçu : {$request->montant_total_recu}");
+    
+            // Validation stricte du fichier de preuve
+            if ($request->hasFile('preuve')) {
+                $validation = validator($request->all(), [
+                    'preuve' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+                ]);
+                if ($validation->fails()) {
+                    return ResponseHandler::error('Fichier de preuve invalide (jpg, jpeg, png ou pdf, 5 Mo max attendu)');
                 }
             }
-            // vérifier si le montant payé >= frais scolarité
-            if(!$checkInscription){
-                foreach ($listePTranches as $key => $data) {
+    
+            $paiement = Paiements::where('reference', $request->reference)->first();
+            if (!$paiement) {
+                return ResponseHandler::error('Paiement introuvable');
+            }
+    
+            $userInfo = User::where('email', $paiement->email)->first();
+            if (!$userInfo) {
+                return ResponseHandler::error('Auditeur introuvable pour ce paiement');
+            }
+    
+            $modePaiement = Modepaiements::find($request->modepaiement_id);
+            if (!$modePaiement) {
+                return ResponseHandler::error('Mode de paiement invalide');
+            }
+    
+            $montantTotalRecu = (int) $request->montant_total_recu;
+            $codePaiement = trim((string) $request->code_paiement);
+    
+            if ($montantTotalRecu <= 0) {
+                return ResponseHandler::error('Montant invalide');
+            }
+    
+            // Idempotence : ce code_paiement a-t-il déjà été appliqué sur ce dossier ?
+            if ($codePaiement !== '' && PaiementsTranche::where('reference', 'like', "%{$paiement->reference}%")
+                ->where('num_transaction', $codePaiement)->exists()) {
+                return ResponseHandler::error('Ce paiement a déjà été validé précédemment', 302);
+            }
+    
+            // Jamais au-delà du solde réellement dû (source de vérité : la base,
+            // pas montant_total envoyé par le client comme dans l'original).
+            if ($montantTotalRecu > (int) $paiement->montant_restant) {
+                return ResponseHandler::error('Le montant reçu dépasse le solde dû sur ce dossier',302);
+            }
+    
+            // Résoudre chaque ligne annoncée depuis la base — jamais depuis le
+            // payload — pour type_tarif / grille / montant_restant.
+            $listePTranches = collect($request->listeTranches ?? []);
+            $inscriptionDetail = null;
+            $scolariteDetail = null;
+    
+            foreach ($listePTranches as $item) {
+                $item = (object) $item;
+                $detailId = $item->detailsPaiementId ?? null;
+                if (!$detailId) {
+                    return ResponseHandler::error('detailsPaiementId manquant sur une ligne soumise',302);
+                }
+                Log::info("id details paiement ok {$detailId}");
+
+                $detail = Detailspaiements::find($detailId);
+                if (!$detail || $detail->code_inscription !== $paiement->code_inscription) {
+                    return ResponseHandler::error("La ligne {$detailId} est introuvable ou n'appartient pas à ce dossier", 302);
+                }
+                Log::info("id details paiement retrouvé {$detail->id}");
+                if ((int) $detail->montant_restant <= 0) {
+                    continue; // déjà soldée, on l'ignore silencieusement
+                }
+    
+                $typeTarif = $detail->getTarification->getGrilletarifaire->type_tarif ?? null;
+                if ($typeTarif === 'INSCRIPTION') {
+                    $inscriptionDetail = $detail;
+                } else {
+                    $scolariteDetail = $detail;
+                }
+            }
+    
+            if (!$inscriptionDetail && !$scolariteDetail) {
+                return ResponseHandler::error('Aucune ligne restant due sur ce dossier parmi celles soumises');
+            }
+    
+            // Priorité aux frais d'inscription (obligatoires, intégraux), comme
+            // dans l'original.
+            $montantRestantAAllouer = $montantTotalRecu;
+            $montantInscriptionApplique = 0;
+            $montantScolariteApplique = 0;
+            $baseRestantScolarite = 0;
+            $reductionAppliquee = false;
+            $checkTranche = $request->input('haveTranche');
+            // vérifier si la tranche existe, sinon mettre double tranche
+            if ($checkTranche) {
+                # code...
+                $getTranche = Tranches::whereCodeInscription($paiement->code_inscription)->first();
+                if ($getTranche) {
                     # code...
-                    if($data->montant_restant > 0 && $data->type_tarif != 'INSCRIPTION'){
-                        if($data->have_reduction_dsc == '1' || $data->have_reduction_dsc == 1){
-                            // 100%
-                            if($montant_total_recu < $data->montant_restant){
-                                return  ResponseHandler::error("Le montant reçu est inférieur au frais de scolarité restant");
-                            }
-                        }
-                        if($montant_total_recu < ($data->grille_montant/2)){
-                            return  ResponseHandler::error("Le montant reçu est inférieur au frais de scolarité restant");
-                        }
-                    }
-                }
-            }
-            // begin process
-            // MAJ table paiements
-            $paiement->setAttribute('montant_paye',$paiement->montant_paye + $montant_total_recu);
-            $paiement->setAttribute('montant_restant',$paiement->montant_restant - $montant_total_recu);
-            // si paiement soldé
-            if(($montant_total_du-$montant_total_recu) == 0){ // facture soldée
-                $paiement->setAttribute('num_transaction',$codePaiement);
-                $paiement->setAttribute('statut_transaction',$codePaiement);
-                $paiement->setAttribute('statut_paiement','PAYE');
-            }
-            $paiement->update();
-
-            // MAJ information details paiements
-            $montantScolariteRecu = $montant_total_recu;
-
-            // Priorité => frais inscription
-            $preuveNameUrl = null;
-            foreach ($listePTranches as $key => $data) {
-                # code...
-                $detailPaiement = Detailspaiements::find($data->detailsPaiementId);
-                if($detailPaiement->montant_restant > 0 && $data->type_tarif == 'INSCRIPTION'){
-                    $detailPaiement->setAttribute("montant_paye",$detailPaiement->montant_paye + ($data->montant_restant));
-                    $detailPaiement->setAttribute("montant_restant",0);
-                    $detailPaiement->setAttribute("modepaiement_id",$request->modepaiement_id);
-                    $detailPaiement->setAttribute("statut_traitement",'VALIDER');
-                    $detailPaiement->setAttribute('statut_paiement', 'PAYE');
-                    // si preuve de paiement on sauvegarde
-                    if (!empty($request->preuve)) {
-                        $preuve_paiement = $request->preuve;
-                        $extension = $preuve_paiement->getClientOriginalExtension();
-                        $preuve_name = date('Ymd-His') . '.' . $extension;
-                        $preuve_paiement->move(public_path('preuve'), $preuve_name);
-                        $detailPaiement->setAttribute('preuve_path', $preuve_name);
-                        $preuveNameUrl = $preuve_name;
-                    }
-                    $detailPaiement->update();
-                    // update frais scolarite
-                    $montantScolariteRecu = ($montantScolariteRecu - $data->montant_restant);
-
-                    // ajout des tranches et paiement tranche
-
-                    //enregistrement tranche pour inscription
-                    $tranche_paiement = new  PaiementsTranche();
-                    $tranche_paiement->setAttribute('details_paiements_id',$detailPaiement->id);
-                    $tranche_paiement->setAttribute('montant_paye',$data->montant_restant);
-                    $tranche_paiement->setAttribute('montant_restant',$montant_total_du - $data->montant_restant);
-                    $tranche_paiement->setAttribute('reference',$update_reference);
-                    $tranche_paiement->setAttribute("num_transaction",trim($codePaiement));
-                    $tranche_paiement->setAttribute("statut_transaction",trim($codePaiement));
-                    // save preuve if exists
-                    if (!empty($preuveNameUrl) && $preuveNameUrl != null) {
+                    if ($getTranche->tranche_2 > 0) {
                         # code...
-                        $tranche_paiement->setAttribute('preuve_path', $preuveNameUrl);
+                        $trancheDemandee = "tranche_double";
+                    }else{
+                        $trancheDemandee = "tranche_unique";
                     }
-                    $tranche_paiement->setAttribute("statut_traitement","VALIDER");
-                    $tranche_paiement->setAttribute("modepaiement_id",$request->modepaiement_id);
-                    $tranche_paiement->setAttribute('is_inscription',true);
-                    $tranche_paiement->setAttribute('traiter_par',$user->id);
-                    $tranche_paiement->setAttribute('created_by',$userInfo->id);
-                    $tranche_paiement->setAttribute('updated_by',$userInfo->id);
-                    $tranche_paiement->save();
-
-                }
-            }
-
-            // cas de Scolarité
-            if($montantScolariteRecu > 0){
-                foreach ($listePTranches as $key => $data) {
+                } else {
                     # code...
-
-                    $detailPaiement = Detailspaiements::find($data->detailsPaiementId);
-                    if($detailPaiement->montant_restant > 0 && $data->type_tarif != 'INSCRIPTION'){
-
-                        $montantRestantScolarite = $detailPaiement->montant_restant - $montantScolariteRecu;
-                        // update info in details paiements table
-                        $detailPaiement->setAttribute("montant_paye",$detailPaiement->montant_paye + $montantScolariteRecu);
-                        $detailPaiement->setAttribute("montant_restant",$montantRestantScolarite);
-                        $detailPaiement->setAttribute("modepaiement_id",$request->modepaiement_id);
-                        if(($data->montant_restant - $montantScolariteRecu) == 0){ // scolarité soldée
-                            $detailPaiement->setAttribute("statut_traitement",'VALIDER');
-                            $detailPaiement->setAttribute('statut_paiement', 'PAYE');
-                        }
-                        // save preuve if exists
-                        if (!empty($preuveNameUrl) && $preuveNameUrl != null) {
-                            # code...
-                            $detailPaiement->setAttribute('preuve_path', $preuveNameUrl);
-                        }else{
-                            if (!empty($request->preuve)) {
-                                $preuve_paiement = $request->preuve;
-                                $extension = $preuve_paiement->getClientOriginalExtension();
-                                $preuve_name = date('Ymd-His') . '.' . $extension;
-                                $preuve_paiement->move(public_path('preuve'), $preuve_name);
-                                $detailPaiement->setAttribute('preuve_path', $preuve_name);
-                                $preuveNameUrl = $preuve_name;
-                            }
-                        }
-
-                        $detailPaiement->update();
-
-                        // ajout des tranches et paiement tranche
-                        if ($request->haveTranche == '1' || $request->haveTranche == 1){
-                            // tranche existe
-                            $tranche = Tranches::where('code_inscription',$paiement->code_inscription)->first();
-                        }else{
-                            // pas de tranche
-                            // sauvegarde de la tranche
-                            $formationTranche = FormationsTranches::where('tranche','tranche 1')->where('grilletarifaire_id',$data->grilleId)->first();
-
-                            $tranche = new Tranches();
-                            $tranche->setAttribute('code_inscription',$paiement->code_inscription);
-                            $tranche->setAttribute('email',$paiement->email);
-                            $tranche->setAttribute('tranche_1',$data->grille_montant);
-                            $tranche->setAttribute('tranche_2',0);
-                            $tranche->setAttribute('echeance_1',$formationTranche->echeance_1);
-                            $tranche->setAttribute('echeance_2',$formationTranche->echeance_1);
-                            $tranche->setAttribute('statut','ATTENTE');
-                            $tranche->setAttribute('created_by',$userInfo->id);
-                            $tranche->setAttribute('updated_by',$userInfo->id);
-                            $tranche->save();
-                        }
-
-                        //enregistrement tranche pour scolarité
-                        $tranche_paiement = new  PaiementsTranche();
-                        $tranche_paiement->setAttribute('details_paiements_id',$detailPaiement->id);
-                        $tranche_paiement->setAttribute('montant_paye',$montantScolariteRecu);
-                        $tranche_paiement->setAttribute('montant_restant',$montantRestantScolarite);
-                        $tranche_paiement->setAttribute('reference',$update_reference);
-                        $tranche_paiement->setAttribute('tranche_id',$tranche->id);
-                        $tranche_paiement->setAttribute("num_transaction",trim($codePaiement));
-                        $tranche_paiement->setAttribute("statut_transaction",trim($codePaiement));
-                        // save preuve if exists
-                        if (!empty($preuveNameUrl) && $preuveNameUrl != null) {
-                            # code...
-                            $tranche_paiement->setAttribute('preuve_path', $preuveNameUrl);
-                        }
-                        $tranche_paiement->setAttribute("statut_traitement","VALIDER");
-                        $tranche_paiement->setAttribute("modepaiement_id",$request->modepaiement_id);
-                        $tranche_paiement->setAttribute('is_inscription',false);
-                        $tranche_paiement->setAttribute('traiter_par',$user->id);
-                        $tranche_paiement->setAttribute('created_by',$userInfo->id);
-                        $tranche_paiement->setAttribute('updated_by',$userInfo->id);
-                        $tranche_paiement->save();
-
-                    }
+                    $trancheDemandee = "tranche_double";
                 }
+                
+            } else {
+                # code...
+                $trancheDemandee = "tranche_double";
             }
+            
+            //$trancheDemandee = $request->input('haveTranche');
+            $ligneScolariteIntacte = false;
+    
+            if ($inscriptionDetail) {
+                $soldeInscription = (int) $inscriptionDetail->montant_restant;
+                if ($montantRestantAAllouer < $soldeInscription) {
+                    return ResponseHandler::error("Le montant reçu est inférieur au solde des frais d'inscription ({$soldeInscription})", 302);
+                }
+                $montantInscriptionApplique = $soldeInscription;
+                $montantRestantAAllouer -= $montantInscriptionApplique;
+            }
+    
+            if ($scolariteDetail && $montantRestantAAllouer > 0) {
+                $grille = $scolariteDetail->getTarification->getGrilletarifaire ?? null;
+                if (!$grille) {
+                    return ResponseHandler::error('Grille tarifaire introuvable pour la ligne scolarité', 302);
+                }
+    
+                $ligneScolariteIntacte = (int) $scolariteDetail->montant_paye === 0;
+                $baseRestantScolarite = (int) $scolariteDetail->montant_restant;
+                $reductionAppliquee = $scolariteDetail->have_reduction_dsc;
+                // CAS OU AUCUN PAIEMENT DES FRAIS DE SCOLARITE N'EST ENCORE EFFECTUE
+                if ($ligneScolariteIntacte) {
+                    if ($trancheDemandee === 'tranche_unique') {
+                        $baseRestantScolarite = (int) round($baseRestantScolarite);
+                        $reductionAppliquee = true;
+                        if ($montantRestantAAllouer < $baseRestantScolarite) {
+                            return ResponseHandler::error('Le montant reçu est inférieur au solde de scolarité (tranche unique, doit être réglée en totalité)',302);
+                        }
+                        Log::info("tranche unique et montant valide");
+                    } else {
+                        $reductionAppliquee = false;
+                        $montantGrille = (int) $grille->montant;
+                        if ($montantRestantAAllouer < ($montantGrille/2)) {
+                            return ResponseHandler::error('Le montant reçu est inférieur à 50% des frais de scolarité (tranche double)'.($montantGrille/2),302);
+                        }
+                        Log::info("tranche double et montant valide");
+                    }
+                }else{
+                    // sinon (ligne déjà entamée) : tranche ignorée, borne = montant_restant réel
 
-        }
+                    // le montant à payer devrait soldé le montant restant
+                    if ($montantRestantAAllouer < $baseRestantScolarite) {
+                        return ResponseHandler::error('Le montant reçu est inférieur au solde de scolarité restante '.$baseRestantScolarite,302);
+                    }
 
-        // envoie de mail pour notification paiement en attente
-        // envoie de mail pour notifier l'enregistrement du paiement
-        $mode_paiement = Modepaiements::find($request->modepaiement_id);
-        $auditeur = Auditeurs::where("email",$paiement->email)->first();
-        $contenu = [
-            'nom' => $auditeur->nom,
-            'prenoms' => $auditeur->prenoms,
-            'reference_paiement' => $update_reference,
-            'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$update_reference,
-            'email' => $paiement->email,
-            'montant' => $montant_total_recu,
-            'montant_restant' => $paiement->montant_restant,
-            'mode_paiement' => $mode_paiement->libelle
-        ];
-
-        try {
-            # code...
-            Mail::to($paiement->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new DscPaiementAttente($contenu));
-
-        } catch(\Exception $e){
-            // Get error here
-
-        }
-        // Notification au comptable
-        // vérifier si la variable send notication au comptable est sur true
-
-        if (env('PAIEMENT_NOTIFIER_COMPTABLE')) {
-            // send mail comptable
-            $liste_comptable = User::whereHas('roles', function ($q) {
-                $q->where('libelle', 'COMPTABLE');
-            })->pluck('email');
-
-                $contenu = [
-                    'name' => 'COMPTABLE',
-                    'reference_paiement' => $update_reference,
-                    'subject' => 'NOUVEAU PAIEMENT '.date('d-m-Y H:i:s'),
-                    'email'=>'',
-                    'montant'=>$montant_total_recu,
-                    'mode_paiement'=>$mode_paiement->libelle
-                ];
-
-
+                }
+                // vérifier si le reliquat dépasse le montant restant de la scolarité
+                if ($montantRestantAAllouer > $baseRestantScolarite) {
+                    return ResponseHandler::error('Le montant appliqué à la scolarité dépasse le solde réellement dû');
+                }
+    
+                $montantScolariteApplique = $montantRestantAAllouer;
+            } elseif ($montantRestantAAllouer > 0) {
+                // reliquat non attribuable (pas de ligne scolarité soumise pour l'absorber)
+                return ResponseHandler::error('Le montant reçu excède ce qui peut être appliqué aux lignes soumises');
+            }
+    
+            // Fichier de preuve — nom garanti unique (pas seulement à la seconde
+            // près comme l'original), toujours dans public_path comme demandé.
+            $preuveNameUrl = null;
+            if ($request->hasFile('preuve')) {
+                $preuve = $request->file('preuve');
+                $preuveName = date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . '.' . $preuve->getClientOriginalExtension();
+                $preuve->move(public_path('preuve'), $preuveName);
+                $preuveNameUrl = $preuveName;
+            }
+    
+            $getPTranche = PaiementsTranche::where('reference', 'like', "%{$paiement->reference}%")->latest()->first();
+            $suffixe = $getPTranche
+                ? ((int) (explode('_', $getPTranche->reference)[1] ?? 0)) + 1
+                : 1;
+            $updateReference = $paiement->reference . '_' . $suffixe;
+    
+            DB::transaction(function () use (
+                $paiement, $inscriptionDetail, $scolariteDetail, $montantInscriptionApplique,
+                $montantScolariteApplique, $baseRestantScolarite, $reductionAppliquee,
+                $ligneScolariteIntacte, $trancheDemandee, $montantTotalRecu, $codePaiement,
+                $modePaiement, $preuveNameUrl, $updateReference, $user, $userInfo
+            ) {
+                if ($inscriptionDetail) {
+                    $inscriptionDetail->montant_paye = $inscriptionDetail->montant_paye + $montantInscriptionApplique;
+                    $inscriptionDetail->montant_restant = 0;
+                    $inscriptionDetail->modepaiement_id = $modePaiement->id;
+                    $inscriptionDetail->statut_traitement = 'VALIDER';
+                    $inscriptionDetail->statut_paiement = 'PAYE';
+                    if ($preuveNameUrl) {
+                        $inscriptionDetail->preuve_path = $preuveNameUrl;
+                    }
+                    $inscriptionDetail->save();
+    
+                    PaiementsTranche::forceCreate([
+                        'details_paiements_id' => $inscriptionDetail->id,
+                        'montant_paye' => $montantInscriptionApplique,
+                        'montant_restant' => 0,
+                        'reference' => $updateReference,
+                        'num_transaction' => $codePaiement,
+                        'statut_transaction' => $codePaiement,
+                        'statut_traitement' => 'VALIDER',
+                        'preuve_path' => $preuveNameUrl,
+                        'modepaiement_id' => $modePaiement->id,
+                        'is_inscription' => true,
+                        'traiter_par' => $user->id,
+                        'created_by' => $userInfo->id,
+                        'updated_by' => $userInfo->id,
+                    ]);
+                }
+    
+                if ($scolariteDetail && $montantScolariteApplique > 0) {
+                    $nouveauRestant = max(0, $baseRestantScolarite - $montantScolariteApplique);
+    
+                    $scolariteDetail->montant_paye = $scolariteDetail->montant_paye + $montantScolariteApplique;
+                    $scolariteDetail->montant_restant = $nouveauRestant;
+                    $scolariteDetail->modepaiement_id = $modePaiement->id;
+                    $scolariteDetail->have_reduction_dsc = $reductionAppliquee;
+                    if ($nouveauRestant <= 0) {
+                        $scolariteDetail->statut_traitement = 'VALIDER';
+                        $scolariteDetail->statut_paiement = 'PAYE';
+                    }
+                    if ($preuveNameUrl) {
+                        $scolariteDetail->preuve_path = $preuveNameUrl;
+                    }
+                    $scolariteDetail->save();
+    
+                    // échéancier — recrée/actualise seulement si la ligne était
+                    // intacte (nouveau plan) ; sinon celui existant reste valable.
+                    $trancheId = null;
+                    if ($ligneScolariteIntacte && $trancheDemandee) {
+                        $trancheId = $this->genarateurCodeService->enregistrerEcheancierTranche($paiement, $scolariteDetail, $trancheDemandee, $userInfo);
+                    } else {
+                        $echeancierExistant = Tranches::where('code_inscription', $paiement->code_inscription)->first();
+                        $trancheId = $echeancierExistant->id ?? null;
+                    }
+    
+                    PaiementsTranche::forceCreate([
+                        'details_paiements_id' => $scolariteDetail->id,
+                        'montant_paye' => $montantScolariteApplique,
+                        'montant_restant' => $nouveauRestant,
+                        'reference' => $updateReference,
+                        'tranche_id' => $trancheId,
+                        'num_transaction' => $codePaiement,
+                        'statut_transaction' => $codePaiement,
+                        'statut_traitement' => 'VALIDER',
+                        'preuve_path' => $preuveNameUrl,
+                        'modepaiement_id' => $modePaiement->id,
+                        'is_inscription' => false,
+                        'traiter_par' => $user->id,
+                        'created_by' => $userInfo->id,
+                        'updated_by' => $userInfo->id,
+                    ]);
+                }
+    
+                $nouveauMontantPaye = $paiement->montant_paye + $montantTotalRecu;
+                $nouveauMontantRestant = $paiement->montant_restant - $montantTotalRecu;
+    
+                $paiement->montant_paye = $nouveauMontantPaye;
+                $paiement->montant_restant = $nouveauMontantRestant;
+                if ($nouveauMontantRestant <= 0) {
+                    $paiement->num_transaction = $codePaiement;
+                    $paiement->statut_transaction = $codePaiement;
+                    $paiement->statut_paiement = 'PAYE';
+                }
+                $paiement->save();
+            });
+    
+            // Notifications — best-effort, hors transaction
+            $auditeur = Auditeurs::where('email', $paiement->email)->first();
+    
+            $contenu = [
+                'nom' => $auditeur->nom ?? '',
+                'prenoms' => $auditeur->prenoms ?? '',
+                'reference_paiement' => $updateReference,
+                'subject' => 'INFORMATION SUR VOTRE PAIEMENT ' . $updateReference,
+                'email' => $paiement->email,
+                'montant' => $montantTotalRecu,
+                'montant_restant' => $paiement->montant_restant,
+                'mode_paiement' => $modePaiement->libelle ?? '',
+            ];
+    
+            try {
+                Mail::to($paiement->email)->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new DscPaiementAttente($contenu));
+            } catch (\Exception $e) { 
+                Log::error('validerProcessPaiementDsc : échec envoi mail auditeur', ['error' => $e->getMessage(), 'reference' => $updateReference]);
+            }
+    
+            if (env('PAIEMENT_NOTIFIER_COMPTABLE')) {
+                $listeComptable = User::whereHas('roles', fn ($q) => $q->where('libelle', 'COMPTABLE'))->pluck('email');
+    
                 try {
-                    # code...
-                    Mail::to(env('MAIL_CC'))->cc($liste_comptable)->bcc(env('MAIL_BCC'))->queue(new NotificationComptable($contenu));
-                } catch(\Exception $e){
-                    // Get error here
-
+                    Mail::to(env('MAIL_CC'))->cc($listeComptable)->bcc(env('MAIL_BCC'))->queue(new NotificationComptable([
+                        'name' => 'COMPTABLE',
+                        'reference_paiement' => $updateReference,
+                        'subject' => 'NOUVEAU PAIEMENT ' . now()->format('d-m-Y H:i:s'),
+                        'email' => '',
+                        'montant' => $montantTotalRecu,
+                        'mode_paiement' => $modePaiement->libelle ?? '',
+                    ]));
+                } catch (\Exception $e) {
+                    Log::error('validerProcessPaiementDsc : échec envoi mail comptable', ['error' => $e->getMessage(), 'reference' => $updateReference]);
                 }
-
-        }
-
-        // Send mail to auditeur for validation
-        // send mail paiement validé
-        $auditeur = Auditeurs::where("email",$paiement->email)->first();
-        // envoie de mail pour la reférence de la facture
-        $contenu = [
-            'nom' => $auditeur->nom ,
-            'prenoms' => $auditeur->prenoms,
-            'reference_paiement' => $update_reference,
-            'subject' => 'TRAITEMENT DE VOTRE PAIEMENT',
-            'commentaire' => "Paiement validé",
-            'email'=>$paiement->email,
-            'mode_paiement'=>$mode_paiement->libelle,
-            'montant'=>$montant_total_recu,
-            'montant_restant'=>$paiement->montant_restant,
-            'type'=>$paiement->type,
-            'url_recu'=>$this->genarateurCodeService->generateUrlSigned('paiements.recu',['reference'=>$paiement->reference])
-        ];
-
-        try {
-            # code...
-             Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new PaiementValideDsc($contenu));
-
+            }
+    
+            try {
+                Mail::to(trim($paiement->email))->cc(env('MAIL_CC'))->bcc(env('MAIL_BCC'))->queue(new PaiementValideDsc([
+                    'nom' => $auditeur->nom ?? '',
+                    'prenoms' => $auditeur->prenoms ?? '',
+                    'reference_paiement' => $updateReference,
+                    'subject' => 'TRAITEMENT DE VOTRE PAIEMENT',
+                    'commentaire' => 'Paiement validé',
+                    'email' => $paiement->email,
+                    'mode_paiement' => $modePaiement->libelle ?? '',
+                    'montant' => $montantTotalRecu,
+                    'montant_restant' => $paiement->montant_restant,
+                    'type' => $paiement->type,
+                    'url_recu' => $this->genarateurCodeService->generateUrlSigned('paiements.recu', ['reference' => $paiement->reference]),
+                ]));
+            } catch (\Exception $e) {
+                Log::error('validerProcessPaiementDsc : échec envoi mail traitement', ['error' => $e->getMessage(), 'reference' => $updateReference]);
+            }
+    
+            return ResponseHandler::success('Opération effectuée avec succès', ['success' => true]);
+    
         } catch (\Exception $e) {
-            //throw $th;
+            Log::error('validerProcessPaiementDsc : exception', ['error' => $e->getMessage(), 'reference' => $request->reference ?? null]);
+            return ResponseHandler::error("Une erreur est survenue lors de la validation du paiement");
         }
-
-        return  ResponseHandler::success("Opération effectuée avec succès",['success'=>true]);
     }
 }

@@ -229,7 +229,7 @@ class ComptabilitesController extends Controller
         }
     }
     public function traitementPaiementPartiel(Request $request){
-        try {
+        try { 
             $validated = $request->validate([
                 'statut_traitement' => 'required',
                 'montant_total' => 'required',

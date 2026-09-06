@@ -715,8 +715,7 @@ class AuditeursService implements AuditeursInterface
     }
 
     public function getIndicateurs(): \Illuminate\Http\JsonResponse
-    {
-        // TODO: Implement getListePays() method.
+    { 
         $user = auth('api')->user();
         $nbreInscription = Inscriptions::whereEmail($user->email)->count();
         $nbreAttestation = Rapports::whereEmail($user->email)->whereAttestationSend(true)->count();
@@ -1630,8 +1629,7 @@ $data = Inscriptions::query()
     
 
     public function getIndicateursAuditeur($email): \Illuminate\Http\JsonResponse
-    {
-        // TODO: Implement getListePays() method.
+    { 
         $user = Auditeurs::whereEmail($email)->first();
         $nbreInscription = Inscriptions::whereEmail($user->email)->count();
         $nbreAttestation = Rapports::whereEmail($user->email)->whereAttestationSend(true)->count();
