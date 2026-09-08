@@ -2892,6 +2892,7 @@ $data = Inscriptions::query()
         $auditeur = Auditeurs::whereEmail($email)->first();
         $listeAttestation = Rapports::join("formations","formations.code_formation","=","rapports.code_formation")
         ->where("email", $auditeur->email) 
+        ->where("attestation_send", true)
         ->get(["rapports.email", "formations.code_formation", "rapports.id","formations.theme"]);
             $response["listeAttestation"] = $listeAttestation; 
         return  ResponseHandler::success("ok",$listeAttestation);

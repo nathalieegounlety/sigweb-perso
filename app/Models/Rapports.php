@@ -31,7 +31,9 @@ class Rapports extends Model
         'code_formation',
         'email',
         'temps_presence',
-        'id_webinaire'
+        'id_webinaire',
+        'attestation_send',
+        'observation'
     ];
 
     public function getInscrit()
