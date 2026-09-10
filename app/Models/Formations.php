@@ -5,7 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
+
+#[OA\Schema(
+    schema: "Formations",
+    type: "object",
+    title: "Formations",
+    properties: [
+        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "code_formation", type: "string"),
+        new OA\Property(property: "theme", type: "string"),
+        new OA\Property(property: "description", type: "string"),
+    ]
+)]
 class Formations extends Model
 {
     use HasFactory;

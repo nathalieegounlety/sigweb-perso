@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\ResponseHandler;
 use App\Services\contracts\ComptabilitesInterface;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 class ComptabilitesController extends Controller
 {
@@ -125,6 +126,43 @@ class ComptabilitesController extends Controller
         }
     }
 
+    
+    #[OA\Get(
+        path: "/v1/comptabilites/paiements/valide",
+        summary: "Liste des paiements validés",
+        security: [["bearerAuth" => []]],
+        tags: ["Paiements"],
+        parameters: [
+            new OA\Parameter(
+                name: "code_formation",
+                description: "Code de la formation",
+                in: "query",
+                required: true,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "page",
+                description: "Numéro de page pour la pagination",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(type: "integer", default: 1)
+            ),
+            new OA\Parameter(
+                name: "per_page",
+                description: "Nombre d'éléments par page",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(type: "integer", default: 15)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Succès"
+            ),
+            new OA\Response(response: 401, description: "Non authentifié"),
+        ]
+    )]
     public function detailPaiementValiderDsc(Request $request){
         try {
             //
@@ -153,6 +191,7 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
     public function deplacerCommandeFormationDsc(Request $request){
         try {
             $validated = $request->validate([

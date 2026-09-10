@@ -8,6 +8,7 @@ use App\Mail\NotificationCompte;
 use App\Services\contracts\FormationsInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use OpenApi\Attributes as OA;
 
 class FormationsController extends Controller
 {
@@ -22,6 +23,40 @@ class FormationsController extends Controller
         //$this->middleware('permission:CREATE')->only(['index']);
         $this->formationsService = $formationsService;
     }
+
+    #[OA\Get(
+        path: "/v1/formations",
+        summary: "Liste des formations",
+        security: [["bearerAuth" => []]],
+        tags: ["Formations"],
+        parameters: [ 
+            new OA\Parameter(
+                name: "page",
+                description: "Numéro de page pour la pagination",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(type: "integer", default: 1)
+            ),
+            new OA\Parameter(
+                name: "per_page",
+                description: "Nombre d'éléments par page",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(type: "integer", default: 15)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Succès",
+                content: new OA\JsonContent(
+                    type: "array",
+                    items: new OA\Items(ref: "#/components/schemas/Formations")
+                )
+            ),
+            new OA\Response(response: 401, description: "Non authentifié"),
+        ]
+    )]
     public function index(Request $request)
     {
         // récupérer la liste des rôles
@@ -199,6 +234,43 @@ class FormationsController extends Controller
         }
     }
 
+    
+    #[OA\Get(
+        path: "/v1/formations/liste/inscrits",
+        summary: "Liste des inscrits",
+        security: [["bearerAuth" => []]],
+        tags: ["Formations"],
+        parameters: [
+            new OA\Parameter(
+                name: "code_formation",
+                description: "Code de la formation",
+                in: "query",
+                required: true,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "page",
+                description: "Numéro de page pour la pagination",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(type: "integer", default: 1)
+            ),
+            new OA\Parameter(
+                name: "per_page",
+                description: "Nombre d'éléments par page",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(type: "integer", default: 15)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Succès", 
+            ),
+            new OA\Response(response: 401, description: "Non authentifié"),
+        ]
+    )]
     public function listeIncrits(Request $request)
     {
         // récupérer la liste des rôles

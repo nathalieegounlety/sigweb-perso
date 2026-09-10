@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\contracts\AuthServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
@@ -36,6 +37,42 @@ class AuthController extends Controller
         return ResponseHandler::success("Enregistrement effectué avec succès.", $user);
     }
 
+    #[OA\Post(
+        path: "/v1/login",
+        summary: "Authentification",
+        tags: ["Auth"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["email", "password"],
+                properties: [
+                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
+                    new OA\Property(property: "password", type: "string", format: "password", example: "secret123"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Succès",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "token", type: "string"),
+                        // ajoute ici les autres champs que renvoie $data
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: "Identifiants invalides",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "string", example: "Invalid credentials"),
+                    ]
+                )
+            ),
+        ]
+    )]
     public function login(Request $request)
     {
 
