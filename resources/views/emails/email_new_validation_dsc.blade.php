@@ -52,7 +52,10 @@
                 <p>Nous vous informons que votre candidature a été examinée par la Commission d’admission aux Diplômes
                     de Spécialité et Certificats (DSC) de l’ERSUMA. A l’issue du processus nous sommes au regret de vous
                     informer que votre candidature n’a pas été retenue pour la rentrée prochaine.
+                     : <br>
+                    {!! nl2br(e($contenu['observations'])) !!}
                 </p>
+
 
                 <p>En vous remerciant de votre confiance et de votre fidélité à l'ERSUMA, nous restons disponibles pour
                     vous accompagner dans le renforcement de vos capacités.</p>
