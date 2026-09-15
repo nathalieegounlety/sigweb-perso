@@ -716,6 +716,30 @@ class FormationsService implements FormationsInterface
             ->where('formations.is_formation_dsc',false)
             ->where('formations.statut','ACTIF')
             ->where('formations.enable',true)
+            ->where('formations.code_formation','NOT LIKE','SOUTENANCES%')
+            ->orderBy("formations.date_debut","ASC")
+            ->limit(6) ;
+        return $queryFormations->get();
+    }
+
+    public function getReinscriptionDscFm(Request $request)
+    {
+        // TODO: Implement getReinscriptionDscFm() method.
+        $perPage = min($request->input('per_page', 6),6);
+
+        $date_now = date('Y-m-d');
+        // $date_now = date('Y-m-d',strtotime($date_now . "-45 days"));
+        $date_actuelle = date('m/d/Y');
+        $get_date = date('Y-m-d',strtotime($date_actuelle . "+60 days"));
+
+        $queryFormations = Formations::select('formations.*')
+            ->with('getTypeformation:id,libelle')
+            ->with('tarifications')
+            ->whereDate('formations.date_fin','>=',$date_now)
+            ->where('formations.is_formation_dsc',false)
+            ->where('formations.statut','ACTIF')
+            ->where('formations.enable',true)
+            ->where('formations.code_formation','like','SOUTENANCES%')
             ->orderBy("formations.date_debut","ASC")
             ->limit(6) ;
         return $queryFormations->get();

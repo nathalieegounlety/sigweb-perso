@@ -78,7 +78,6 @@ Route::prefix('v1/pointdepaiements')->group(function () {
     Route::post('unique', [\App\Http\Controllers\PointDePaiementsController::class, 'getPointdepaiement']);
     Route::post('update', [\App\Http\Controllers\PointDePaiementsController::class, 'update']);
     Route::post('remove', [\App\Http\Controllers\PointDePaiementsController::class, 'remove']);
-
 });
 Route::controller(\App\Http\Controllers\MaintenanceController::class)->prefix('v1/maintenance')->group(function () {
     Route::post('update/composant', 'update');
@@ -92,6 +91,7 @@ Route::prefix('v1/formations')->controller(\App\Http\Controllers\FormationsContr
     Route::post('update', 'update');
     Route::post('remove', 'remove');
     Route::get('recentes', 'recenteFormation');
+    Route::get('liste/reinscription/dsc','inscriptionDscFm');
     Route::post('details', 'detailFormation');
     Route::get('for/attestation', 'listeFormationAttestation');
     Route::get('dsc', 'formationsDsc');

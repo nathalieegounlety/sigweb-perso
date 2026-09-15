@@ -65,6 +65,7 @@ class HomeController extends Controller
             ->where('formations.is_formation_dsc',false)
             ->where('formations.statut','ACTIF')
             ->where('formations.enable',true)
+            ->where('formations.code_formation','NOT LIKE','SOUTENANCES%')
             ->orderBy("formations.date_debut","ASC")
             ->paginate(9) ;
         return response()->json($queryFormations);

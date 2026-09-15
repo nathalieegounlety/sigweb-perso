@@ -32,5 +32,6 @@ interface FormationsInterface
     public function saveDeleteLogo(Request $request): \Illuminate\Http\JsonResponse;
     public function getListeLogos(Request $request): \Illuminate\Http\JsonResponse;
     public function saveEditLogos(Request $request): \Illuminate\Http\JsonResponse;
+    public function getReinscriptionDscFm(Request $request);
 
 }
