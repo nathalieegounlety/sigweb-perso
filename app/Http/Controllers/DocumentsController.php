@@ -185,7 +185,7 @@ class DocumentsController extends Controller
             $validated = $request->validate([
                 'reference' => 'required|string',
             ]);
-            return $this->documentService->getUrlProformaOuvrage($request->reference);
+            return $this->documentService->getUrlProformaOuvrageSigned($request->reference);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
@@ -631,7 +631,7 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
 
     $date = date('d_m_Y_His');
    // download PDF file with download method
-  return $pdf->download('Etat_recapitulatif_wb_'.$code_formation.'_'.$date.'.pdf');
+  return $pdf->download('SIGWEB_Etat_recapitulatif_wb_'.$code_formation.'_'.$date.'.pdf');
 
 
 }
@@ -656,7 +656,7 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
 
         $date = date('YmdHis');
         // download PDF file with download method
-        return $pdf->download('Etat_recapitulatif_ouvrage_'.$date.'.pdf');
+        return $pdf->download('SIGWEB_Etat_recapitulatif_ouvrage_'.$date.'.pdf');
 
 
     }
@@ -725,7 +725,7 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
     $canvas->add_object($footer, "all");
 
     $date = date('d-m-Y_H-i-s');
-    return $pdf->download($code_formation . '_LISTE_GLOBALE_PARTICIPANT_' . $date . '.pdf');
+    return $pdf->download('SIGWEB_'.$code_formation . '_LISTE_GLOBALE_PARTICIPANT_' . $date . '.pdf');
 }
 
   
@@ -830,7 +830,7 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
     $canvas->add_object($footer, "all");
 
     $date = date('d-m-Y_H:i:s');
-    return $pdf->download($code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
+    return $pdf->download('SIGWEB_'.$code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
 }
 
     public function attestationCandidat($id, $code_formation)

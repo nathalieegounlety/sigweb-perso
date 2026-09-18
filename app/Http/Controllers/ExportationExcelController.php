@@ -438,7 +438,7 @@ class ExportationExcelController extends Controller
 
     // export liste auditeur
     public function AuditeursExportListe() {
-        return Excel::download(new AuditeursExport(),"LISTE_DES_AUDITEURS_".date("Ymdhis").".xlsx");
+        return Excel::download(new AuditeursExport(),"SIGWEB_LISTE_DES_AUDITEURS_".date("Ymdhis").".xlsx");
     }
 
     // export list formateur
@@ -448,19 +448,19 @@ class ExportationExcelController extends Controller
     }
     // export all participant by code formation
     public function ExportAllParticipantExcel(Request $request) {
-        return Excel::download(new AllParticipantsExport($request->code_formation),"LISTE_PARTICIPANTS_".date("Ymdhis").".xlsx");
+        return Excel::download(new AllParticipantsExport($request->code_formation),"SIGWEB_LISTE_PARTICIPANTS_".date("Ymdhis").".xlsx");
     }
     // export all rapport by code formation
     public function ExportAllRapportExcel(Request $request) {
-        return Excel::download(new AllRapportsExport($request->code_formation),"LISTE_RAPPORTS_".date("Ymdhis").".xlsx");
+        return Excel::download(new AllRapportsExport($request->code_formation),"SIGWEB_LISTE_RAPPORTS_".date("Ymdhis").".xlsx");
     }
     // export all attestation participant by code formation
     public function ExportAllAttestationParticipantExcel(Request $request) {
-        return Excel::download(new AllAttestationsParticipantsExport($request->code_formation),"LISTE_PARTICIPANTS_ATTESTATIONS_".date("Ymdhis").".xlsx");
+        return Excel::download(new AllAttestationsParticipantsExport($request->code_formation),"SIGWEB_LISTE_PARTICIPANTS_ATTESTATIONS_".date("Ymdhis").".xlsx");
     }
     // export all attestation formateur by code formation
     public function ExportAllAttestationFormateurExcel(Request $request) {
-        return Excel::download(new AllAttestationsFormateursExport($request->code_formation),"LISTE_FORMATEURS_ATTESTATIONS_".date("Ymdhis").".xlsx");
+        return Excel::download(new AllAttestationsFormateursExport($request->code_formation),"SIGWEB_LISTE_FORMATEURS_ATTESTATIONS_".date("Ymdhis").".xlsx");
     }
 
     

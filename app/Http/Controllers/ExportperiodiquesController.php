@@ -129,7 +129,7 @@ class ExportperiodiquesController extends Controller
     $dateDb = date('d_m_Y_His', strtotime($request->date_debut));
     $dateDf = date('d_m_Y_His', strtotime($request->date_fin));
    // download PDF file with download method
-  return $pdf->download('Liste_paiements_'.$dateDb.'_'.$dateDf.'.pdf');
+  return $pdf->download('SIGWEB_Liste_paiements_'.$dateDb.'_'.$dateDf.'.pdf');
 
 
         }
