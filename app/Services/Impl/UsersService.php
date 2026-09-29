@@ -79,10 +79,49 @@ class UsersService implements UsersInterface
         }
     }
 
+    // définition de la fonction permettant d'initialiser la requête de sélection
+    public function requestUsersQuery(Request $request){
+        $queryData = User::select('users.id','users.code_user','users.name','users.username','users.email','users.actif','users.login_count','users.first_login','users.last_login','users.updated_at','users.created_at')
+            ->with('roles:id,libelle')
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('roles.id', 6);
+            }); 
+         // Recherche globale sur plusieurs champs
+        $search = $request->input('search');
+        if ($search) {
+            $queryData->where(function ($q) use ($search) {
+                $q->where('users.code_user', 'like', "%{$search}%")
+                    ->orWhere('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.username', 'like', "%{$search}%")  
+                    ->orWhere('users.email', 'like', "%{$search}%")
+                    ->orWherehas('roles', fn ($r) => $r->where('roles.libelle','like',"%{$search}%")); // Recherche sur auteur
+            });
+        }
+        // définition des filtres de multiples critères
+        $queryData
+        ->when($request->filled('role_id'), fn ($q) => $q->whereHas('roles', fn ($r) => $r->where('roles.id', $request->role_id)))
+        ->when($request->has('actif') && $request->actif !== '', fn ($q) => $q->where('actif', (int) $request->actif)) 
+        ->when($request->filled('date_debut'), fn ($q) => $q->whereDate('updated_at', '>=', $request->date_debut))
+        ->when($request->filled('date_fin'),   fn ($q) => $q->whereDate('updated_at', '<=', $request->date_fin));
+        
+        return $queryData;
+    }
+
+    private function appliquerFiltre($query, Request $request)
+    {
+        // définition des champs de trie asc ou desc
+        $allowed = ['name', 'email', 'actif', 'updated_at'];
+        $field = in_array($request->sort_field, $allowed, true) ? $request->sort_field : 'updated_at';
+        return $query->orderBy($field, $request->sort_order === 'asc' ? 'asc' : 'desc');
+    }
+
     public function getUsers(Request $request): LengthAwarePaginator
     {
         // TODO: Implement getUsers() method.
-        $perPage = $request->input('per_page', 50);
+        return $this->appliquerFiltre($this->requestUsersQuery($request), $request)
+        ->paginate($request->input('per_page', 50));
+
+        /* $perPage = $request->input('per_page', 50);
         $search = $request->input('search');
         $sortField = $request->input('sort_field', 'id');
         $sortOrder = $request->input('sort_order', 'desc');
@@ -117,7 +156,12 @@ class UsersService implements UsersInterface
         // Tri
             $queryData->orderBy("users.{$sortField}", $sortOrder);
 
-        return $queryData->paginate($perPage);
+        return $queryData->paginate($perPage); */
+    }
+
+    public function getExportUsers(Request $request)
+    {
+        return $this->appliquerFiltre($this->requestUsersQuery($request), $request)->get();
     }
 
     public function update(Request $data): \Illuminate\Http\JsonResponse

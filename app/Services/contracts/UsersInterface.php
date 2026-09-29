@@ -17,4 +17,6 @@ interface UsersInterface
 
     public function remove(int $idRole): \Illuminate\Http\JsonResponse;
 
+    public function getExportUsers(Request $request);
+
 }

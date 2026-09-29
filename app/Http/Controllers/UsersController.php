@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ListeUsersExport;
 use App\Helpers\ResponseHandler;
 use App\Services\contracts\UsersInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use OpenApi\Attributes as OA;
+use PDF;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UsersController extends Controller
 {
@@ -48,7 +51,7 @@ class UsersController extends Controller
             $perPage = $request->get('per_page',50); // par défaut 50 éléments
             $data = $this->usersInterface->getUsers($request);
 
-            // Transformer pour enlever le bloc 'links'
+            // Transformer pour enlever le bloc 'links' 
             $response = [
                 'current_page' => $data->currentPage(),
                 'data'         => $data->items(),
@@ -63,6 +66,34 @@ class UsersController extends Controller
 
         }catch (\Exception $e){
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
+        }
+    }
+
+    
+
+    public function exportListeUsers(Request $request)
+    {
+        $request->validate([
+            'format'      => 'required|in:pdf,excel',
+            'date_debut'  => 'nullable|date',
+            'date_fin'    => 'nullable|date|after_or_equal:date_debut', 
+            'role_id' => 'nullable|numeric', 
+        ]);
+
+        try {
+            $rows = $this->usersInterface->getExportUsers($request);
+            $nom  = 'SIGWEB_LISTE_UTILISATEURS_' . now()->format('Ymd_His');
+
+            if ($request->format === 'pdf') {
+                return PDF::loadView('exports.paiements_valides', [
+                    'rows'    => $rows,
+                    'filtres' => $request->only(['date_debut','date_fin','role_id','search']),
+                ])->setPaper('a4', 'landscape')->download("$nom.pdf");
+            }
+
+            return Excel::download(new ListeUsersExport($rows), "$nom.xlsx");
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Erreur lors de l'export", 500, $e->getMessage());
         }
     }
 
