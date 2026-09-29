@@ -385,7 +385,10 @@ class ComptabilitesService implements ComptabilitesInterface
 
     }
 
-    public function getPaiementsvalides(Request $request) //: LengthAwarePaginator
+    /**
+     * Requête filtrée commune à la liste et à l'export (sans tri ni pagination).
+     */
+    private function paiementsValidesQuery(Request $request)
     {
         // TODO: Implement getPaiementsvalides() method.
         $perPage   = $request->input('per_page', 50);
@@ -487,27 +490,20 @@ class ComptabilitesService implements ComptabilitesInterface
             MAX(detailspaiements.code_inscription) as code_inscription
             ");
 
-        /** UNION GLOBAL */
-        $unionQuery = $classiques
-            ->unionAll($partiels)
-            ->unionAll($dsc);
 
-        /** PAGINATION */
-        $query = DB::query()->fromSub($unionQuery, 't');
-        //->orderBy('date', 'desc')
-        //->paginate($perPage);
+        $query = DB::query()->fromSub(
+            $classiques->unionAll($partiels)->unionAll($dsc), 't'
+        );
 
-        /* ==============================
-     |  SEARCH GLOBAL
-     ============================== */
-        if ($search) {
+        // Recherche globale (inchangée)
+        if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('t.nom', 'like', "%{$search}%")
-                    ->orWhere('t.prenoms', 'like', "%{$search}%")
-                    ->orWhere('t.reference', 'like', "%{$search}%")
-                    ->orWhere('t.num_transaction', 'like', "%{$search}%")
-                    ->orWhere('t.type', 'like', "%{$search}%")
-                    ->orWhere('t.libelle_modepaiement', 'like', "%{$search}%");
+                ->orWhere('t.prenoms', 'like', "%{$search}%")
+                ->orWhere('t.reference', 'like', "%{$search}%")
+                ->orWhere('t.num_transaction', 'like', "%{$search}%")
+                ->orWhere('t.type', 'like', "%{$search}%")
+                ->orWhere('t.libelle_modepaiement', 'like', "%{$search}%");
 
                 $clean = str_replace([' ', ','], '', $search);
                 if (is_numeric($clean)) {
@@ -516,46 +512,49 @@ class ComptabilitesService implements ComptabilitesInterface
             });
         }
 
-        if ($filterDate) {
-            $query->whereDate('t.date', $filterDate);
-        }
+        // Filtres multicritères
+        $query
+            ->when($request->filled('filter_date'),     fn ($q) => $q->whereDate('t.date', $request->filter_date))
+            ->when($request->filled('date_debut'),      fn ($q) => $q->whereDate('t.date', '>=', $request->date_debut))
+            ->when($request->filled('date_fin'),        fn ($q) => $q->whereDate('t.date', '<=', $request->date_fin))
+            ->when($request->filled('type'),            fn ($q) => $q->where('t.type', $request->type))
+            ->when($request->filled('modepaiement_id'), fn ($q) => $q->where('t.id_modepaiement', $request->modepaiement_id))
+            ->when($request->filled('montant_min'),     fn ($q) => $q->where('t.montant', '>=', (float) $request->montant_min))
+            ->when($request->filled('montant_max'),     fn ($q) => $q->where('t.montant', '<=', (float) $request->montant_max));
 
+        return $query;
+    }
 
-        $allowedSortFields = [
-            'id',
-            'nom',
-            'prenoms',
-            'reference',
-            'email',
-            'montant',
-            'num_transaction',
-            'type',
-            'date',
-            'id_modepaiement',
-            'libelle_modepaiement',
-            'pourcentage',
-            'have_reduction'
-        ];
+    private function appliquerTri($query, Request $request)
+    {
+        $allowed = ['nom','prenoms','reference','email','montant','num_transaction',
+                    'type','date','libelle_modepaiement','pourcentage','have_reduction'];
 
-        $sortField = in_array($sortField, $allowedSortFields) ? $sortField : 'date';
-        $sortOrder = $sortOrder === 'asc' ? 'asc' : 'desc';
+        $field = in_array($request->input('sort_field'), $allowed) ? $request->input('sort_field') : 'date';
+        $order = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
 
-        $query->orderBy("t.$sortField", $sortOrder);
+        return $query->orderBy("t.$field", $order);
+    }
 
+    public function getPaiementsvalides(Request $request) //: LengthAwarePaginator
+    { 
+         $query = $this->paiementsValidesQuery($request);
 
-        /* ==============================
-         |  PAGINATION
-         ============================== */
-        $paiements = $query->paginate($perPage);
+            // Somme calculée AVANT tri et pagination, sinon LIMIT/OFFSET la fausse
+            $total = (clone $query)->sum('t.montant');
 
-        /** TOTAL GLOBAL */
-        $total = (clone $query)->sum('montant'); // collect($paiements->items())->sum('montant');
+            $paiements = $this->appliquerTri($query, $request)
+                ->paginate($request->input('per_page', 10));
 
-        return [
-            'pagination' => $paiements,
-            'montant_total' => $total
-        ];
+            return [
+                'pagination'    => $paiements,
+                'montant_total' => $total,
+            ];
+    }
 
+    public function getPaiementsvalidesExport(Request $request)
+    {
+        return $this->appliquerTri($this->paiementsValidesQuery($request), $request)->get();
     }
 
     public function getPaiementsOuvragesvalides(Request $request) //: LengthAwarePaginator

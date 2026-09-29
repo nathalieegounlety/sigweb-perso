@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PaiementsValidesExport;
 use App\Helpers\ResponseHandler;
 use App\Services\contracts\ComptabilitesInterface;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
+use PDF;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ComptabilitesController extends Controller
 {
@@ -305,6 +308,7 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
     public function listePaiementsValide(Request $request){
 
         try {
@@ -329,6 +333,36 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+
+    public function exportPaiementsValide(Request $request)
+    {
+        $request->validate([
+            'format'      => 'required|in:pdf,excel',
+            'date_debut'  => 'nullable|date',
+            'date_fin'    => 'nullable|date|after_or_equal:date_debut',
+            'type'        => 'nullable|in:FORMATION,FORMATION PARTIEL,DSC,OUVRAGE',
+            'montant_min' => 'nullable|numeric',
+            'montant_max' => 'nullable|numeric',
+        ]);
+
+        try {
+            $rows = $this->comptabiliteService->getPaiementsvalidesExport($request);
+            $nom  = 'paiements_valides_' . now()->format('Ymd_His');
+
+            if ($request->format === 'pdf') {
+                return PDF::loadView('exports.paiements_valides', [
+                    'rows'    => $rows,
+                    'total'   => $rows->sum('montant'),
+                    'filtres' => $request->only(['date_debut','date_fin','type','montant_min','montant_max','search']),
+                ])->setPaper('a4', 'landscape')->download("$nom.pdf");
+            }
+
+            return Excel::download(new PaiementsValidesExport($rows), "$nom.xlsx");
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Erreur lors de l'export", 500, $e->getMessage());
+        }
+    }
+
     public function listePaiementsOuvragesValide(Request $request){
 
         try {

@@ -399,6 +399,7 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
     Route::get('liste/paiements', 'listeDesPaiements');
     Route::post('details/process/paiements/dsc', 'detailProcessPaiementDsc');
     Route::post('traitement/process/paiement/dsc', 'traitementProcessPaiementDsc');
+    Route::get('paiements/valide/export', 'exportPaiementsValide');
 });
 
 // gestion des dashboard

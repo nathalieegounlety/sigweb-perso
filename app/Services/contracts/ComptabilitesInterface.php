@@ -12,6 +12,7 @@ interface ComptabilitesInterface
     public function getCommandesOuvrages(Request $request);//: LengthAwarePaginator;
     public function getPaiementsattente(Request $request); //: LengthAwarePaginator;
     public function getPaiementsvalides(Request $request);//: LengthAwarePaginator;
+    public function getPaiementsvalidesExport(Request $request);
     public function getPaiementsOuvragesvalides(Request $request);//: LengthAwarePaginator;
     public function getDetailsCommandeFormation(Request $request): \Illuminate\Http\JsonResponse;
     public function getDetailsCommandeOuvrage(Request $request): \Illuminate\Http\JsonResponse;

@@ -1004,7 +1004,7 @@ $data = Inscriptions::query()
             ->where("paiements.email", $request->email)
             ->whereNull('num_transaction')
             ->where('montant_restant', '>=', 0)
-            ->where('statut_paiement', '=', 'EN ATENTE')
+            ->where('statut_paiement', '=', 'EN ATTENTE')
             ->where('paiements.type', '=', 'dsc')
             ->orderBy('paiements.updated_at', 'desc')
             ->select([
