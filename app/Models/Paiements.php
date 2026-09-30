@@ -31,6 +31,7 @@ class Paiements extends Model
         'reference',
         'montant_total',
         'montant_a_payer',
+        'montant_restant',
         'id_modepaiement',
         'num_transaction',
         'statut_transaction',
@@ -48,7 +49,9 @@ class Paiements extends Model
         'compteur',
         'qrcode',
         'heurenormalisation',
-        'code_remise_dsc'
+        'code_remise_dsc',
+        'statut_paiement',
+        'type'
     ];
 
 

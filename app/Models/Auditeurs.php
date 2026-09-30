@@ -22,5 +22,6 @@ class Auditeurs extends Model
         'pays',
         'code_pays',
         'nationalite',
+        'civilite'
     ];
 }

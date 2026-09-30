@@ -8,8 +8,11 @@ use App\Models\User;
 use App\Services\contracts\UsersInterface;
 use App\Services\util\GenarateurCodeService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UsersService implements UsersInterface
 {
@@ -20,7 +23,109 @@ class UsersService implements UsersInterface
         $this->genarateurCodeService = $genarateurCodeService;
     }
 
-    public function saveUser(Request $data): \Illuminate\Http\JsonResponse
+    private const ROLE_PAR_DEFAUT = 6;
+
+    public function createUser(array $data): User
+{
+    $email    = strtolower(trim((string) ($data['email'] ?? '')));
+    $username = !empty($data['username']) ? trim($data['username']) : null;
+    $password = (string) ($data['password'] ?? '');
+ 
+    // Nom : "nom prenoms" s'ils sont fournis, sinon "name"
+    $name = !empty($data['nom'])
+        ? trim(trim($data['nom']) . ' ' . trim((string) ($data['prenoms'] ?? '')))
+        : trim((string) ($data['name'] ?? ''));
+ 
+    /* ---------- Contrôles métier ---------- */
+    if ($email === '') {
+        throw new \DomainException("L'adresse e-mail est obligatoire.");
+    }
+    if ($password === '') {
+        throw new \DomainException("Le mot de passe est obligatoire.");
+    }
+    if ($username && User::where('username', $username)->exists()) {
+        throw new \DomainException("Le nom d'utilisateur {$username} existe déjà.");
+    }
+    if (User::where('email', $email)->exists()) {
+        throw new \DomainException("Un compte existe déjà avec l'adresse {$email}.");
+    }
+ 
+    // Rôles 
+    $rolesDemandes = is_array($data['idRoles'] ?? null) ? $data['idRoles'] : [];
+ 
+    if (count($rolesDemandes) > 0) {
+        $roles = Roles::whereIn('id', $rolesDemandes)->pluck('id')->all();
+        if (count($roles) === 0) {
+            throw new \DomainException("Aucun des rôles sélectionnés n'est valide.");
+        }
+    } else {
+        $roles = Roles::whereKey(self::ROLE_PAR_DEFAUT)->pluck('id')->all();
+        if (count($roles) === 0) {
+            throw new \DomainException("Le rôle par défaut n'existe pas.");
+        }
+    }
+ 
+    $codeUser = $this->genarateurCodeService->genererCodeUser();
+    if (empty($codeUser)) {
+        throw new \RuntimeException("Impossible de générer le code utilisateur.");
+    }
+ 
+    /* ---------- Création : utilisateur + rôles, tout ou rien ---------- */
+    return DB::transaction(function () use ($name, $username, $email, $codeUser, $password, $roles) {
+        $user = new User();
+        $user->forceFill([
+            'name'      => $name,
+            'username'  => $username,
+            'email'     => $email,
+            'code_user' => $codeUser,
+            'password'  => Hash::make($password),
+        ])->save();
+ 
+        $user->roles()->sync($roles);   // uniquement les ids validés
+ 
+        return $user;
+    });
+}
+ 
+ 
+/**
+ * Point d'entrée de la route API : même format de réponse que le reste de l'application.
+ */
+public function saveUser(Request $data): \Illuminate\Http\JsonResponse
+{
+    try {
+        $user = $this->createUser($data->all());
+ 
+    } catch (\DomainException $e) {
+        return ResponseHandler::success($e->getMessage(), [
+            'success' => false,
+            'message' => $e->getMessage(),
+        ]);
+ 
+    } catch (QueryException $e) {
+        // 1062 : email ou username déjà pris par une requête simultanée
+        if (($e->errorInfo[1] ?? null) == 1062) {
+            return ResponseHandler::success("Cet utilisateur existe déjà", [
+                'success' => false,
+                'message' => "Un compte existe déjà avec cette adresse e-mail ou ce nom d'utilisateur.",
+            ]);
+        }
+        Log::error('Création utilisateur - erreur SQL : ' . $e->getMessage());
+        return ResponseHandler::error("Erreur lors de la création de l'utilisateur", 500, $e->getMessage());
+ 
+    } catch (\Throwable $e) {
+        Log::error('Création utilisateur - erreur : ' . $e->getMessage());
+        return ResponseHandler::error("Erreur lors de la création de l'utilisateur", 500, $e->getMessage());
+    }
+ 
+    return ResponseHandler::success("Création effectuée", [
+        'success' => true,
+        'message' => "Utilisateur créé avec succès",
+        'user_id' => $user->id,
+    ]);
+}
+
+    public function saveUserOld(Request $data): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement saveUser() method.
         $hashPassword = Hash::make($data->password);
