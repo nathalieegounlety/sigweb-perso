@@ -52,6 +52,15 @@ Route::prefix('v1/permissions')->group(function () {
     Route::post('remove', [\App\Http\Controllers\PermissionsController::class, 'remove']);
 });
 
+// gestion des historiquesactions
+Route::prefix('v1/historiquesactions')->group(function () {
+    Route::post('store', [\App\Http\Controllers\HistoriqueActionController::class, 'store']);
+    Route::get('/', [\App\Http\Controllers\HistoriqueActionController::class, 'index']);
+    Route::post('unique', [\App\Http\Controllers\HistoriqueActionController::class, 'getHistoriques']);
+    Route::post('update', [\App\Http\Controllers\HistoriqueActionController::class, 'update']);
+    Route::post('remove', [\App\Http\Controllers\HistoriqueActionController::class, 'remove']);
+});
+
 // gestion des modepaiements
 Route::prefix('v1/modepaiements')->group(function () {
     Route::post('store', [\App\Http\Controllers\ModepaiementsController::class, 'store']);

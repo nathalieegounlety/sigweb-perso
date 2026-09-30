@@ -18,6 +18,7 @@ use App\Services\contracts\FormateursInterface;
 use App\Services\contracts\FormationsdscInterface;
 use App\Services\contracts\FormationsInterface;
 use App\Services\contracts\GrilletarifairesInterface;
+use App\Services\contracts\HistoriqueActionServiceInterface;
 use App\Services\contracts\InscritstypepiecesInterface;
 use App\Services\contracts\KkiapayInterfarce;
 use App\Services\contracts\ModepaiementsInterface;
@@ -47,6 +48,7 @@ use App\Services\Impl\FormateursService;
 use App\Services\Impl\FormationsdscService;
 use App\Services\Impl\FormationsService;
 use App\Services\Impl\GrilletarifairesService;
+use App\Services\Impl\HistoriqueActionService;
 use App\Services\Impl\InscritstypepiecesService;
 use App\Services\Impl\KkiapayService;
 use App\Services\Impl\ModepaiementsService;
@@ -105,6 +107,10 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(AfribapayInterface::class, AfribapayService::class);
         $this->app->bind(ModepaysInterface::class, ModepaysService::class);
         $this->app->bind(OperateursInterface::class, OperateursService::class);
+        $this->app->bind(HistoriqueActionServiceInterface::class, HistoriqueActionService::class);
+
+        
+        
     }
 
     /**
