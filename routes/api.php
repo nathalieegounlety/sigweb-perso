@@ -242,7 +242,8 @@ Route::prefix('v1/utilisateurs')->controller(\App\Http\Controllers\UsersControll
     Route::get('/', 'index');
     Route::post('update', 'update');
     Route::post('remove', 'remove');
-    Route::post('get_user', 'getUser');
+    Route::post('get_user', 'getUser'); 
+    Route::get('/export', 'exportListeUsers'); 
 });
 
 // gestion des auditeurs
@@ -409,6 +410,7 @@ Route::prefix('v1/comptabilites')->controller(\App\Http\Controllers\Comptabilite
     Route::post('details/process/paiements/dsc', 'detailProcessPaiementDsc');
     Route::post('traitement/process/paiement/dsc', 'traitementProcessPaiementDsc');
     Route::get('paiements/valide/export', 'exportPaiementsValide');
+    Route::get('paiements/liste/export', 'exportListePaiements');
 });
 
 // gestion des dashboard

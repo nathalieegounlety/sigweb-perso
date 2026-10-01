@@ -1,4 +1,3 @@
-{{-- resources/views/exports/paiements_valides.blade.php --}}
 <!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
@@ -12,7 +11,7 @@
   tfoot td { font-weight: bold; background: #f3f4f6; }
 </style></head>
 <body>
-  <h2>Paiements validés</h2>
+  <h2>SIGWEB ERSUMA - Paiements validés</h2>
   <div class="filtres">
     Édité le {{ now()->format('d/m/Y H:i') }}
     @if(!empty($filtres['date_debut'])) — Du {{ \Carbon\Carbon::parse($filtres['date_debut'])->format('d/m/Y') }} @endif

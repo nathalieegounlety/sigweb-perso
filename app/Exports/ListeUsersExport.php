@@ -14,13 +14,13 @@ class ListeUsersExport implements FromCollection, WithHeadings, WithMapping, Sho
 
     public function headings(): array
     {
-        return ['Nom et Prénoms',  'Email', 'Rôle', 'Statut', 'Date création', 'Date modification'];
+        return ['identifiant','Nom et Prénoms',  'Email', 'Rôle', 'Statut', 'Date création', 'Date modification'];
     }
 
     public function map($r): array
     {
         return [
-            $r->name, $r->email, 
+            $r->code_user, $r->name, $r->email, 
             $r->roles->pluck('libelle')->implode(', ') ?: 'Aucun rôle',
             $r->actif ? 'Actif' : 'Inactif',
             $r->created_at ? \Carbon\Carbon::parse($r->created_at)->format('d/m/Y H:i:s') : '',

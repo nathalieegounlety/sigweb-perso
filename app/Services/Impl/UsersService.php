@@ -203,11 +203,11 @@ public function saveUser(Request $data): \Illuminate\Http\JsonResponse
             });
         }
         // définition des filtres de multiples critères
-        $queryData
+        $queryData 
         ->when($request->filled('role_id'), fn ($q) => $q->whereHas('roles', fn ($r) => $r->where('roles.id', $request->role_id)))
         ->when($request->has('actif') && $request->actif !== '', fn ($q) => $q->where('actif', (int) $request->actif)) 
-        ->when($request->filled('date_debut'), fn ($q) => $q->whereDate('updated_at', '>=', $request->date_debut))
-        ->when($request->filled('date_fin'),   fn ($q) => $q->whereDate('updated_at', '<=', $request->date_fin));
+        ->when($request->filled('date_debut'), fn ($q) => $q->whereDate('created_at', '>=', $request->date_debut))
+        ->when($request->filled('date_fin'),   fn ($q) => $q->whereDate('created_at', '<=', $request->date_fin));
         
         return $queryData;
     }
@@ -215,7 +215,7 @@ public function saveUser(Request $data): \Illuminate\Http\JsonResponse
     private function appliquerFiltre($query, Request $request)
     {
         // définition des champs de trie asc ou desc
-        $allowed = ['name', 'email', 'actif', 'updated_at'];
+        $allowed = ['code_user','name', 'email', 'actif', 'updated_at'];
         $field = in_array($request->sort_field, $allowed, true) ? $request->sort_field : 'updated_at';
         return $query->orderBy($field, $request->sort_order === 'asc' ? 'asc' : 'desc');
     }
@@ -224,44 +224,7 @@ public function saveUser(Request $data): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getUsers() method.
         return $this->appliquerFiltre($this->requestUsersQuery($request), $request)
-        ->paginate($request->input('per_page', 50));
-
-        /* $perPage = $request->input('per_page', 50);
-        $search = $request->input('search');
-        $sortField = $request->input('sort_field', 'id');
-        $sortOrder = $request->input('sort_order', 'desc');
-
-        // Filtres spécifiques
-        $filterActif = $request->input('filter_actif');
-        $filterUpdatedAt = $request->input('filter_updated_at');
-
-        $queryData = User::select('users.id','users.code_user','users.name','users.username','users.email','users.actif','users.login_count','users.first_login','users.last_login','users.updated_at')
-            ->with('roles:id,libelle')
-            ->whereDoesntHave('roles', function ($q) {
-                $q->where('roles.id', 6);
-            });
-
-        // Recherche globale sur plusieurs champs
-        if ($search) {
-            $queryData->where(function ($q) use ($search) {
-                $q->where('users.code_user', 'like', "%{$search}%")
-                    ->orWhere('users.name', 'like', "%{$search}%")
-                    ->orWhere('users.username', 'like', "%{$search}%")
-                    ->orWhere('users.email', 'like', "%{$search}%"); // Recherche sur auteur
-            });
-        }
-
-        // Filtres par colonne
-        if ($filterActif !== null && $filterActif !== '') {
-            $queryData->where('users.actif', $filterActif); // 0 ou 1
-        }
-        if ($filterUpdatedAt) {
-            $queryData->whereDate('users.updated_at', $filterUpdatedAt);
-        }
-        // Tri
-            $queryData->orderBy("users.{$sortField}", $sortOrder);
-
-        return $queryData->paginate($perPage); */
+        ->paginate($request->input('per_page', 50)); 
     }
 
     public function getExportUsers(Request $request)

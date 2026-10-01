@@ -6,6 +6,7 @@ use App\Exports\ListeUsersExport;
 use App\Helpers\ResponseHandler;
 use App\Services\contracts\UsersInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use OpenApi\Attributes as OA;
 use PDF;
@@ -85,14 +86,18 @@ class UsersController extends Controller
             $nom  = 'SIGWEB_LISTE_UTILISATEURS_' . now()->format('Ymd_His');
 
             if ($request->format === 'pdf') {
-                return PDF::loadView('exports.paiements_valides', [
+                Log::info('export pdf user');
+                return PDF::loadView('exports.liste_utilisateurs', [
                     'rows'    => $rows,
                     'filtres' => $request->only(['date_debut','date_fin','role_id','search']),
                 ])->setPaper('a4', 'landscape')->download("$nom.pdf");
             }
 
             return Excel::download(new ListeUsersExport($rows), "$nom.xlsx");
+            
         } catch (\Exception $e) {
+             Log::info('erreur export pdf user');
+            Log::info($e->getMessage());
             return ResponseHandler::error("Erreur lors de l'export", 500, $e->getMessage());
         }
     }

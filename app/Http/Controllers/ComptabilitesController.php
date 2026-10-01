@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ExportsListePaiements;
 use App\Exports\PaiementsValidesExport;
 use App\Helpers\ResponseHandler;
 use App\Services\contracts\ComptabilitesInterface;
@@ -347,7 +348,7 @@ class ComptabilitesController extends Controller
 
         try {
             $rows = $this->comptabiliteService->getPaiementsvalidesExport($request);
-            $nom  = 'paiements_valides_' . now()->format('Ymd_His');
+            $nom  = 'SIGWEB_LISTE_PAIEMENTS_VALIDES_' . now()->format('Ymd_His');
 
             if ($request->format === 'pdf') {
                 return PDF::loadView('exports.paiements_valides', [
@@ -408,6 +409,39 @@ class ComptabilitesController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+ 
+    public function exportListePaiements(Request $request)
+    {
+        $request->validate([
+            'format'      => 'required|in:pdf,excel',
+            'date_debut'  => 'nullable|date',
+            'date_fin'    => 'nullable|date|after_or_equal:date_debut',
+            'statut_paiement'=> 'nullable|in:PAYE,IMPAYE',
+            'montant_min' => 'nullable|numeric',
+            'montant_max' => 'nullable|numeric',
+            'modepaiement_id' => 'nullable|numeric',
+            'formation_id' => 'nullable|numeric', 
+        ]);
+
+        try {
+            $rows = $this->comptabiliteService->getListePaiementsExport($request);
+            $nom  = 'SIGWEB_LISTE_PAIEMENTS_' . now()->format('Ymd_His');
+
+            if ($request->format === 'pdf') {
+                return PDF::loadView('exports.liste_paiements_tri', [
+                    'rows'    => $rows,
+                    'total'   => $rows->sum('montant'),
+                    'filtres' => $request->only(['date_debut','date_fin','statut_paiement','formation_id','modepaiement_id','montant_min','montant_max','search']),
+                ])->setPaper('a4', 'landscape')->download("$nom.pdf");
+            }
+
+            return Excel::download(new ExportsListePaiements($rows), "$nom.xlsx");
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Erreur lors de l'export", 500, $e->getMessage());
+        }
+    }
+
+
     public function traitementProcessPaiementDsc(Request $request){
         try {
             $validated = $request->validate([

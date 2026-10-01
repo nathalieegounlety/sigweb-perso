@@ -456,7 +456,7 @@ class ComptabilitesService implements ComptabilitesInterface
             formations.code_formation,
             formations.theme,
             detailspaiements.code_inscription
-        ");
+        "); 
 
         /** PAIEMENTS DSC (TRANCHES) */
         $dsc = DB::table('paiements_tranches')
@@ -525,13 +525,13 @@ class ComptabilitesService implements ComptabilitesInterface
         return $query;
     }
 
-    private function appliquerTri($query, Request $request)
+    private function appliquerTriPV($query, Request $request)
     {
         $allowed = ['nom','prenoms','reference','email','montant','num_transaction',
                     'type','date','libelle_modepaiement','pourcentage','have_reduction'];
 
         $field = in_array($request->input('sort_field'), $allowed) ? $request->input('sort_field') : 'date';
-        $order = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
+        $order = $request->input('sort_order') === 'desc' ? 'desc' : 'asc';
 
         return $query->orderBy("t.$field", $order);
     }
@@ -543,7 +543,7 @@ class ComptabilitesService implements ComptabilitesInterface
             // Somme calculée AVANT tri et pagination, sinon LIMIT/OFFSET la fausse
             $total = (clone $query)->sum('t.montant');
 
-            $paiements = $this->appliquerTri($query, $request)
+            $paiements = $this->appliquerTriPV($query, $request)
                 ->paginate($request->input('per_page', 10));
 
             return [
@@ -554,7 +554,7 @@ class ComptabilitesService implements ComptabilitesInterface
 
     public function getPaiementsvalidesExport(Request $request)
     {
-        return $this->appliquerTri($this->paiementsValidesQuery($request), $request)->get();
+        return $this->appliquerTriPV($this->paiementsValidesQuery($request), $request)->get();
     }
 
     public function getPaiementsOuvragesvalides(Request $request) //: LengthAwarePaginator
@@ -1855,118 +1855,143 @@ class ComptabilitesService implements ComptabilitesInterface
 
         return  ResponseHandler::success("ok",$details_paiement);
     }
+    
+    /**
+     * Requête filtrée commune à la liste et à l'export (sans tri ni pagination).
+     */
+    public function listePaiementsQuery(Request $request)
+    {
+        /* =========================================================
+        |  1. Requête de base (jointures + colonnes)
+        ========================================================= */
+        $base = Inscriptions::query()
+            ->leftJoin('auditeurs', 'auditeurs.email', '=', 'inscriptions.email')
+            ->leftJoin('detailspaiements as dp', function ($join) {
+                $join->on('dp.id_tarification_formation', '=', 'inscriptions.tarif_formation_id')
+                    ->on('dp.email', '=', 'inscriptions.email');  
+            })
+            ->leftJoin('paiements as p', 'p.reference', '=', 'dp.reference_paiement')
+            ->leftJoin('modepaiements as mp', 'mp.id', '=', 'p.id_modepaiement')
+            ->leftJoin('reductions', 'reductions.id', '=', 'dp.id_reduction')
+            ->leftJoin('formations', 'formations.code_formation', '=', 'inscriptions.code_formation')
+            ->selectRaw("
+                inscriptions.id,
+                inscriptions.tarif_formation_id,
+                inscriptions.code_formation,
+                inscriptions.code_inscription,
+                inscriptions.updated_at,
+                auditeurs.email,
+                auditeurs.nom,
+                auditeurs.prenoms,
+                CONCAT(auditeurs.prenoms, ' ', auditeurs.nom) as auditeur,
+                CASE
+                    WHEN p.type = 'DSC' THEN (
+                        SELECT SUM(COALESCE(dp2.montant_paye, 0) + COALESCE(dp2.montant_restant, 0))
+                        FROM detailspaiements dp2
+                        WHERE dp2.reference_paiement = dp.reference_paiement
+                    )
+                    ELSE COALESCE(dp.montant_paye, 0) + COALESCE(dp.montant_restant, 0)
+                END as montant,
+                dp.id as detailpaiement_id,
+                dp.reference_paiement,
+                dp.id_tarification_formation,
+                dp.preuve_path,
+                dp.statut_paiement,
+                dp.have_reduction_dsc,
+                dp.reference_paiement_partiel,
+                dp.montant_restant,
+                mp.libelle as modepaiement,
+                mp.id as modepaiement_id,
+                p.type,
+                p.id as paiement_id,
+                p.num_transaction,
+                reductions.id as id_reduction,
+                reductions.pourcentage,
+                formations.id as formation_id,
+                formations.is_formation_dsc,
+                formations.theme
+            ")
+            ->selectRaw("
+                EXISTS (
+                    SELECT 1 FROM paiements_tranches pt
+                    WHERE pt.details_paiements_id = dp.id
+                    AND pt.statut_traitement = 'ATTENTE'
+                ) as check_statut_ptranche
+            ")
+            ->selectRaw("
+                EXISTS (
+                    SELECT 1 FROM paiements_tranches pt
+                    WHERE pt.details_paiements_id = dp.id
+                    AND pt.statut_traitement = 'VALIDER'
+                ) as check_recu_ptranche
+            ");
+    
+        /* =========================================================
+        |  2. Filtres sur des colonnes réelles : appliqués sur la base 
+        ========================================================= */
+        if ($search = $request->input('search')) {
+            $base->where(function ($q) use ($search) {
+                $q->where('auditeurs.nom', 'like', "%{$search}%")
+                ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
+                ->orWhere('auditeurs.email', 'like', "%{$search}%")
+                ->orWhere('dp.reference_paiement', 'like', "%{$search}%")
+                ->orWhere('dp.statut_paiement', 'like', "%{$search}%")
+                ->orWhere('inscriptions.code_formation', 'like', "%{$search}%")
+                ->orWhere('mp.libelle', 'like', "%{$search}%");
+            });
+        }
+    
+        $base
+            ->when($request->filled('filter_updated_at'), fn ($q) => $q->whereDate('inscriptions.updated_at', $request->filter_updated_at))
+            ->when($request->filled('date_debut'),        fn ($q) => $q->whereDate('inscriptions.updated_at', '>=', $request->date_debut))
+            ->when($request->filled('date_fin'),          fn ($q) => $q->whereDate('inscriptions.updated_at', '<=', $request->date_fin))
+            ->when($request->filled('modepaiement_id'),   fn ($q) => $q->where('mp.id', $request->modepaiement_id))
+            ->when($request->filled('formation_id'),      fn ($q) => $q->where('formations.id', $request->formation_id))
+            ->when($request->filled('statut_paiement'),      fn ($q) => $q->where('dp.statut_paiement', $request->statut_paiement));
+    
+        /* =========================================================
+        |  3. "montant" est un alias calculé : on enveloppe la requête
+        |     pour pouvoir le filtrer (et le trier) comme une colonne
+        ========================================================= */
+        return DB::query()
+            ->fromSub($base, 't')
+            ->when($request->filled('montant_min'), fn ($q) => $q->where('t.montant', '>=', (float) $request->montant_min))
+            ->when($request->filled('montant_max'), fn ($q) => $q->where('t.montant', '<=', (float) $request->montant_max));
+    }
+    
+    
+    /**
+     * Tri : liste blanche des colonnes autorisées.
+     */
+    private function appliquerFiltreP($query, Request $request)
+    {
+        $allowed = [
+            'nom', 'prenoms', 'auditeur', 'email', 'reference_paiement', 'code_formation',
+            'statut_paiement', 'montant', 'modepaiement', 'type', 'updated_at',
+        ];
+    
+        $field = in_array($request->input('sort_field'), $allowed, true) ? $request->input('sort_field') : 'updated_at';
+        $order = $request->input('sort_order') === 'desc' ? 'desc' : 'asc';
+    
+        return $query
+            ->orderBy("t.$field", $order)
+            ->orderBy('t.id');   // départage les égalités : pagination stable
+    }
 
     public function getListePaiements(Request $request)
     {
         // TODO: Implement getListePaiements() method.
         $perPage = $request->input('per_page', 50);
-        $search = $request->input('search');
-        $sortField = $request->input('sort_field', 'id');
-        $sortOrder = $request->input('sort_order', 'desc');
+        return $this->appliquerFiltreP($this->listePaiementsQuery($request), $request)
+        ->paginate($perPage);  
+    }
 
-        // Filtres spécifiques
-        $filterActif = $request->input('filter_actif');
-        $filterUpdatedAt = $request->input('filter_updated_at');
-
-        $queryData = Inscriptions::leftJoin('auditeurs', 'auditeurs.email', '=', 'inscriptions.email')
-            ->leftJoin('detailspaiements as dp', function ($join) {
-                $join->on('dp.id_tarification_formation', '=', 'inscriptions.tarif_formation_id')
-                    ->where('dp.email', '=', DB::raw('inscriptions.email'))
-                    ->whereNotNull('dp.email');
-            })
-            ->leftJoin('paiements as p', function ($join) {
-                $join->on('p.reference', '=', 'dp.reference_paiement');
-            })
-            ->leftJoin('modepaiements as mp', function ($join) {
-                $join->on('mp.id', '=', 'p.id_modepaiement');
-            })
-            ->leftJoin('reductions', function ($join) {
-                $join->on('reductions.id', '=', 'dp.id_reduction');
-            })
-            ->leftJoin('formations', function ($join) {
-                $join->on('inscriptions.code_formation', '=', 'formations.code_formation');
-            })
-            ->selectRaw("
-                auditeurs.email,
-                inscriptions.tarif_formation_id,
-                inscriptions.code_formation,
-                CONCAT(auditeurs.prenoms, ' ', auditeurs.nom) as auditeur,
-                CASE
-                    WHEN p.type = 'DSC' THEN (
-                        SELECT
-                            SUM(
-                                COALESCE(dp2.montant_paye, 0) + COALESCE(dp2.montant_restant, 0)
-                            )
-                        FROM detailspaiements dp2
-                        WHERE dp2.reference_paiement = dp.reference_paiement
-                    )
-                    ELSE (
-                        COALESCE(dp.montant_paye, 0) + COALESCE(dp.montant_restant, 0)
-                    )
-                END as montant,
-                inscriptions.updated_at,
-                inscriptions.id,
-                inscriptions.code_inscription,
-                dp.id as detailpaiement_id,
-                dp.reference_paiement,
-                dp.id_tarification_formation,
-                dp.preuve_path,
-                mp.libelle as modepaiement,
-                mp.id as modepaiement_id,
-                dp.statut_paiement,
-                dp.id_reduction,
-                p.type,
-                p.id as paiement_id,
-                reductions.id as id_reduction,
-                reductions.pourcentage,
-                dp.have_reduction_dsc,
-                dp.reference_paiement_partiel,
-                p.num_transaction,
-                dp.montant_restant,
-                formations.is_formation_dsc,
-                formations.theme
-            ")
-            ->selectRaw(
-                'EXISTS (
-                    SELECT 1
-                    FROM paiements_tranches pt
-                    WHERE pt.details_paiements_id = dp.id
-                    AND pt.statut_traitement = "ATTENTE"
-                ) as check_statut_ptranche'
-            )
-            ->selectRaw(
-                'EXISTS (
-                    SELECT 1
-                    FROM paiements_tranches pt
-                    WHERE pt.details_paiements_id = dp.id
-                    AND pt.statut_traitement = "VALIDER"
-                ) as check_recu_ptranche'
-            )
-        ;
-
-
-        // Recherche globale sur plusieurs champs
-        if ($search) {
-            $queryData->where(function ($q) use ($search) {
-                $q->where('auditeurs.nom', 'like', "%{$search}%")
-                    ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
-                    ->orWhere('auditeurs.email', 'like', "%{$search}%")
-                    ->orWhere('dp.reference_paiement', 'like', "%{$search}%")
-                    ->orWhere('dp.statut_paiement', 'like', "%{$search}%")
-                    ->orWhere('inscriptions.code_formation', 'like', "%{$search}%")
-                    ->orWhere('mp.libelle', 'like', "%{$search}%")
-                ;
-            });
-        }
-
-        // Filtres par colonne
-        if ($filterUpdatedAt) {
-            $queryData->whereDate('inscriptions.updated_at', $filterUpdatedAt);
-        }
-        // Tri
-        $queryData->orderBy("inscriptions.{$sortField}", $sortOrder);
-
-        return $queryData->paginate($perPage);
+    /**
+     * Pour l'export : même requête, sans pagination.
+     */
+    public function getListePaiementsExport(Request $request)
+    {
+        return $this->appliquerFiltreP($this->listePaiementsQuery($request), $request)->get();
     }
 
     public function getDetailsProcessPaiementDsc(Request $request): \Illuminate\Http\JsonResponse
