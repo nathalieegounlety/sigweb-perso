@@ -364,6 +364,8 @@ Route::prefix('v1/paiements')->controller(\App\Http\Controllers\PaiementsControl
     Route::post('partiel/store', 'savePaiementPartiel');
     Route::post('infos/ouvrage', 'infosPaiementOuvrage');
     Route::get('recapitulatif/{codeFormation}', 'getRecapitulatifPaiements');
+    Route::get('recapitulatif/stats/{codeFormation}/participants', 'statsParticipantsFormation');
+    Route::get('recapitulatif/stats/export/{codeFormation}/participants', 'statsExportParticipantsFormation');
 
 });
 

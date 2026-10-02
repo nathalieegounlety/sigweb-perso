@@ -15,6 +15,7 @@ use App\Models\Paiements;
 use App\Models\Rapports;
 use App\Models\User;
 use App\Services\contracts\PaiementsInterface;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -329,255 +330,431 @@ class PaiementsService implements PaiementsInterface
         return  ResponseHandler::success("Paiement non retrouvé ou référence invalide",$dataResponse);
     }
 
-    public function getRecapitulatifPaiements(string $codeFormation): \Illuminate\Http\JsonResponse
-    {
-        // Information sur la formation en cours
-        $formation = Formations::where("code_formation", $codeFormation)->first();
-        $totalInscGratuite = Detailspaiements::where("code_formation",$codeFormation)->where("id_reduction",3)->count();
 
-        // vérifier s'il s'agit d'une formation dsc
-        if ($formation->is_formation_dsc) {
-            # code...
-              // Détails des participants
-       $liste_participants = DB::table('inscriptions')
-            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
-            ->leftJoin('paiements', 'paiements.code_inscription', '=', 'inscriptions.code_inscription')
-            ->leftJoin(
-                DB::raw('
+    /**
+     * Liste paginée + filtrée des participants d'une formation.
+     *
+     * Paramètres acceptés :
+     *  - page, per_page, sort_field, sort_order (asc par défaut)
+     *  - search          : nom, prénoms, e-mail, téléphone
+     *  - type_formation  : PRESENTIEL | VISIO
+     *  - statut_paiement : PAYE | NON_PAYE
+     *  - a_participe     : 1 | 0
+     */
+    public function getStatsParticipantsFormation(string $codeFormation, Request $request): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $query = $this->participantsFormationQuery($codeFormation, $request);
+
+            // Totaux sur l'ensemble filtré, calculés AVANT tri et pagination
+            $totaux = (clone $query)
+                ->selectRaw('
+                    COUNT(*) as nb_participants,
+                    COALESCE(SUM(t.montant_paye), 0)    as total_paye,
+                    COALESCE(SUM(t.montant_restant), 0) as total_restant
+                ')
+                ->first();
+
+            $page = $this->trierParticipants($query, $request)
+                ->paginate((int) $request->input('per_page', 10));
+
+            return ResponseHandler::success('ok', [
+                'current_page' => $page->currentPage(),
+                'data'         => $page->items(),
+                'per_page'     => $page->perPage(),
+                'total'        => $page->total(),
+                'totaux'       => $totaux,
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return ResponseHandler::success("Formation introuvable", [
+                'success' => false,
+                'message' => "La formation {$codeFormation} n'existe pas.",
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('Participants formation : ' . $e->getMessage());
+            return ResponseHandler::error("Erreur lors de la récupération des participants", 500, $e->getMessage());
+        }
+    }
+
+
+    /**
+     * Même requête, sans pagination : pour l'export Excel / PDF.
+     */
+    public function getStatsParticipantsFormationExport(string $codeFormation, Request $request)
+    {
+        return $this->trierParticipants($this->participantsFormationQuery($codeFormation, $request), $request)->get();
+    }
+
+ 
+/**
+ * Requête filtrée commune à la liste et à l'export (sans tri ni pagination).
+ */
+private function participantsFormationQuery(string $codeFormation, Request $request)
+{
+    $formation = Formations::where('code_formation', $codeFormation)->firstOrFail();
+    $estDsc    = (bool) $formation->is_formation_dsc;
+ 
+    $base = $estDsc
+        ? $this->baseParticipantsDsc($codeFormation)
+        : $this->baseParticipantsClassique($codeFormation);
+ 
+    /* ---------- Filtres sur colonnes réelles (index utilisés) ---------- */
+    if ($search = trim((string) $request->input('search'))) {
+        $base->where(function ($q) use ($search, $estDsc) {
+            $like = "%{$search}%";
+            $q->where('auditeurs.nom', 'like', $like)
+              ->orWhere('auditeurs.prenoms', 'like', $like)
+              ->orWhere('inscriptions.email', 'like', $like)
+              ->orWhere('auditeurs.telephone', 'like', $like)
+              ->orWhereRaw("CONCAT(auditeurs.prenoms, ' ', auditeurs.nom) LIKE ?", [$like])
+              ->orWhereRaw("CONCAT(auditeurs.nom, ' ', auditeurs.prenoms) LIKE ?", [$like]);
+ 
+            if ($estDsc) {
+                $q->orWhere('paiements.code_remise_dsc', 'like', $like);   // table jointe en DSC seulement
+            }
+        });
+    }
+ 
+    $base->when($request->filled('type_formation'),
+        fn ($q) => $q->where('inscriptions.type_formation', $request->type_formation));
+ 
+    /* ---------- Enveloppe : filtres sur les colonnes calculées ---------- */
+    return DB::query()
+        ->fromSub($base, 't')
+        ->when($request->filled('statut_paiement'), function ($q) use ($request) {
+            if ($request->statut_paiement === 'PAYE') {
+                $q->where('t.statut_paiement', 'PAYE');
+            } else {
+                // Non payé : tout ce qui n'est pas PAYE, y compris sans paiement (NULL)
+                $q->where(fn ($w) => $w->whereNull('t.statut_paiement')->orWhere('t.statut_paiement', '<>', 'PAYE'));
+            }
+        })
+        ->when($request->filled('a_participe'),
+            fn ($q) => $q->where('t.a_participe', (int) $request->a_participe))
+        ->when($request->filled('type_reduction'), function ($q) use ($request) {
+            match ($request->type_reduction) {
+                'BOURSE_COMPLET' => $q->where('t.have_reduction_dsc', 1)
+                                      ->where('t.code_remise_dsc', 'BOURSE_COMPLET'),
+                'REDUCTION_5'    => $q->where('t.have_reduction_dsc', 1)
+                                      ->where(fn ($w) => $w->whereNull('t.code_remise_dsc')
+                                                           ->orWhere('t.code_remise_dsc', '<>', 'BOURSE_COMPLET')),
+                'SANS'           => $q->where('t.have_reduction_dsc', 0),
+                default          => null,
+            };
+        });
+}
+ 
+ 
+/**
+ * Tri : liste blanche, ascendant par défaut, départage par id pour une pagination stable.
+ */
+private function trierParticipants($query, Request $request)
+{
+    $allowed = [
+        'nom', 'prenoms', 'email', 'type_formation', 'statut_paiement',
+        'montant_total', 'montant_paye', 'montant_restant', 'a_participe', 'observations',
+        'frais_inscription', 'frais_participation', 'reduction_affichee', 'code_remise_dsc',
+    ];
+ 
+    $field = in_array($request->input('sort_field'), $allowed, true) ? $request->input('sort_field') : 'nom';
+    $order = $request->input('sort_order') === 'desc' ? 'desc' : 'asc';
+ 
+    return $query->orderBy("t.$field", $order)->orderBy('t.id', $order);
+}
+
+
+/**
+ * Base DSC.
+ * Les montants affichés par la vue DSC sont calculés ICI, pour que tri,
+ * filtres, totaux et export utilisent exactement les mêmes valeurs.
+ */
+private function baseParticipantsDsc(string $codeFormation)
+{
+    // Catégories DSC pour lesquelles payé / restant viennent des frais détaillés
+    $categoriesDetaillees = "'PROFESSIONNELS', 'ETUDIANTS', 'INSCRIPTION'";
+ 
+    return DB::table('inscriptions')
+        ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+        ->leftJoin('paiements', 'paiements.code_inscription', '=', 'inscriptions.code_inscription')
+        ->leftJoin(DB::raw('
             (
                 SELECT
                     dp.reference_paiement,
                     MAX(r.pourcentage) as reduction_pourcentage,
-                    SUM(
-                        CASE
-                            WHEN gt.type_tarif = "INSCRIPTION"
-                            THEN dp.montant_paye
-                            ELSE 0
-                        END
-                    ) as frais_inscription_paye,
-                    SUM(
-                        CASE
-                            WHEN gt.type_tarif = "INSCRIPTION"
-                            THEN dp.montant_restant
-                            ELSE 0
-                        END
-                    ) as frais_inscription_restant,
-                    SUM(
-                        CASE
-                            WHEN gt.type_tarif <> "INSCRIPTION"
-                            THEN dp.montant_paye
-                            ELSE 0
-                        END
-                    ) as frais_scolarite_paye,
-
-                    SUM(
-                        CASE
-                            WHEN gt.type_tarif <> "INSCRIPTION"
-                            THEN dp.montant_restant
-                            ELSE 0
-                        END
-                    ) as frais_scolarite_restant
-
+                    SUM(CASE WHEN gt.type_tarif = "INSCRIPTION"  THEN dp.montant_paye    ELSE 0 END) as frais_inscription_paye,
+                    SUM(CASE WHEN gt.type_tarif = "INSCRIPTION"  THEN dp.montant_restant ELSE 0 END) as frais_inscription_restant,
+                    SUM(CASE WHEN gt.type_tarif <> "INSCRIPTION" THEN dp.montant_paye    ELSE 0 END) as frais_scolarite_paye,
+                    SUM(CASE WHEN gt.type_tarif <> "INSCRIPTION" THEN dp.montant_restant ELSE 0 END) as frais_scolarite_restant
                 FROM detailspaiements dp
-                INNER JOIN tarificationsformations tt
-                    ON tt.id = dp.id_tarification_formation
-                INNER JOIN grilletarifaires gt
-                    ON gt.id = tt.id_grilletarifaire
-                LEFT JOIN reductions r
-                    ON r.id = dp.id_reduction
-
+                INNER JOIN tarificationsformations tt ON tt.id = dp.id_tarification_formation
+                INNER JOIN grilletarifaires gt        ON gt.id = tt.id_grilletarifaire
+                LEFT JOIN reductions r                ON r.id  = dp.id_reduction
                 GROUP BY dp.reference_paiement
             ) as dp_calc
-        '),
-                function ($join) {
-                    $join->on('dp_calc.reference_paiement', '=', 'paiements.reference')
-                        ->where('paiements.type', '=', 'DSC');
-                }
-            )
-
-            /*
-            |--------------------------------------------------------------------------
-            | 2️⃣ Flag toujours retourné (is_paiement_dsc)
-            |--------------------------------------------------------------------------
-            */
-            ->leftJoin(
-                DB::raw('
+        '), function ($join) {
+            $join->on('dp_calc.reference_paiement', '=', 'paiements.reference')
+                 ->where('paiements.type', '=', 'DSC');
+        })
+        ->leftJoin(DB::raw('
             (
-                SELECT
-                    reference_paiement,
-                    MAX(have_reduction_dsc) as have_reduction_dsc
+                SELECT reference_paiement, MAX(have_reduction_dsc) as have_reduction_dsc
                 FROM detailspaiements
                 GROUP BY reference_paiement
             ) as dp_flag
-        '),
-                'dp_flag.reference_paiement',
-                '=',
-                'paiements.reference'
-            )
+        '), 'dp_flag.reference_paiement', '=', 'paiements.reference')
+        ->select(
+            'inscriptions.id',
+            'inscriptions.email',
+            'auditeurs.nom',
+            'auditeurs.prenoms',
+            'auditeurs.telephone',
+            'auditeurs.pays',
+            'inscriptions.tarif_formation_id',
+            'inscriptions.type_formation',
+            'inscriptions.presentiel',
+            'inscriptions.observations',
+            'paiements.statut_paiement',
+            'paiements.code_remise_dsc',
+ 
+            // Montant total : celui du paiement (comme la vue d'origine)
+            DB::raw('COALESCE(paiements.montant_total, 0) as montant_total'),
+ 
+            // Payé / restant : depuis les frais détaillés pour les catégories DSC, sinon depuis le paiement
+            DB::raw("CASE WHEN inscriptions.type_formation IN ({$categoriesDetaillees})
+                          THEN COALESCE(dp_calc.frais_inscription_paye, 0) + COALESCE(dp_calc.frais_scolarite_paye, 0)
+                          ELSE COALESCE(paiements.montant_paye, 0)
+                     END as montant_paye"),
+            DB::raw("CASE WHEN inscriptions.type_formation IN ({$categoriesDetaillees})
+                          THEN COALESCE(dp_calc.frais_inscription_restant, 0) + COALESCE(dp_calc.frais_scolarite_restant, 0)
+                          ELSE COALESCE(paiements.montant_restant, 0)
+                     END as montant_restant"),
+ 
+            // Frais affichés (payé + restant)
+            DB::raw('COALESCE(dp_calc.frais_inscription_paye, 0) + COALESCE(dp_calc.frais_inscription_restant, 0) as frais_inscription'),
+            DB::raw('COALESCE(dp_calc.frais_scolarite_paye, 0)   + COALESCE(dp_calc.frais_scolarite_restant, 0)   as frais_participation'),
+ 
+            // Détail des frais (conservé pour compatibilité)
+            DB::raw('COALESCE(dp_calc.frais_inscription_paye, 0)    as frais_inscription_paye'),
+            DB::raw('COALESCE(dp_calc.frais_inscription_restant, 0) as frais_inscription_restant'),
+            DB::raw('COALESCE(dp_calc.frais_scolarite_paye, 0)      as frais_scolarite_paye'),
+            DB::raw('COALESCE(dp_calc.frais_scolarite_restant, 0)   as frais_scolarite_restant'),
+ 
+            // Réduction
+            DB::raw('COALESCE(dp_calc.reduction_pourcentage, 0) as reduction_pourcentage'),
+            DB::raw('COALESCE(dp_flag.have_reduction_dsc, 0)    as have_reduction_dsc'),
+            DB::raw("CASE WHEN COALESCE(dp_flag.have_reduction_dsc, 0) = 1
+                          THEN (CASE WHEN paiements.code_remise_dsc = 'BOURSE_COMPLET' THEN 100 ELSE 5 END)
+                          ELSE COALESCE(dp_calc.reduction_pourcentage, 0)
+                     END as reduction_affichee")
+        )
+        ->selectRaw('
+            (EXISTS (
+                SELECT 1 FROM rapports
+                WHERE rapports.email = inscriptions.email
+                  AND rapports.code_formation = ?
+            )) as a_participe
+        ', [$codeFormation])
+        ->where('inscriptions.code_formation', $codeFormation);
+}
+ 
+ 
+/**
+ * Base formation classique.
+ * Les colonnes DSC sont présentes avec des valeurs neutres (0 / NULL).
+ */
+private function baseParticipantsClassique(string $codeFormation)
+{
+    return DB::table('inscriptions')
+        ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
+        ->leftJoin('detailspaiements', function ($join) {
+            $join->on('detailspaiements.code_formation', '=', 'inscriptions.code_formation')
+                 ->on('detailspaiements.code_inscription', '=', 'inscriptions.code_inscription');
+        })
+        ->leftJoin('reductions', 'reductions.id', '=', 'detailspaiements.id_reduction')
+        ->select(
+            'inscriptions.id',
+            'inscriptions.email',
+            'auditeurs.nom',
+            'auditeurs.prenoms',
+            'auditeurs.telephone',
+            'auditeurs.pays',
+            'inscriptions.tarif_formation_id',
+            'inscriptions.type_formation',
+            'inscriptions.presentiel',
+            'inscriptions.observations',
+            'detailspaiements.montant_restant',
+            'detailspaiements.montant_paye',
+            'detailspaiements.statut_paiement',
+            'reductions.pourcentage',
+            DB::raw('COALESCE(detailspaiements.montant_paye, 0) + COALESCE(detailspaiements.montant_restant, 0) as montant_total'),
+ 
+            // Colonnes DSC neutres : mêmes colonnes dans les deux bases
+            DB::raw('NULL as code_remise_dsc'),
+            DB::raw('0 as frais_inscription'),
+            DB::raw('0 as frais_participation'),
+            DB::raw('0 as have_reduction_dsc'),
+            DB::raw('COALESCE(reductions.pourcentage, 0) as reduction_affichee')
+        )
+        ->selectRaw('
+            (EXISTS (
+                SELECT 1 FROM rapports
+                WHERE rapports.email = inscriptions.email
+                  AND rapports.code_formation = ?
+            )) as a_participe
+        ', [$codeFormation])
+        ->where('inscriptions.code_formation', $codeFormation);
+}
 
-            ->select(
-                'inscriptions.email',
-                'auditeurs.nom as nom',
-                'auditeurs.prenoms as prenoms',
-                'auditeurs.telephone as telephone',
-                'auditeurs.pays as pays',
-                'inscriptions.tarif_formation_id',
-                'inscriptions.type_formation',
-                'inscriptions.presentiel',
-                'inscriptions.observations',
-
-                'paiements.montant_total',
-                'paiements.montant_restant',
-                'paiements.montant_paye',
-                'paiements.statut_paiement',
-                'paiements.code_remise_dsc',
-                
-                // Frais calculés via grille
-                DB::raw('COALESCE(dp_calc.frais_inscription_paye, 0) as frais_inscription_paye'),
-                DB::raw('COALESCE(dp_calc.frais_inscription_restant, 0) as frais_inscription_restant'),
-                DB::raw('COALESCE(dp_calc.frais_scolarite_paye, 0) as frais_scolarite_paye'),
-                DB::raw('COALESCE(dp_calc.frais_scolarite_restant, 0) as frais_scolarite_restant'),
-
-                // Réduction
-                DB::raw('COALESCE(dp_calc.reduction_pourcentage, 0) as reduction_pourcentage'),
-
-                // Toujours retourné
-                DB::raw('COALESCE(dp_flag.have_reduction_dsc, 0) as have_reduction_dsc')
-            )
-            ->selectRaw(
-                '(EXISTS (
-                    SELECT 1 FROM rapports
-                    WHERE rapports.email = inscriptions.email 
-                    AND rapports.code_formation = ?
-                )) as a_participe',
-                [$codeFormation]
-            )
-            ->where('inscriptions.code_formation', $codeFormation)
-            ->orderBy('auditeurs.nom', 'ASC')
-            ->get(); 
-
-        } else {
-            # code...
-              // Détails des participants
-       $liste_participants = DB::table('inscriptions')
-            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
-            ->leftJoin('detailspaiements', function ($join) {
-                $join->on('detailspaiements.code_formation', '=', 'inscriptions.code_formation')
-                    ->on('detailspaiements.code_inscription', '=', 'inscriptions.code_inscription'); 
-            })
-            ->leftJoin('reductions', 'reductions.id', '=', 'detailspaiements.id_reduction') 
-            ->select(
-                'inscriptions.email',
-                'auditeurs.nom as nom',
-                'auditeurs.prenoms as prenoms',
-                'auditeurs.telephone as telephone',
-                'auditeurs.pays as pays',
-                'inscriptions.tarif_formation_id',
-                'inscriptions.type_formation',
-                'inscriptions.presentiel',
-                'inscriptions.observations', 
-                'detailspaiements.montant_restant',
-                'detailspaiements.montant_paye',
-                'detailspaiements.statut_paiement', 
-                'reductions.pourcentage' 
-            )
-            ->selectRaw(
-                '(EXISTS (
-                    SELECT 1 FROM rapports
-                    WHERE rapports.email = inscriptions.email 
-                    AND rapports.code_formation = ?
-                )) as a_participe',
-                [$codeFormation]
-            )
-            ->where('inscriptions.code_formation', $codeFormation) 
-            ->orderBy('auditeurs.nom', 'ASC')
-            ->get(); 
-        }
-         
-
-        // Total des participants
-        $total_participant = Rapports::where("code_formation", $codeFormation)->count();
-
-        // Total des participants en présentiel
-        $total_participant_presentiel = DB::table('rapports')
-            ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
-            ->leftJoin('auditeurs', 'inscriptions.email', '=', 'auditeurs.email')
-            ->where('rapports.code_formation', $codeFormation)
-            ->where('inscriptions.code_formation', $codeFormation)
-            ->where('rapports.temps_presence', 0)
-            ->count();
-
-        $totalPaiementAttestation = DB::table('tarificationsformations')
-            ->join('detailspaiements', 'detailspaiements.id_tarification_formation', '=', 'tarificationsformations.id')
-            ->join('grilletarifaires', 'grilletarifaires.id', '=', 'tarificationsformations.id_grilletarifaire')
-            ->join('paiements', 'paiements.reference', '=', 'detailspaiements.reference_paiement')
-            ->join('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
-            ->select('detailspaiements.*','paiements.email as email_paiement','grilletarifaires.type_tarif','grilletarifaires.montant','modepaiements.libelle as modepaiement')
-            ->where('tarificationsformations.code_formation',$codeFormation)
-            ->where('detailspaiements.statut_paiement',"PAYE")
-            ->count();
-
-        // Total des inscriptions
-        $total_inscrit = Inscriptions::where("code_formation", $codeFormation)->count();
-
-        // Total des inscriptions en visio
-        $total_inscrit_visio = Inscriptions::where("code_formation", $codeFormation)->where("presentiel", 0)->count();
-
-        // Total des inscriptions en présentiel
-        $total_inscrit_presentiel = Inscriptions::where("code_formation", $codeFormation)->where("presentiel", 1)->count();
-
-        $totalGratuitPresentiel = Detailspaiements::where("detailspaiements.code_formation",$codeFormation)
-            ->where("id_reduction",3)
-            ->join("inscriptions","inscriptions.email","detailspaiements.email")
-            ->where("inscriptions.type_formation","PRESENTIEL")
-            ->where("inscriptions.code_formation",$codeFormation)->count();
-
-        $totalGratuitVisio = Detailspaiements::where("detailspaiements.code_formation",$codeFormation)
-            ->where("id_reduction",3)
-            ->join("inscriptions","inscriptions.email","detailspaiements.email")
-            ->where("inscriptions.type_formation","VISIO")
-            ->where("inscriptions.code_formation",$codeFormation)->count();
-
-                      $fm_gratuite = false;
-                  foreach($formation->getTarification($formation->code_formation) as $tarification){
-                      if ($tarification->get_grille_libelle == "GRATUIT"){
-                          $fm_gratuite = true;
-                      }
-                  }
-
-        // Calcul des statistiques
-        $stats = [
-            'inscriptions_presentiel' => $total_inscrit_presentiel,
-            'gratuits_presentiel' => $totalGratuitPresentiel,
-            'payants_presentiel' => $total_inscrit_presentiel, // À ajuster selon votre logique
-            'attestations_presentiel' => $totalPaiementAttestation, // À calculer selon votre logique
-            'participants_presentiel' => $total_participant_presentiel,
-
-            'inscriptions_visio' => $total_inscrit_visio,
-            'gratuits_visio' => $totalGratuitVisio, // À calculer selon votre logique
-            'payants_visio' => $total_inscrit_visio, // À ajuster selon votre logique
-            'attestations_visio' => 0, // À calculer selon votre logique
-            'participants_visio' => $total_participant - $total_participant_presentiel,
-
-            'total_inscriptions' => $total_inscrit,
-            'total_gratuits' => 0, // À calculer selon votre logique
-            'total_payants' => $total_inscrit, // À ajuster selon votre logique
-            'total_attestations' => 0, // À calculer selon votre logique
-            'total_participants' => $total_participant,
-            'totalInscGratuite' => $totalInscGratuite
-        ];
-
-
-
-        // Retourner les données sous forme de JSON
+/**
+ * Récapitulatif d'une formation : formation + statistiques globales.
+ * (La liste des participants est servie par getParticipantsFormation.)
+ */
+public function getRecapitulatifPaiements(string $codeFormation): \Illuminate\Http\JsonResponse
+{
+    $formation = Formations::where('code_formation', $codeFormation)->first();
+ 
+    if (!$formation) {
         return response()->json([
-            'success' => true,
-            'formation' => $formation,
-            'stats' => $stats,
-            'participants' => $liste_participants,
-            'fm_gratuite' => $fm_gratuite
+            'success' => false,
+            'message' => "La formation {$codeFormation} n'existe pas.",
         ]);
     }
+ 
+    $recap = $this->calculerStatsRecapitulatif($formation);
+ 
+    // Même format de réponse qu'avant
+    return response()->json([
+        'success'     => true,
+        'formation'   => $formation,
+        'stats'       => $recap['stats'],
+        'fm_gratuite' => $recap['fm_gratuite'],
+    ]);
+}
+ 
+ 
+/**
+ * Calcul des statistiques d'une formation.
+ * Utilisé par l'écran (getRecapitulatifPaiements) ET par l'export.
+ *
+ * @return array{stats: array, fm_gratuite: bool}
+ */
+public function calculerStatsRecapitulatif(Formations $formation): array
+{
+    $codeFormation = $formation->code_formation;
+ 
+    $totalInscGratuite = Detailspaiements::where('code_formation', $codeFormation)
+        ->where('id_reduction', 3)
+        ->count();
+ 
+    // Participants (présents dans les rapports)
+    $total_participant = Rapports::where('code_formation', $codeFormation)->count();
+ 
+    $total_participant_presentiel = DB::table('rapports')
+        ->join('inscriptions', 'inscriptions.email', '=', 'rapports.email')
+        ->where('rapports.code_formation', $codeFormation)
+        ->where('inscriptions.code_formation', $codeFormation)
+        ->where('rapports.temps_presence', 0)
+        ->count();
+ 
+    // Attestations payées
+    $totalPaiementAttestation = DB::table('tarificationsformations')
+        ->join('detailspaiements', 'detailspaiements.id_tarification_formation', '=', 'tarificationsformations.id')
+        ->join('paiements', 'paiements.reference', '=', 'detailspaiements.reference_paiement')
+        ->join('modepaiements', 'modepaiements.id', '=', 'paiements.id_modepaiement')
+        ->where('tarificationsformations.code_formation', $codeFormation)
+        ->where('detailspaiements.statut_paiement', 'PAYE')
+        ->count();
+ 
+    // Inscriptions
+    $total_inscrit            = Inscriptions::where('code_formation', $codeFormation)->count();
+    $total_inscrit_visio      = Inscriptions::where('code_formation', $codeFormation)->where('presentiel', 0)->count();
+    $total_inscrit_presentiel = Inscriptions::where('code_formation', $codeFormation)->where('presentiel', 1)->count();
+ 
+    // Gratuits par mode
+    $totalGratuitPresentiel = $this->compterGratuits($codeFormation, 'PRESENTIEL');
+    $totalGratuitVisio      = $this->compterGratuits($codeFormation, 'VISIO');
+ 
+    // Formation gratuite ?
+    $fm_gratuite = collect($formation->getTarification($codeFormation))
+        ->contains(fn ($tarification) => $tarification->get_grille_libelle === 'GRATUIT');
+ 
+    return [
+        'fm_gratuite' => $fm_gratuite,
+        'stats'       => [
+            'inscriptions_presentiel' => $total_inscrit_presentiel,
+            'gratuits_presentiel'     => $totalGratuitPresentiel,
+            'payants_presentiel'      => $total_inscrit_presentiel,     // À ajuster selon votre logique
+            'attestations_presentiel' => $totalPaiementAttestation,     // À calculer selon votre logique
+            'participants_presentiel' => $total_participant_presentiel,
+ 
+            'inscriptions_visio'      => $total_inscrit_visio,
+            'gratuits_visio'          => $totalGratuitVisio,
+            'payants_visio'           => $total_inscrit_visio,          // À ajuster selon votre logique
+            'attestations_visio'      => 0,                             // À calculer selon votre logique
+            'participants_visio'      => $total_participant - $total_participant_presentiel,
+ 
+            'total_inscriptions'      => $total_inscrit,
+            'total_gratuits'          => 0,                             // À calculer selon votre logique
+            'total_payants'           => $total_inscrit,                // À ajuster selon votre logique
+            'total_attestations'      => 0,                             // À calculer selon votre logique
+            'total_participants'      => $total_participant,
+            'totalInscGratuite'       => $totalInscGratuite,
+        ],
+    ];
+}
+ 
+ 
+/**
+ * Lignes du tableau récapitulatif (PRESENTIEL / VISIO / TOTAL), avec 
+ * Format :  PDF et l'Excel.
+ *
+ * @return array<int, array{libelle: string, inscrits: int, gratuits: int, payants: int, attestations: int, participants: int}>
+ */
+public function lignesRecapitulatif(array $s, bool $fmGratuite): array
+{
+    return [
+        [
+            'libelle'      => 'PRESENTIEL',
+            'inscrits'     => $s['inscriptions_presentiel'],
+            'gratuits'     => $fmGratuite ? $s['participants_presentiel'] : $s['gratuits_presentiel'],
+            'payants'      => $fmGratuite ? 0 : $s['inscriptions_presentiel'] - $s['gratuits_presentiel'],
+            'attestations' => $s['attestations_presentiel'],
+            'participants' => $s['participants_presentiel'],
+        ],
+        [
+            'libelle'      => 'VISIO',
+            'inscrits'     => $s['inscriptions_visio'],
+            'gratuits'     => $fmGratuite ? $s['total_participants'] - $s['participants_presentiel'] : $s['gratuits_visio'],
+            'payants'      => $fmGratuite ? 0 : $s['inscriptions_visio'] - $s['gratuits_visio'],
+            'attestations' => $s['attestations_visio'],
+            'participants' => $s['participants_visio'],
+        ],
+        [
+            'libelle'      => 'TOTAL',
+            'inscrits'     => $s['total_inscriptions'],
+            'gratuits'     => $fmGratuite ? $s['total_participants'] : $s['totalInscGratuite'],
+            'payants'      => $fmGratuite ? 0 : $s['total_inscriptions'] - $s['totalInscGratuite'],
+            'attestations' => $s['total_attestations'],
+            'participants' => $s['total_participants'],
+        ],
+    ];
+}
+ 
+ 
+/**
+ * Nombre d'inscriptions gratuites (réduction id 3) pour un mode donné.
+ */
+private function compterGratuits(string $codeFormation, string $typeFormation): int
+{
+    return Detailspaiements::where('detailspaiements.code_formation', $codeFormation)
+        ->where('detailspaiements.id_reduction', 3)
+        ->join('inscriptions', 'inscriptions.email', '=', 'detailspaiements.email')
+        ->where('inscriptions.type_formation', $typeFormation)
+        ->where('inscriptions.code_formation', $codeFormation)
+        ->count();
+}
 
 
 }

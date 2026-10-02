@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ExportsStatsParticipants;
 use App\Helpers\ResponseHandler;
+use App\Models\Formations;
 use App\Services\contracts\PaiementsInterface;
 use App\Services\Impl\PaiementsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use PDF;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PaiementsController extends Controller
 {
@@ -82,6 +87,68 @@ class PaiementsController extends Controller
         $paiementsService = new PaiementsService();
         return $paiementsService->getRecapitulatifPaiements($code_formation);
     }
+
+    public function statsParticipantsFormation(Request $request, string $codeFormation)
+    {
+        $paiementsService = new PaiementsService();
+        return $this->paiementsService->getStatsParticipantsFormation($codeFormation, $request);
+    }
+
+    
+public function statsExportParticipantsFormation(Request $request, string $codeFormation)
+{ 
+    $request->validate([
+        'format'          => 'required|in:pdf,excel',
+        'type_formation'  => 'nullable|in:PRESENTIEL,VISIO,PROFESSIONNELS,ETUDIANTS,INSCRIPTION',
+        'statut_paiement' => 'nullable|in:PAYE,NON_PAYE',
+        'a_participe'     => 'nullable|in:0,1',
+        'type_reduction'  => 'nullable|in:BOURSE_COMPLET,REDUCTION_5,SANS',
+    ]);
+ 
+    $formation = Formations::where('code_formation', $codeFormation)->first();
+    if (!$formation) {
+        return ResponseHandler::success("Formation introuvable", [
+            'success' => false,
+            'message' => "La formation {$codeFormation} n'existe pas.",
+        ]);
+    }
+ 
+    try {
+          $paiementsService = new PaiementsService();
+         $recap  = $this->paiementsService->calculerStatsRecapitulatif($formation);
+        $lignes = $this->paiementsService->lignesRecapitulatif($recap['stats'], $recap['fm_gratuite']);
+ 
+        // Participants : mêmes filtres et même tri que la liste affichée
+        $rows = $this->paiementsService->getStatsParticipantsFormationExport($codeFormation, $request);
+        
+        
+        $filtres = $request->only(['type_formation', 'statut_paiement', 'a_participe', 'type_reduction', 'search']);
+        $nom     = 'SIGWEB_STATS_PARTICIPANTS_' . $codeFormation . '_' . now()->format('Ymd_His');
+ 
+        if ($request->format === 'pdf') {
+            return PDF::loadView('exports.stats_participants_formation', [
+                'formation'    => $formation,
+                'fmGratuite'   => $recap['fm_gratuite'],
+                'lignesRecap'  => $lignes,
+                'rows'         => $rows,
+                'filtres'      => $filtres,
+                'totalPaye'    => $rows->sum(fn ($r) => (float) $r->montant_paye),
+                'totalRestant' => $rows->sum(fn ($r) => (float) $r->montant_restant),
+            ])->setPaper('a4', 'landscape')->download("$nom.pdf");
+        }
+ 
+        return Excel::download(
+            new ExportsStatsParticipants($formation, $lignes, $recap['fm_gratuite'], $rows),
+            "$nom.xlsx"
+        );
+ 
+ 
+    } catch (\Throwable $e) {
+        Log::error('Export état de paiement formation : ' . $e->getMessage());
+        return ResponseHandler::error("Erreur lors de l'export", 500, $e->getMessage());
+    }
+      
+} 
     
 
 }
