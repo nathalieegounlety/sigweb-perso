@@ -20,20 +20,20 @@
   </div>
   <table>
     <thead><tr>
-      <th>#</th><th>Nom & Prénoms</th><th>Référence</th><th>Mode</th>
-      <th>Montant</th><th>Code transaction</th><th>Type</th><th>Date</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">#</th><th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Nom & Prénoms</th><th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Référence</th><th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Mode</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant</th><th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Code transaction</th><th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Type</th><th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Date</th>
     </tr></thead>
     <tbody>
     @foreach($rows as $i => $r)
       <tr>
-        <td>{{ $i + 1 }}</td>
-        <td>{{ $r->nom }} {{ $r->prenoms }}</td>
-        <td>{{ $r->reference }}</td>
-        <td>{{ $r->libelle_modepaiement }}</td>
-        <td class="r">{{ number_format($r->montant, 0, ',', ' ') }}</td>
-        <td>{{ $r->num_transaction }}</td>
-        <td>{{ $r->type }}</td>
-        <td>{{ \Carbon\Carbon::parse($r->date)->format('d/m/Y') }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{ $i + 1 }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->nom }} {{ $r->prenoms }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->reference }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->libelle_modepaiement }}</td>
+        <td class="r" style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ number_format($r->montant, 0, ',', ' ') }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->num_transaction }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->type }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ \Carbon\Carbon::parse($r->date)->format('d/m/Y') }}</td>
       </tr>
     @endforeach
     </tbody>

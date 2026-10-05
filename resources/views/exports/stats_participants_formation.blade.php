@@ -66,7 +66,7 @@
         <tbody>
         @foreach($lignesRecap as $l)
             <tr class="{{ $l['libelle'] === 'TOTAL' ? 'total' : '' }}">
-                <td class="libelle">{{ $l['libelle'] }}</td>
+                <td class="libelle" >{{ $l['libelle'] }}</td>
                 <td>{{ $l['inscrits'] }}</td>
                 <td>{{ $l['gratuits'] }}</td>
                 <td>{{ $l['payants'] }}</td>

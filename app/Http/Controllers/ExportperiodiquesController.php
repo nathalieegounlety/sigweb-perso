@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ExportsListeRoles;
 use App\Exports\Paiementsperiodique;
 use App\Helpers\ResponseHandler;
 use App\Models\Inscriptions;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use NumberFormatter;
 use PDF;
@@ -135,6 +137,27 @@ class ExportperiodiquesController extends Controller
         }
         
 
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+
+    public function listeRoles(Request $request)
+    {
+
+    try {
+        //code...   
+            # code...
+            $fileName = 'SIGWEB_LISTE_ROLES_' . date('dmY'). '.xlsx';
+            Log::info('test log ok');
+            return Excel::download(
+                new ExportsListeRoles(),
+                $fileName
+            );  
 
     } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());

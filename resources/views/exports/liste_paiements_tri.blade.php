@@ -19,31 +19,31 @@
   </div>
   <table>
     <thead><tr>
-      <th>#</th>
-      <th>Nom</th>
-      <th>Prénoms</th>
-      <th>E-mail</th>
-      <th>Référence</th>
-      <th>Montant</th>
-      <th>Formation</th>
-      <th>Statut</th>
-      <th>Mode</th>
-      <th>Date</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">#</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Nom</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Prénoms</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">E-mail</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Référence</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Formation</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Statut</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Mode</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Date</th>
     </tr>
   </thead>
     <tbody>
     @foreach($rows as $i => $r)
       <tr>
-        <td>{{ $i + 1 }}</td>
-        <td>{{ $r->nom }}</td>
-        <td>{{ $r->prenoms }}</td>
-        <td>{{ $r->email }}</td>
-        <td>{{ $r->reference_paiement }}</td>
-        <td class="r">{{ number_format($r->montant, 0, ',', ' ') }}</td>
-        <td>{{ $r->code_formation }}</td>
-        <td>{{ $r->statut_paiement }}</td>
-        <td>{{ $r->modepaiement }}</td>
-        <td>{{ \Carbon\Carbon::parse($r->updated_at)->format('d/m/Y H:i:s') }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">{{ $i + 1 }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->nom }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->prenoms }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->email }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->reference_paiement }}</td>
+        <td class="r" style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ number_format($r->montant, 0, ',', ' ') }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->code_formation }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->statut_paiement }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->modepaiement }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ \Carbon\Carbon::parse($r->updated_at)->format('d/m/Y H:i:s') }}</td>
       </tr>
     @endforeach
     </tbody> 

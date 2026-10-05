@@ -82,17 +82,19 @@ class RolesService implements RolesServiceInterface
         $filterUpdatedAt = $request->input('filter_updated_at');
         $filterAuthor = $request->input('filter_author');
 
-        $query = Roles::select('roles.id', 'roles.libelle', 'roles.updated_at', 'roles.is_enable', 'roles.updated_by')
+        $query = Roles::select('roles.id', 'roles.libelle', 'roles.updated_at', 'roles.is_enable', 'roles.updated_by', 'roles.created_by')
             ->with([
                 'getUserUpdated:id,name,email,code_user',
+                'getUserCreated:id,name,email,code_user',
                 'permissions:id,libelle'
             ]);
 
         // On fait la jointure dès qu'on a besoin de users.name (recherche globale OU filtre auteur OU tri par auteur)
-        $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';
+        $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name' || $sortField === 'get_user_created.name';
 
         if ($needsUserJoin) {
             $query->leftJoin('users', 'roles.updated_by', '=', 'users.id');
+            $query->leftJoin('users', 'roles.created_by', '=', 'users.id');
         }
 
         // Recherche globale sur plusieurs champs
@@ -118,7 +120,7 @@ class RolesService implements RolesServiceInterface
         }
 
         // Tri
-        if ($sortField === 'get_user_updated.name') {
+        if ($sortField === 'get_user_updated.name' || $sortField === 'get_user_created.name' ) {
             $query->orderBy('users.name', $sortOrder);
         } else {
             $query->orderBy("roles.{$sortField}", $sortOrder);
