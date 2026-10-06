@@ -55,8 +55,7 @@
                     </tr>
                 @endforeach
             @endforeach
-
-            {{-- Total dans le tbody : en tfoot, DomPDF le répéterait sur chaque page --}}
+ 
             <tr class="total">
                 <th colspan="4" class="l">Montant total hors taxe</th>
                 <th class="r">{{ number_format($montant_total, 0, ',', '.') }}</th>

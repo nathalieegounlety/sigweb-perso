@@ -1,4 +1,3 @@
-{{-- Facture proforma (commande d'ouvrages) --}}
 @extends('documents.layouts.document')
 
 @section('titre_document', 'Facture Proforma')
@@ -29,14 +28,12 @@
             @foreach ($details_paiement as $item)
                 <tr>
                     <td class="c"><b>{{ $loop->iteration }}</b></td>
-                    <td class="c"><b>{{ $item->reference }}</b></td>
-                    {{-- ?-> : pas de plantage si l'ouvrage a été supprimé --}}
+                    <td class="c"><b>{{ $item->reference }}</b></td> 
                     <td>{{ $item->getOuvrage?->libelle ?? '-' }}</td>
                     <td class="r">{{ number_format($item->montant, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
-
-            {{-- Total dans le tbody : en tfoot, DomPDF le répéterait sur chaque page --}}
+ 
             <tr class="total">
                 <th colspan="3" class="l">Montant total hors taxe</th>
                 <th class="r">{{ number_format($paiement->montant_total, 0, ',', '.') }}</th>

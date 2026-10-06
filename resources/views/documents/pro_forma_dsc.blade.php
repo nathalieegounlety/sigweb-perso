@@ -1,4 +1,3 @@
-{{-- Facture proforma (formation DSC) --}}
 @extends('documents.layouts.document')
 
 @section('titre_document', 'Facture Proforma')
