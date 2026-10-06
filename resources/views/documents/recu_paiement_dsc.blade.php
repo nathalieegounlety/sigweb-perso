@@ -1,413 +1,72 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html>
-<head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>Facture Proforma</title>
-    <style type="text/css">
-        @page {
-            size: 21cm 29.7cm;
-            margin: 1cm;
-        }
+@extends('documents.layouts.document')
 
-        body {
-            font-family: Tahoma, sans-serif;
-            margin: 0;
-            padding: 0;
-            line-height: 1.2;
-            color: #333;
-            position: relative;
-            min-height: 29.7cm; /* Assurez-vous que le corps de la page a une hauteur minimale */
-        }
+@section('titre_document', 'Reçu de paiement')
+@section('qr_reference', $paiement->reference)
+@section('marge_laterale', '1cm')
 
-        p {
-            margin-bottom: 0.25cm;
-            direction: ltr;
-            line-height: 115%;
-            text-align: justify;
-            font-family: Tahoma, serif;
-            orphans: 2;
-            widows: 2;
-            background: transparent;
-        }
+@section('contenu')
+    <div class="titre">REÇU DE PAIEMENT</div>
 
-        div, table, span, p {
-            font-family: Tahoma, sans-serif;
-        }
+    @include('documents.partials.entete_document', [
+        'libelleNumero'       => 'N° RECU',
+        'numero'              => $paiement->reference,
+        'date'                => $paiement->updated_at,
+        'libelleDestinataire' => 'DELIVRE A',
+    ])
 
-        a:link {
-            color: #1571c6;
-            text-decoration: underline;
-        }
+    <div class="bandeau"><b>Détails du paiement</b></div>
 
-        header {
-            height: auto;
-            margin-bottom: 0.5cm;
-        }
-
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 4cm; /* Ajustez la hauteur selon votre besoin */
-            background: white;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 5px;
-        }
-
-        th, td {
-            padding: 4px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #1571c6;
-            color: white;
-            font-weight: bold;
-            border: 1px solid black;
-        }
-
-        td {
-            border: none;
-        }
-
-        .title {
-            text-align: center;
-            font-size: 22pt;
-            color: #006fc0;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .subtitle {
-            text-align: center;
-            font-size: 12pt;
-            color: #1571c6;
-            font-weight: bold;
-            margin: 5px 0;
-            text-transform: uppercase;
-            background-color: #1571c6;
-            color: white;
-            padding: 4px;
-        }
-
-        .info-table {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        .info-table td {
-            padding: 4px;
-            border: none;
-        }
-
-        .info-table .header-cell {
-            background-color: #1571c6;
-            color: white;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .signature-section {
-            margin-top: 20px;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .signature-section img {
-            height: 80px;
-            width: auto;
-            margin-bottom: 5px;
-        }
-
-        .signature-section .name {
-            font-weight: bold;
-            text-decoration: underline;
-            margin-bottom: 2px;
-            font-size: 11pt;
-        }
-
-        .signature-section .title {
-            font-size: 10pt;
-            margin: 0;
-            line-height: 1.2;
-        }
-
-        .footer-content {
-            border-top: 8px solid #9cc2e5;
-            border-bottom: 8px solid #1571c6;
-            padding: 10px 0;
-            text-align: center;
-            font-size: 9pt;
-            margin-top: 10px;
-        }
-
-        .qr-code {
-            width: 90px;
-            height: 90px;
-            float: left;
-            margin-right: 10px;
-        }
-
-        .footer-text {
-            text-align: left;
-            margin-left: 100px;
-        }
-
-        .background-image {
-            background: url('img/logo/logo-ohada-new500.png') no-repeat center;
-            opacity: 0.1;
-            background-attachment: fixed;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-
-        .main-content {
-            position: relative;
-            z-index: 1;
-            margin-top: 0.5cm;
-            margin-bottom: 4.5cm; /* Assurez-vous que le contenu ne chevauche pas le pied de page */
-        }
-    </style>
-</head>
-
-<body lang="fr-BJ" link="#0563c1" vlink="#800000" dir="ltr" style="font-family: Tahoma, sans-serif;">
-
-<header>
-    <div style="z-index:30;">
-        <div style="float:left;width:86%;">
-            <div style="border-bottom:5px double #2681ca; max-width:75%; padding: 0 0 10px 0;">
-                <div style="float:left; width: 90px; margin:0px; height:90px;">
-                    <img src="img/logo/logo-ohada.png" alt="Logo OHADA" height="75px" style="height: 75px;">
-                </div>
-                <div style="font-size:65%; line-height:1.5; margin: -25px 0 0 95px; padding:0px; top:0; font-family: Tahoma, serif; font-weight:bold; text-align:justify;">
-                    Organisation &nbsp;pour &nbsp;l’Harmonisation &nbsp;en &nbsp;Afrique &nbsp;du &nbsp;Droit &nbsp;des &nbsp;Affaires <br>
-                    Organization &nbsp;&nbsp; for&nbsp; &nbsp;the&nbsp; &nbsp;Harmonization &nbsp;&nbsp; of &nbsp;&nbsp;Business &nbsp;&nbsp; Law &nbsp;in &nbsp;&nbsp; Africa <br>
-                    Organización para la Armonización en África del Derecho de los Negocios <br>
-                    Organização &nbsp;para &nbsp;a &nbsp;Harmonização &nbsp;em &nbsp;África &nbsp;do &nbsp;Direito dos Negócios
-                </div>
-            </div>
-        </div>
-        <div style="float:right;width:14%;position:relative; text-align:right;">
-            <img src="img/logo/attestation_flyers2.png" alt="Logo Attestation" height="80px">
-        </div>
-    </div>
-</header>
-
-<div class="main-content">
-    <div class="background-image"></div>
-
-    <div class="title">REÇU DE PAIEMENT</div>
-
-    <div style="clear:both;">
-        <table style="width: 100%; padding: 5px 0 0 0; margin: 0;">
-            <tbody>
-            <tr>
-                <td style="width: 45%;padding:4px;background:#1571c6; color:#fff; text-align:center;">
-                    N° RECU
-                </td>
-                <td style="width: 20%;">
-                    &nbsp;
-                </td>
-                <td style="width: 35%;padding:4px;background:#1571c6; color:#fff; text-align:center;">
-                    DATE
-                </td>
-            </tr>
-            <tr>
-                <td style="text-align:center;">
-                    <b>{{ $paiement->reference }}</b>
-                </td>
-                <td style="">
-                    &nbsp;
-                </td>
-                <td style="text-align:center;">
-                    <b>{{ \Carbon\Carbon::parse($paiement->updated_at)->format('d/m/Y') }}</b>
-                </td>
-            </tr>
-
-            <tr>
-                <td colspan="3" style="padding:4px; margin-top:10px;background:#1571c6; color:#fff; text-align:center; ">
-                    <b>DELIVRE A</b>
-                </td>
-            </tr>
-
-            <tr>
-                <td colspan="3" style="line-height: 1.3; padding: 10px; font-size: 11pt; text-align:left;">
-
-                    <b>{{ $auditeur->prenoms }} <span style="text-transform:uppercase;">{{ $auditeur->nom }}</span></b><br>
-                    @if ($auditeur->telephone)
-                        Tél : {{ $auditeur->telephone }} -
-                    @endif
-                    E-mail : {{ $auditeur->email }}
-                    @if ($auditeur->ville)
-                        <br>
-                        {{ $auditeur->ville }},
-                    @endif
-                    @if ($auditeur->pays)
-                        {{ $auditeur->pays }}
-                    @endif
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div style="line-height: 1.3; margin:5px 0; padding:4px; text-align:center; text-transform:uppercase; background:#1571c6; color:#fff;">
-        <b>Détails du paiement</b>
-    </div>
-
-    <div style="clear:both;">
-        <table cellspacing="0" cellpadding="0" style="spacing: 0; cellpadding:0; border:0; width: 100%; padding: 5px 0 0 0; margin: 0; font-size:10.5pt;">
-            <thead>
-            <tr style="margin:0;background-color: #abd">
-                <th style="padding:5px; margin:0; border: 1px solid black;">#</th>
-                <th style="padding:5px; margin:0; border: 1px solid black; text-align:left;">Formation
-                </th>
-                <th style="padding:5px; margin:0; border: 1px solid black;">Frais</th>
-                <th style="padding:5px; margin:0; border: 1px solid black;">Ref. transaction</th>
-                <th style="padding:5px; margin:0; border: 1px solid black;">Etat</th>
-                <th style="padding:5px; margin:0; border: 1px solid black;">Réduction</th>
-                <th style="padding:5px; margin:0; border: 1px solid black;">Montant</th>
-            </tr>
-            </thead>
-            <tbody>
-            @php
-                $i = 1;
-                $have_reduction = false;
-                $montant_total_paye = 0;
-                $montant_paye = 0;
-                $montant_restant = 0;
-            @endphp
-            @foreach ($details_paiement as $item)
-                @php
-                    if ($item->have_reduction_dsc) {
-                        $have_reduction = true;
-                    }
-                    if($item->statut_tranche == 'VALIDER'){
-                        $montant_total_paye = $montant_total_paye + $item->montant_paye;
-                    }
-                @endphp
-                @if ($item->montant_paye > 0 && $item->statut_tranche == 'VALIDER')
-                    <tr style="margin:0; font-size:10.5pt;">
-                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-                            <b>{{ $i++ }}</b>
-                        </td>
-                        <td style="margin:0; padding:5px; border: 1px solid black;">
-                            <b>{{ $item->code_formation }}</b><br><small>{{ $item->theme }}</small>
-                        </td>
-                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-                            {{ $item->type_tarif }}
-                        </td>
-                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-                            {{ $item->num_transaction }}
-                        </td>
-                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-                            @if ($item->have_reduction_dsc)
-                                5%
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:center;">
-                            PAYE
-                        </td>
-                        <td style="margin:0; padding:5px; border: 1px solid black; text-align:right;">
-                            {{ number_format($item->montant_paye, 0, ',', '.') }}
-                        </td>
-                    </tr>
-                @endif
-            @endforeach
-            <tr style="background-color: #abd; font-weight: bold;">
-                <th colspan="6" style="padding:6px; font-size: 10pt;">Montant total hors taxe</th>
-                <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total, 0, ',', '.') }}</th>
-            </tr>
-            <tr style="background-color: #abd; font-weight: bold;">
-                <th colspan="6" style="padding:6px; font-size: 10pt;">Montant payé</th>
-                <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($montant_total_paye, 0, ',', '.') }}</th>
-            </tr>
-            <tr style="background-color: #abd; font-weight: bold;">
-                <th colspan="6" style="padding:6px; font-size: 10pt;">Montant restant</th>
-                <th style="text-align:right; padding:6px; font-size: 10pt;">{{ number_format($item->montant_total - $montant_total_paye, 0, ',', '.') }}</th>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-    <p>
-        <pr style="text-decoration: underline;">Montant en lettres</pr> :
-        <b>{{ $formatter->format($montant_total_paye) }} francs CFA</b> (XOF).
-    </p>
     @php
-        $date = date('d M Y');
+        // Montant total : pris sur la première ligne (fonctionne même sans détail)
+        $montant_total = (float) (collect($details_paiement)->first()->montant_total ?? 0);
+
+        // Uniquement les tranches validées et réellement payées
+        $lignes = collect($details_paiement)
+            ->filter(fn ($item) => $item->statut_tranche == 'VALIDER' && $item->montant_paye > 0)
+            ->values();
+
+        $montant_total_paye = $lignes->sum(fn ($item) => (float) $item->montant_paye);
     @endphp
 
-    <table style="width: 100%;  padding: 0; margin: 0 ;">
+    <table class="details">
+        <thead>
+            <tr>
+                <th class="c">#</th>
+                <th class="l">Formation</th>
+                <th class="c">Frais</th>
+                <th class="c">Ref. transaction</th>
+                <th class="c">Etat</th>
+                <th class="c">Réduction</th>
+                <th class="r">Montant</th>
+            </tr>
+        </thead>
         <tbody>
+            @foreach ($lignes as $item)
+                <tr>
+                    <td class="c"><b>{{ $loop->iteration }}</b></td>
+                    <td><b>{{ $item->code_formation }}</b><br><small>{{ $item->theme }}</small></td>
+                    <td class="c">{{ $item->type_tarif }}</td>
+                    <td class="c">{{ $item->num_transaction }}</td>
+                    <td class="c">PAYE</td>
+                    <td class="c">{{ $item->have_reduction_dsc ? '5%' : '-' }}</td>
+                    <td class="r">{{ number_format($item->montant_paye, 0, ',', '.') }}</td>
+                </tr>
+            @endforeach
 
-        <tr>
-            <td style="width:40%;vertical-align: bottom;">
-                &nbsp;
-            </td>
-
-            <td style="vertical-align: bottom;">
-                &nbsp;
-            </td>
-
-            <td style="width:45%;vertical-align: bottom;padding:0; ">
-                @php
-                    $signataire = getSignataireByDate(\Carbon\Carbon::parse(date('Y-m-d'))->format('Y-m-d'));
-                @endphp
-
-                <div style=" text-align:left;margin:0; -15px; auto; 0px;;padding:0; z-index: 10;">
-                    <img src="storage/signature/{{$signataire->signature}}" alt="Signature"
-                         style="margin: 0 0 -20px -45px; padding:0;height: 105px; opacity:;0.9;text-align:left;center; ">
-                </div>
-                <div style="padding:0; margin:-10px 0 0; text-align:center; z-index: 100;">
-                    <b><u>{{$signataire->titre}} {{$signataire->nom}} {{$signataire->prenoms}}</u></b><br>
-                    <small>{{$signataire->fonction}}</small>
-                </div>
-            </td>
-        </tr>
+            <tr class="total">
+                <th colspan="6" class="l">Montant total hors taxe</th>
+                <th class="r">{{ number_format($montant_total, 0, ',', '.') }}</th>
+            </tr>
+            <tr class="total">
+                <th colspan="6" class="l">Montant payé</th>
+                <th class="r">{{ number_format($montant_total_paye, 0, ',', '.') }}</th>
+            </tr>
+            <tr class="total">
+                <th colspan="6" class="l">Montant restant</th>
+                <th class="r">{{ number_format($montant_total - $montant_total_paye, 0, ',', '.') }}</th>
+            </tr>
         </tbody>
     </table>
-</div>
 
-<footer>
-    <div class="footer-content">
-        <div style="overflow: hidden;">
-            <div class="qr-code">
-                <img width="90" height="90" src="data:image/png;base64, {!! base64_encode(
-                        QrCode::encoding('UTF-8')->format('svg')->size(95)->generate(
-                                'REFERENCE : ' .
-                                    $paiement->reference .
-                                    ' Prénoms & nom : ' .
-                                    $auditeur->prenoms .
-                                    ' ' .
-                                    $auditeur->nom,
-                            ),
-                    ) !!}">
-            </div>
-            <div class="footer-text">
-                <b>NB :</b> Traité relatif à l'Harmonisation du Droit des Affaires en Afrique <br>
-                <span><b>Article 51: </b></span><br>
-                <span>L'OHADA, ses avoirs, ses biens et ses revenus ainsi que les opérations autorisées par le présent Traité sont exonérés de tous impôts, taxes et droits de douane.</span> <br>
-                <span>L'OHADA est également exempte de toute obligation relative au recouvrement ou au paiement d'impôts, de taxes ou de droits de douane.</span>
-            </div>
-        </div>
-        <div style="margin-top: 20px; font-size: 12px; padding: 10px 0; border-top: 8px solid #9cc2e5; border-bottom: 8px solid #1571c6;">
-            ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN <br>
-            Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
-            Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org" style="color: #0563c1; text-decoration: underline; font-size: 14px;">https://ersuma.ohada.org</a></u></font>
-        </div>
-
-    </div>
-</footer>
-</body>
-</html>
+    @include('documents.partials.bloc_final', ['montant' => $montant_total_paye])
+@endsection

@@ -1946,7 +1946,7 @@ class ComptabilitesService implements ComptabilitesInterface
             ->when($request->filled('date_debut'),        fn ($q) => $q->whereDate('inscriptions.updated_at', '>=', $request->date_debut))
             ->when($request->filled('date_fin'),          fn ($q) => $q->whereDate('inscriptions.updated_at', '<=', $request->date_fin))
             ->when($request->filled('modepaiement_id'),   fn ($q) => $q->where('mp.id', $request->modepaiement_id))
-            ->when($request->filled('formation_id'),      fn ($q) => $q->where('formations.id', $request->formation_id))
+            ->when($request->filled('formation_id'),      fn ($q) => $q->where('formations.code_formation', $request->formation_id))
             ->when($request->filled('statut_paiement'),      fn ($q) => $q->where('dp.statut_paiement', $request->statut_paiement));
     
         /* =========================================================

@@ -125,7 +125,7 @@ class DocumentsService implements DocumentsInterface
 
             $date = date('d_m_Y_His');
             // download PDF file with download method
-            return $pdf->download('recu_' . $reference . '_' . $date . '.pdf');
+            return $pdf->download('SIGWEB_RECU_' . $reference . '_' . $date . '.pdf');
         } else {
             # code...
 
@@ -158,7 +158,7 @@ class DocumentsService implements DocumentsInterface
 
                 $date = date('d_m_Y_His');
                 // download PDF file with download method
-                return $pdf->download('recu_' . $reference . '_' . $date . '.pdf');
+                return $pdf->download('SIGWEB_RECU_' . $reference . '_' . $date . '.pdf');
             } else {
                 # code...
                 return  ResponseHandler::success("ok");
@@ -205,7 +205,7 @@ class DocumentsService implements DocumentsInterface
 
         $date = date('d_m_Y_His');
         // download PDF file with download method
-        return $pdf->download('proforma_' . $reference . '_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_PROFORMA_' . $reference . '_' . $date . '.pdf');
     }
 
     public function getUrlProformaSigned(string $reference): \Illuminate\Http\JsonResponse
@@ -243,7 +243,7 @@ class DocumentsService implements DocumentsInterface
 
         $date = date('d_m_Y_His');
         // download PDF file with download method
-        return $pdf->download('proforma_' . $reference . '_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_PROFORMA_' . $reference . '_' . $date . '.pdf');
     }
 
     public function getListeAttestationParticipant(Request $request, string $code_formation) //: LengthAwarePaginator
@@ -621,7 +621,7 @@ class DocumentsService implements DocumentsInterface
         $auditeur = Auditeurs::whereEmail($rapport->email)->first();
         $participant_name = $auditeur->nom . ' ' . $auditeur->prenoms;
         $fichier_name = Str::slug($participant_name);
-        $file_name = $formation->code_formation . '_' . $fichier_name . '_' . $date;
+        $file_name = 'SIGWEB_'.$formation->code_formation . '_' . $fichier_name . '_' . $date;
 
         //$file_name = md5($file);
         // download PDF file with download method
@@ -673,7 +673,7 @@ class DocumentsService implements DocumentsInterface
         $canvas->close_object();
         $canvas->add_object($footer, "all");
 
-        return $pdf->download($code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_'.$code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
     }
 
     public function downloadListeParticipantPresentiel($code_formation)
@@ -716,7 +716,7 @@ class DocumentsService implements DocumentsInterface
         $canvas->close_object();
         $canvas->add_object($footer, "all");
 
-        return $pdf->download($code_formation . '_LISTE_PRESENTIELLE_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_'.$code_formation . '_LISTE_PRESENTIELLE_' . $date . '.pdf');
     }
 
     public function getUrlListeParticipantPresentiel($code_formation)
@@ -804,7 +804,7 @@ class DocumentsService implements DocumentsInterface
 
 
         // download PDF file with download method
-        return $pdf->download($code_formation . '_ATTESTATION_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_'.$code_formation . '_ATTESTATION_' . $date . '.pdf');
     }
 
     public function downloadAllAttestationPresentielParticipant($code_formation)
@@ -861,7 +861,7 @@ class DocumentsService implements DocumentsInterface
 
 
         // download PDF file with download method
-        return $pdf->download($code_formation . '_ATTESTATION_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_'.$code_formation . '_ATTESTATION_' . $date . '.pdf');
     }
 
     public function sendAllMailAttestationParticipant(Request $request): \Illuminate\Http\JsonResponse
@@ -1055,7 +1055,7 @@ class DocumentsService implements DocumentsInterface
         $date = date('d_m_Y_His');
         $formateur_name = $getFormateur->getFormateur->nom . ' ' . $getFormateur->getFormateur->prenoms;
         $fichier_name = Str::slug($formateur_name);
-        $file_name = $formation->code_formation . '_' . $fichier_name . '_' . $date;
+        $file_name = 'SIGWEB_'.$formation->code_formation . '_' . $fichier_name . '_' . $date;
         //$file_name = md5($file);
         // download PDF file with download method
         return $pdf->download($file_name . '.pdf');
@@ -1090,7 +1090,7 @@ class DocumentsService implements DocumentsInterface
         $pdf->setPaper('A4', 'landscape');
 
         // download PDF file with download method
-        return $pdf->download($formation->code_formation . '_ATTESTATION_FORMATEUR_' . $nom_formateur . '_' . $date_pdf . '.pdf');
+        return $pdf->download('SIGWEB_'.$formation->code_formation . '_ATTESTATION_FORMATEUR_' . $nom_formateur . '_' . $date_pdf . '.pdf');
     }
 
     public function getUrlConsultationAttestationFormateur($id)
@@ -1208,7 +1208,7 @@ class DocumentsService implements DocumentsInterface
         // $pdf = PDF::loadView('attestations.pdf_attestation_by_formateur');
         $pdf->setPaper('A4', 'landscape');
         // download PDF file with download method
-        return $pdf->download($formation->code_formation . '_ATTESTATION_FORMATEURS_' . $date_pdf . '.pdf');
+        return $pdf->download('SIGWEB_'.$formation->code_formation . '_ATTESTATION_FORMATEURS_' . $date_pdf . '.pdf');
     }
 
     public function getUrlAllAttestationFormateur($code_formation)
@@ -1254,7 +1254,7 @@ class DocumentsService implements DocumentsInterface
         $canvas->close_object();
         $canvas->add_object($footer, "all");
 
-        return $pdf->download($code_formation . '_LISTE_FORMATEUR_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_'.$code_formation . '_LISTE_FORMATEUR_' . $date . '.pdf');
     }
 
     public function getUrlListeFormateur($code_formation)
@@ -1285,7 +1285,7 @@ class DocumentsService implements DocumentsInterface
 
         $date = date('d_m_Y_His');
         // download PDF file with download method
-        return $pdf->download('proforma_' . $reference . '_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_PROFORMA_' . $reference . '_' . $date . '.pdf');
     }
 
     public function getUrlProformaOuvrageSigned(string $reference): \Illuminate\Http\JsonResponse
@@ -1315,7 +1315,7 @@ class DocumentsService implements DocumentsInterface
 
         $date = date('d_m_Y_His');
         // download PDF file with download method
-        return $pdf->download('recu_' . $reference . '_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_RECU_' . $reference . '_' . $date . '.pdf');
     }
 
     public function getListeRapports(Request $request, string $code_formation) //: LengthAwarePaginator
@@ -1438,7 +1438,7 @@ class DocumentsService implements DocumentsInterface
     $canvas->add_object($footer, "all");
 
     // Lancement du téléchargement officiel de l'attestation
-    return $pdf->download($code_formation . '_ATTESTATION_DSC_' . $date . '.pdf');
+    return $pdf->download('SIGWEB_'.$code_formation . '_ATTESTATION_DSC_' . $date . '.pdf');
 }
 
  
@@ -1558,7 +1558,7 @@ class DocumentsService implements DocumentsInterface
     $canvas->close_object();
     $canvas->add_object($footer, "all");
 
-    return $pdf->download($code_formation . '_RELEVE_DE_NOTES_' . $date . '.pdf');
+    return $pdf->download('SIGWEB_'.$code_formation . '_RELEVE_DE_NOTES_' . $date . '.pdf');
 }
 
 
@@ -1608,7 +1608,7 @@ class DocumentsService implements DocumentsInterface
     $canvas->close_object();
     $canvas->add_object($footer, "all");
 
-    return $pdf->download($code_formation . '_ATTESTATIONS_DSC_LOT_' . $date . '.pdf');
+    return $pdf->download('SIGWEB_'.$code_formation . '_ATTESTATIONS_DSC_LOT_' . $date . '.pdf');
 }
 
  
@@ -1664,7 +1664,7 @@ class DocumentsService implements DocumentsInterface
         $canvas->add_object($footer, "all");
     
         // Lancement du téléchargement du fichier PDF assemblé
-        return $pdf->download($code_formation . '_RELEVES_DE_NOTES_LOT_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_'.$code_formation . '_RELEVES_DE_NOTES_LOT_' . $date . '.pdf');
     }
     
 
@@ -1744,7 +1744,7 @@ class DocumentsService implements DocumentsInterface
         $canvas->add_object($footer, "all");
     
         // Lancement du téléchargement sécurisé
-        return $pdf->download($code_formation . '_LISTE_DES_NOTES_DSC_' . $date . '.pdf');
+        return $pdf->download('SIGWEB_'.$code_formation . '_LISTE_DES_NOTES_DSC_' . $date . '.pdf');
     }
     
 
@@ -1795,7 +1795,7 @@ class DocumentsService implements DocumentsInterface
     // ##### end a considerer pour pagination ###############
     // download PDF file with download method
 
-    return $pdf->download($code_formation . '_LISTE_DES_NOTES_DSC_' . $date . '.pdf');
+    return $pdf->download('SIGWEB_'.$code_formation . '_LISTE_DES_NOTES_DSC_' . $date . '.pdf');
 
     }
 }
