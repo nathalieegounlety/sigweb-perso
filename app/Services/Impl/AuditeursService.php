@@ -205,7 +205,83 @@ public function saveAuditeur(Request $request): \Illuminate\Http\JsonResponse
         'auditeur_id' => $auditeur->id,
     ]);
 }
- 
+
+
+    public function saveAuditeurOld(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement saveAuditeur() method.
+        $user = auth('api')->user();
+        // generator password
+        $generate_password = $this->genarateurCodeService->genererCodeAlphaNumeric(8);
+        $check_auditeur = Auditeurs::where("email", trim($request->email))->exists();
+        $check_user = User::where("email", trim($request->email))->exists();
+
+        if ($check_user == true && $check_auditeur == true) {
+            return ResponseHandler::success("Cet auditeur existe déjà");
+        }
+        // create user acount
+        $dataUser = ['email' => trim($request->email), 'password' => $request->password,'name' => $request->nom.' '.$request->prenoms];
+        $userRequest = new Request($dataUser);
+        $this->usersService->saveUser($userRequest);
+
+        $user = User::whereEmail(trim($request->email))->first();
+
+        // register data into auditeur table
+        $auditeur = new Auditeurs();
+        $auditeur->setAttribute("nom", trim($request->nom));
+        $auditeur->setAttribute("prenoms", trim($request->prenoms));
+        $auditeur->setAttribute("email", trim($request->email));
+        $auditeur->setAttribute("telephone", trim($request->telephone));
+        $auditeur->setAttribute("ville", trim($request->ville));
+        $auditeur->setAttribute("civilite", trim($request->civilite));
+        $auditeur->setAttribute("genre", trim($request->genre));
+        $auditeur->setAttribute("secteur_activite", trim($request->secteur_activite));
+        $auditeur->setAttribute("organisme", trim($request->organisme));
+        $auditeur->setAttribute("intitule_poste", trim($request->intitule_poste));
+        // récupéré l'objet pays
+        $pays = Pays::where("id", $request->get('pays'))->get()->first();
+        $count_pays = Pays::where("id", trim($request->get('pays')))->count();
+        if ($count_pays > 0) {
+            # code...
+            $auditeur->setAttribute('pays', $pays->nom_pays);
+            $auditeur->setAttribute('code_pays', $pays->code_iso);
+            $auditeur->setAttribute('nationalite', $pays->nationalite);
+        } else {
+            # code...
+            // $auditeur->setAttribute('pays', $request->get('pays'));
+        }
+
+        try {
+            $auditeur->save();
+
+            // save historique action
+            $action = 'CREATION COMPTE AUDITEUR';
+            $description = "Création du compte de l'auditeur ".$user->code_user." ".$auditeur->nom." ".$auditeur->prenoms;
+            $this->genarateurCodeService->saveHistoriqueAction($action, $description, $user->id);
+
+            // send mail for user to inform that about acount
+
+            // send identifiant to mail for user
+            $contenu = [
+                'nom_prenoms' => $user->name,
+                'email' => trim($user->email),
+                'mot_de_passe' => $generate_password,
+                'subject' => 'SIGWEB - CREATION DE COMPTE'
+            ];
+
+            # code...
+            Mail::to(trim($user->email))->queue(new NotificationCompte($contenu));
+
+
+        } catch (\Exception $e) {
+            // Get error here
+            return  ResponseHandler::success("Enregistrement effectué avec succès", $e->getMessage());
+
+        }
+
+        return  ResponseHandler::success("Enregistrement effectué avec succès");
+
+    }
 
     public function getAuditeur(int $id): Auditeurs
     {
@@ -2928,4 +3004,112 @@ $data = Inscriptions::query()
             $response["listeAttestation"] = $listeAttestation; 
         return  ResponseHandler::success("ok",$listeAttestation);
     }
+
+     
+public function rmInscriptionAuditeur(Request $request)
+{ 
+
+    $codeFormation   = $request->code_formation;
+    $codeInscription = $request->code_inscription;
+    $userId          = auth('api')->id();
+
+    try {
+        DB::transaction(function () use ($codeFormation, $codeInscription, $userId) {
+
+            $formation = Formations::where('code_formation', $codeFormation)->first();
+            if (!$formation) {
+                return ResponseHandler::error("Impossible d'annuler l'inscription, formation introuvable.", 301); 
+            }
+
+            $inscription = Inscriptions::where('code_inscription', $codeInscription)
+                ->where('code_formation', $codeFormation)
+                ->lockForUpdate()
+                ->first();
+            if (!$inscription) { 
+                return ResponseHandler::error("Inscription introuvable pour cette formation", 301);
+            }
+ 
+            $paiement = Paiements::where('code_inscription', $codeInscription)->lockForUpdate()->first();
+
+            if (!$paiement) { 
+                $inscription->delete();
+            } else {
+                if (Inscriptions::where('code_inscription', $codeInscription)->count() > 1) {
+                    throw new \DomainException("Vous ne pouvez pas annuler cette inscription car plusieurs formations sont associées.");
+                }
+
+                if ($this->paiementDejaEngage($paiement, (bool) $formation->is_formation_dsc)) {
+                    throw new \DomainException("Vous ne pouvez pas supprimer cette inscription car un paiement est déjà enregistré.");
+                }
+
+                Detailspaiements::where('code_inscription', $codeInscription)->delete();
+                $paiement->delete();
+                $inscription->delete();
+            }
+
+            // Dans la transaction : annulé avec le reste en cas d'erreur
+            $this->genarateurCodeService->saveHistoriqueAction(
+                'ANNULATION INSCRIPTION AUDITEUR',
+                "Annulation de l'inscription code_formation : {$codeFormation} code_inscription : {$codeInscription}",
+                $userId
+            );
+        });
+
+    } catch (\DomainException $e) {
+        // Refus métier : rien n'a été écrit (exception => rollback)
+        return ResponseHandler::success($e->getMessage(), [
+            'success' => false,
+            'message' => $e->getMessage(),
+        ]);
+
+    } catch (\Throwable $e) {
+        Log::error('Annulation inscription : exception', [
+            'code_inscription' => $codeInscription,
+            'error'            => $e->getMessage(),
+        ]);
+        return ResponseHandler::error("Une erreur est survenue lors de l'annulation de l'inscription", 301);
+    }
+
+    return ResponseHandler::success("Annulation effectuée avec succès", [
+        'success' => true,
+        'message' => "Annulation effectuée avec succès",
+    ]);
+}
+
+/**
+ * Un paiement est "engagé" dès qu'il y a une trace de règlement :
+ * transaction, montant payé, détail partiellement payé ou tranche DSC.
+ */
+private function paiementDejaEngage(Paiements $paiement, bool $estDsc): bool
+{
+    if (!empty($paiement->num_transaction)
+        || !empty($paiement->statut_transaction)
+        || (float) $paiement->montant_paye > 0) {
+        return true;
+    }
+
+    // Un détail déjà (partiellement) payé
+    $details = Detailspaiements::where('reference_paiement', $paiement->reference);
+    if ((clone $details)->where('montant_paye', '>', 0)->exists()) {
+        return true;
+    }
+
+    if ($estDsc) {
+        $idsDetails = (clone $details)->pluck('id');
+ 
+    $prefixe = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $paiement->reference) . '\\_%';
+
+    return PaiementsTranche::query()
+        ->where(function ($q) use ($idsDetails, $paiement, $prefixe) {
+            $q->whereIn('details_paiements_id', $idsDetails)
+              ->orWhere('reference', $paiement->reference)     // paiement unique : REFERENCE
+              ->orWhere('reference', 'like', $prefixe);        // tranches : REFERENCE_1, _2, ...
+        })
+        ->exists();
+    }
+
+    return false;
+}
+
+
 }

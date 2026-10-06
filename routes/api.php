@@ -277,6 +277,7 @@ Route::prefix('v1/auditeurs')->controller(\App\Http\Controllers\AuditeursContoll
     Route::post('delete/compte', 'deleteCompteAuditeur');
     Route::get('update/tarif/{code_formation}', 'updateTarifAuditeur');
     Route::post('mes/atestations', 'getAttestionsAudtieur');
+    Route::post('remove/inscription', 'removeIncription');
 });
 
 // gestion des api du frontoffice

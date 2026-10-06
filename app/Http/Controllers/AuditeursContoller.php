@@ -401,11 +401,12 @@ class AuditeursContoller extends Controller
     }
     public function updateMode(Request $request){
         try {
+            
             $this->validate($request, [
             'code_inscription' => 'required',
             'code_formation' => 'required', 
             'choix_mode' => 'required'
-        ]); 
+            ]); 
             return $data = $this->auditeurService->updateMode($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -497,6 +498,30 @@ class AuditeursContoller extends Controller
                 'email' => 'required'
             ]);
             return $data = $this->auditeurService->getMyAttestions($request->email);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+    
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function removeInscription(Request $request)
+    {
+        try {
+            // Validation des données
+            $validatedData = $request->validate([ 
+                'code_formation' => 'required',
+                'code_inscription' => 'required'
+            ]);
+            // procéder à l'enregistrement
+            Log::info("start delete inscription $request->code_inscription");
+            return $processSave = $this->auditeurService->rmInscriptionAuditeur($request);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());

@@ -47,5 +47,6 @@ interface AuditeursInterface
     public function updateMode(Request $request): \Illuminate\Http\JsonResponse;
     public function startDeleteCompteAuditeur(Request $data): \Illuminate\Http\JsonResponse;
     public function getMyAttestions(string $email): \Illuminate\Http\JsonResponse;
+    public function rmInscriptionAuditeur(Request $data);
 
 }
