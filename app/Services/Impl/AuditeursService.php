@@ -3005,9 +3005,12 @@ $data = Inscriptions::query()
         return  ResponseHandler::success("ok",$listeAttestation);
     }
 
-     
-public function rmInscriptionAuditeur(Request $request)
-{ 
+ public function rmInscriptionAuditeur(Request $request)
+{
+    $request->validate([
+        'code_formation'   => 'required|string',
+        'code_inscription' => 'required|string',
+    ]);
 
     $codeFormation   = $request->code_formation;
     $codeInscription = $request->code_inscription;
@@ -3018,20 +3021,20 @@ public function rmInscriptionAuditeur(Request $request)
 
             $formation = Formations::where('code_formation', $codeFormation)->first();
             if (!$formation) {
-                return ResponseHandler::error("Impossible d'annuler l'inscription, formation introuvable.", 301); 
+                throw new \DomainException("Impossible d'annuler l'inscription, formation introuvable.");
             }
 
             $inscription = Inscriptions::where('code_inscription', $codeInscription)
                 ->where('code_formation', $codeFormation)
                 ->lockForUpdate()
                 ->first();
-            if (!$inscription) { 
-                return ResponseHandler::error("Inscription introuvable pour cette formation", 301);
+            if (!$inscription) {
+                throw new \DomainException("Inscription introuvable pour cette formation.");
             }
- 
+
             $paiement = Paiements::where('code_inscription', $codeInscription)->lockForUpdate()->first();
 
-            if (!$paiement) { 
+            if (!$paiement) {
                 $inscription->delete();
             } else {
                 if (Inscriptions::where('code_inscription', $codeInscription)->count() > 1) {
@@ -3047,7 +3050,6 @@ public function rmInscriptionAuditeur(Request $request)
                 $inscription->delete();
             }
 
-            // Dans la transaction : annulé avec le reste en cas d'erreur
             $this->genarateurCodeService->saveHistoriqueAction(
                 'ANNULATION INSCRIPTION AUDITEUR',
                 "Annulation de l'inscription code_formation : {$codeFormation} code_inscription : {$codeInscription}",
@@ -3056,11 +3058,8 @@ public function rmInscriptionAuditeur(Request $request)
         });
 
     } catch (\DomainException $e) {
-        // Refus métier : rien n'a été écrit (exception => rollback)
-        return ResponseHandler::success($e->getMessage(), [
-            'success' => false,
-            'message' => $e->getMessage(),
-        ]);
+        // Refus métier : l'exception a annulé la transaction, rien n'est écrit
+        return ResponseHandler::error($e->getMessage(), 301);
 
     } catch (\Throwable $e) {
         Log::error('Annulation inscription : exception', [
@@ -3070,10 +3069,8 @@ public function rmInscriptionAuditeur(Request $request)
         return ResponseHandler::error("Une erreur est survenue lors de l'annulation de l'inscription", 301);
     }
 
-    return ResponseHandler::success("Annulation effectuée avec succès", [
-        'success' => true,
-        'message' => "Annulation effectuée avec succès",
-    ]);
+    // Atteint UNIQUEMENT si la transaction s'est terminée sans exception
+    return ResponseHandler::success("Annulation effectuée avec succès");
 }
 
 /**
@@ -3096,14 +3093,15 @@ private function paiementDejaEngage(Paiements $paiement, bool $estDsc): bool
 
     if ($estDsc) {
         $idsDetails = (clone $details)->pluck('id');
+        Log::info($idsDetails);
  
     $prefixe = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $paiement->reference) . '\\_%';
 
     return PaiementsTranche::query()
         ->where(function ($q) use ($idsDetails, $paiement, $prefixe) {
-            $q->whereIn('details_paiements_id', $idsDetails)
-              ->orWhere('reference', $paiement->reference)     // paiement unique : REFERENCE
-              ->orWhere('reference', 'like', $prefixe);        // tranches : REFERENCE_1, _2, ...
+            $q->whereIn('details_paiements_id', $idsDetails);
+              //->orWhere('reference', $paiement->reference)     // paiement unique : REFERENCE
+              //->orWhere('reference', 'like', $prefixe);        // tranches : REFERENCE_1, _2, ...
         })
         ->exists();
     }
