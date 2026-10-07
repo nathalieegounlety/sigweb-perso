@@ -2032,10 +2032,10 @@ $query = Inscriptions::query()
             WHEN reductions.id IS NOT NULL
                 THEN CONCAT(reductions.pourcentage, '%')
             WHEN dp.have_reduction_dsc = 1 AND COALESCE(dp.code_remise_dsc, '') <> ''
-                THEN dp.code_remise_dsc
+                THEN '100%'
             WHEN dp.have_reduction_dsc = 1
-                THEN '5% (FRAIS SCOLARITE)'
-            ELSE 'N/A'
+                THEN '5%'
+            ELSE '0%'
         END as libelle_reduction
     ")
     ->selectRaw("
