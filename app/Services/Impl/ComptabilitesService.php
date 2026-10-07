@@ -1883,6 +1883,7 @@ class ComptabilitesService implements ComptabilitesInterface
                 auditeurs.email,
                 auditeurs.nom,
                 auditeurs.prenoms,
+                auditeurs.id as auditeur_id,
                 CONCAT(auditeurs.prenoms, ' ', auditeurs.nom) as auditeur,
                 CASE
                     WHEN p.type = 'DSC' THEN (
