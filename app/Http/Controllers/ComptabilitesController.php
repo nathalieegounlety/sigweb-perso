@@ -7,7 +7,9 @@ use App\Exports\PaiementsValidesExport;
 use App\Helpers\ResponseHandler;
 use App\Services\contracts\ComptabilitesInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
+use Carbon\Carbon;
 use PDF;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -410,6 +412,68 @@ class ComptabilitesController extends Controller
         }
     }
  
+    
+private function libellesCriteres(Request $request): array
+{
+    $fmtDate    = fn ($d) => Carbon::parse($d)->format('d/m/Y');
+    $fmtMontant = fn ($m) => number_format((float) $m, 0, ',', ' ') . ' F CFA';
+    $criteres   = [];
+ 
+    // Période
+    if ($request->filled('date_debut') || $request->filled('date_fin')) {
+        $criteres['Période'] = trim(
+            ($request->filled('date_debut') ? 'du ' . $fmtDate($request->date_debut) . ' ' : '') .
+            ($request->filled('date_fin')   ? 'au ' . $fmtDate($request->date_fin)          : '')
+        );
+    }
+    if ($request->filled('filter_updated_at')) {
+        $criteres['Date'] = $fmtDate($request->filter_updated_at);
+    }
+ 
+    // Formation (le filtre porte sur le code formation)
+    if ($request->filled('formation_id')) {
+        $theme = DB::table('formations')->where('code_formation', $request->formation_id)->value('theme');
+        $criteres['Formation'] = $request->formation_id . ($theme ? " - {$theme}" : '');
+    }
+ 
+    // Mode de paiement : libellé plutôt que l'identifiant
+    if ($request->filled('modepaiement_id')) {
+        $criteres['Mode de paiement'] = DB::table('modepaiements')
+            ->where('id', $request->modepaiement_id)->value('libelle') ?? $request->modepaiement_id;
+    }
+ 
+    if ($request->filled('statut_paiement')) {
+        $criteres['Statut'] = $request->statut_paiement;
+    }
+ 
+    // Montant (min / max)
+    if ($request->filled('montant_min') || $request->filled('montant_max')) {
+        $criteres['Montant dû'] = trim(
+            ($request->filled('montant_min') ? 'de ' . $fmtMontant($request->montant_min) . ' ' : '') .
+            ($request->filled('montant_max') ? 'à '  . $fmtMontant($request->montant_max)        : '')
+        );
+    }
+ 
+    if ($request->filled('a_participe')) {
+        $criteres['A participé'] = (int) $request->a_participe === 1 ? 'Oui' : 'Non';
+    }
+ 
+    if ($request->filled('ecart')) {
+        $criteres['Écart de contrôle'] = [
+            'NUL'     => 'Sans écart (= 0)',
+            'POSITIF' => 'Écart positif (> 0)',
+            'NEGATIF' => 'Écart négatif (< 0)',
+            'NON_NUL' => 'Tout écart (≠ 0)',
+        ][$request->ecart] ?? $request->ecart;
+    }
+ 
+    if ($request->filled('search')) {
+        $criteres['Recherche'] = '« ' . $request->search . ' »';
+    }
+ 
+    return $criteres;
+}
+
     public function exportListePaiements(Request $request)
     {
         $request->validate([
@@ -435,11 +499,14 @@ class ComptabilitesController extends Controller
                 ])->setPaper('a4', 'landscape')->download("$nom.pdf");
             }
 
-            return Excel::download(new ExportsListePaiements($rows), "$nom.xlsx");
+            return Excel::download(new ExportsListePaiements($rows,'SIGWEB EXTRACTION DES PAIEMENTS', $this->libellesCriteres($request)), "$nom.xlsx");
         } catch (\Exception $e) {
             return ResponseHandler::error("Erreur lors de l'export", 500, $e->getMessage());
         }
+
+
     }
+
 
 
     public function traitementProcessPaiementDsc(Request $request){

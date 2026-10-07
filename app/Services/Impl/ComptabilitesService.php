@@ -1864,12 +1864,14 @@ class ComptabilitesService implements ComptabilitesInterface
         /* =========================================================
         |  1. Requête de base (jointures + colonnes)
         ========================================================= */
-        $base = Inscriptions::query()
+        /*$base = Inscriptions::query()
             ->leftJoin('auditeurs', 'auditeurs.email', '=', 'inscriptions.email')
             ->leftJoin('detailspaiements as dp', function ($join) {
                 $join->on('dp.id_tarification_formation', '=', 'inscriptions.tarif_formation_id')
                     ->on('dp.email', '=', 'inscriptions.email');  
             })
+            ->leftJoin('tarificationsformations as tf', 'tf.id', '=', 'dp.id_tarification_formation')
+            ->leftJoin('grilletarifaires as gt', 'gt.id', '=', 'tf.id_grilletarifaire')
             ->leftJoin('paiements as p', 'p.reference', '=', 'dp.reference_paiement')
             ->leftJoin('modepaiements as mp', 'mp.id', '=', 'p.id_modepaiement')
             ->leftJoin('reductions', 'reductions.id', '=', 'dp.id_reduction')
@@ -1893,6 +1895,16 @@ class ComptabilitesService implements ComptabilitesInterface
                     )
                     ELSE COALESCE(dp.montant_paye, 0) + COALESCE(dp.montant_restant, 0)
                 END as montant,
+                CASE
+                    WHEN p.type = 'DSC' THEN (
+                        SELECT SUM(COALESCE(gf2.montant, 0))
+                        FROM detailspaiements df2
+                        INNER JOIN tarificationsformations tf2 ON tf2.id = df2.id_tarification_formation
+                        INNER JOIN grilletarifaires gf2 ON gf2.id = tf2.id_grilletarifaire
+                        WHERE gf2.id = gf.id
+                    )
+                    ELSE COALESCE(gf.montant, 0)
+                END as montant_base,
                 dp.id as detailpaiement_id,
                 dp.reference_paiement,
                 dp.id_tarification_formation,
@@ -1901,6 +1913,7 @@ class ComptabilitesService implements ComptabilitesInterface
                 dp.have_reduction_dsc,
                 dp.reference_paiement_partiel,
                 dp.montant_restant,
+                dp.montant_paye,
                 mp.libelle as modepaiement,
                 mp.id as modepaiement_id,
                 p.type,
@@ -1925,24 +1938,141 @@ class ComptabilitesService implements ComptabilitesInterface
                     WHERE pt.details_paiements_id = dp.id
                     AND pt.statut_traitement = 'VALIDER'
                 ) as check_recu_ptranche
-            ");
+            ");*/
     
+            // Totaux par paiement, calculés une seule fois (frais d'inscription + scolarité)
+$aggDetails = DB::table('detailspaiements as d')
+    ->join('tarificationsformations as t', 't.id', '=', 'd.id_tarification_formation')
+    ->join('grilletarifaires as g', 'g.id', '=', 't.id_grilletarifaire')
+    ->groupBy('d.reference_paiement')
+    ->selectRaw('
+        d.reference_paiement,
+        SUM(COALESCE(g.montant, 0))                                    as base,
+        SUM(COALESCE(d.montant_paye, 0) + COALESCE(d.montant_restant, 0)) as net,
+        SUM(COALESCE(d.montant_paye, 0))                               as paye_details
+    ');
+
+// Encaissé validé (tranches) par paiement
+$aggTranches = DB::table('paiements_tranches as pt')
+    ->join('detailspaiements as d', 'd.id', '=', 'pt.details_paiements_id')
+    ->where('pt.statut_traitement', 'VALIDER')
+    ->groupBy('d.reference_paiement')
+    ->selectRaw('d.reference_paiement, SUM(COALESCE(pt.montant_paye, 0)) as paye_valide');
+
+// Expressions réutilisées (un alias SQL ne peut pas être réutilisé dans le même SELECT)
+$base = "CASE WHEN p.type = 'DSC' THEN COALESCE(agg.base, 0) ELSE COALESCE(gt.montant, 0) END";
+$net  = "CASE WHEN p.type = 'DSC' THEN COALESCE(agg.net, 0)
+              ELSE COALESCE(dp.montant_paye, 0) + COALESCE(dp.montant_restant, 0) END";
+$paye = "CASE WHEN p.type = 'DSC' THEN COALESCE(trv.paye_valide, 0) ELSE COALESCE(dp.montant_paye, 0) END";
+
+$query = Inscriptions::query()
+    ->leftJoin('auditeurs', 'auditeurs.email', '=', 'inscriptions.email')
+    ->leftJoin('detailspaiements as dp', function ($join) {
+        $join->on('dp.id_tarification_formation', '=', 'inscriptions.tarif_formation_id')
+             ->on('dp.email', '=', 'inscriptions.email')
+             ->on('dp.code_inscription', '=', 'inscriptions.code_inscription');   // évite les doublons
+    })
+    ->leftJoin('tarificationsformations as tf', 'tf.id', '=', 'dp.id_tarification_formation')
+    ->leftJoin('grilletarifaires as gt', 'gt.id', '=', 'tf.id_grilletarifaire')
+    ->leftJoin('paiements as p', 'p.reference', '=', 'dp.reference_paiement')
+    ->leftJoin('modepaiements as mp', 'mp.id', '=', 'p.id_modepaiement')
+    ->leftJoin('reductions', 'reductions.id', '=', 'dp.id_reduction')
+    ->leftJoin('formations', 'formations.code_formation', '=', 'inscriptions.code_formation')
+    ->leftJoinSub($aggDetails, 'agg', 'agg.reference_paiement', '=', 'dp.reference_paiement')
+    ->leftJoinSub($aggTranches, 'trv', 'trv.reference_paiement', '=', 'dp.reference_paiement')
+    ->selectRaw("
+        inscriptions.id,
+        inscriptions.tarif_formation_id,
+        inscriptions.code_formation,
+        inscriptions.code_inscription,
+        inscriptions.updated_at,
+        auditeurs.email,
+        auditeurs.nom,
+        auditeurs.prenoms,
+        auditeurs.pays,
+        auditeurs.genre,
+        auditeurs.code_pays,
+        auditeurs.intitule_poste,
+        auditeurs.id as auditeur_id,
+        CONCAT(auditeurs.prenoms, ' ', auditeurs.nom) as auditeur,
+
+        -- Montants comptables (une ligne = une inscription)
+        ($base)                    as montant_base,          -- prix catalogue (grille)
+        ($base) - ($net)           as montant_reduction,     -- remise accordée
+        ($net)                     as montant,               -- montant dû (net de réduction)
+        ($paye)                    as montant_total_paye,    -- encaissé (DSC : tranches validées)
+        ($net) - ($paye)           as montant_total_restant, -- reste dû
+
+        -- Contrôle DSC : écart entre tranches validées et detailspaiements (doit valoir 0)
+        CASE WHEN p.type = 'DSC'
+             THEN COALESCE(agg.paye_details, 0) - COALESCE(trv.paye_valide, 0)
+             ELSE 0 END            as ecart_controle,
+
+        dp.id as detailpaiement_id,
+        dp.reference_paiement,
+        dp.id_tarification_formation,
+        dp.preuve_path,
+        dp.statut_paiement,
+        dp.montant_paye,
+        dp.montant_restant,
+        dp.have_reduction_dsc, 
+        dp.reference_paiement_partiel,
+        mp.libelle as modepaiement,
+        mp.id as modepaiement_id,
+        p.type,
+        p.id as paiement_id,
+        p.num_transaction,
+        reductions.id as id_reduction,
+        reductions.pourcentage,
+        formations.id as formation_id,
+        formations.is_formation_dsc,
+        formations.theme,
+        dp.code_remise_dsc,
+        CASE
+            WHEN reductions.id IS NOT NULL
+                THEN CONCAT(reductions.pourcentage, '%')
+            WHEN dp.have_reduction_dsc = 1 AND COALESCE(dp.code_remise_dsc, '') <> ''
+                THEN dp.code_remise_dsc
+            WHEN dp.have_reduction_dsc = 1
+                THEN '5% (FRAIS SCOLARITE)'
+            ELSE 'N/A'
+        END as libelle_reduction
+    ")
+    ->selectRaw("
+        EXISTS (SELECT 1 FROM paiements_tranches pt
+                WHERE pt.details_paiements_id = dp.id AND pt.statut_traitement = 'ATTENTE') as check_statut_ptranche
+    ")
+    ->selectRaw("
+        EXISTS (SELECT 1 FROM paiements_tranches pt
+                WHERE pt.details_paiements_id = dp.id AND pt.statut_traitement = 'VALIDER') as check_recu_ptranche
+    ")
+    ->selectRaw("
+        EXISTS (
+            SELECT 1 FROM rapports
+            WHERE rapports.email = inscriptions.email
+            AND rapports.code_formation = inscriptions.code_formation
+        ) as a_participe
+    ");
         /* =========================================================
         |  2. Filtres sur des colonnes réelles : appliqués sur la base 
         ========================================================= */
         if ($search = $request->input('search')) {
-            $base->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('auditeurs.nom', 'like', "%{$search}%")
                 ->orWhere('auditeurs.prenoms', 'like', "%{$search}%")
                 ->orWhere('auditeurs.email', 'like', "%{$search}%")
                 ->orWhere('dp.reference_paiement', 'like', "%{$search}%")
                 ->orWhere('dp.statut_paiement', 'like', "%{$search}%")
                 ->orWhere('inscriptions.code_formation', 'like', "%{$search}%")
-                ->orWhere('mp.libelle', 'like', "%{$search}%");
+                ->orWhere('mp.libelle', 'like', "%{$search}%")
+                ->orWhere('auditeurs.pays', 'like', "%{$search}%")
+                ->orWhere('auditeurs.genre', 'like', "%{$search}%")
+                ->orWhere('auditeurs.intitule_poste', 'like', "%{$search}%")
+                ;
             });
         }
     
-        $base
+        $query
             ->when($request->filled('filter_updated_at'), fn ($q) => $q->whereDate('inscriptions.updated_at', $request->filter_updated_at))
             ->when($request->filled('date_debut'),        fn ($q) => $q->whereDate('inscriptions.updated_at', '>=', $request->date_debut))
             ->when($request->filled('date_fin'),          fn ($q) => $q->whereDate('inscriptions.updated_at', '<=', $request->date_fin))
@@ -1955,9 +2085,19 @@ class ComptabilitesService implements ComptabilitesInterface
         |     pour pouvoir le filtrer (et le trier) comme une colonne
         ========================================================= */
         return DB::query()
-            ->fromSub($base, 't')
+            ->fromSub($query, 't')
             ->when($request->filled('montant_min'), fn ($q) => $q->where('t.montant', '>=', (float) $request->montant_min))
-            ->when($request->filled('montant_max'), fn ($q) => $q->where('t.montant', '<=', (float) $request->montant_max));
+            ->when($request->filled('montant_max'), fn ($q) => $q->where('t.montant', '<=', (float) $request->montant_max))
+            ->when($request->filled('a_participe'), fn ($q) => $q->where('t.a_participe', (int) $request->a_participe))
+            ->when($request->filled('ecart'), function ($q) use ($request) {
+                match ($request->ecart) {
+                    'POSITIF' => $q->where('t.ecart_controle', '>', 0),
+                    'NEGATIF' => $q->where('t.ecart_controle', '<', 0),
+                    'NON_NUL' => $q->where('t.ecart_controle', '<>', 0),
+                    'NUL'     => $q->where('t.ecart_controle', '=', 0),
+                    default   => null,
+                };
+            });
     }
     
     
@@ -1968,7 +2108,9 @@ class ComptabilitesService implements ComptabilitesInterface
     {
         $allowed = [
             'nom', 'prenoms', 'auditeur', 'email', 'reference_paiement', 'code_formation',
-            'statut_paiement', 'montant', 'modepaiement', 'type', 'updated_at',
+            'statut_paiement', 'montant', 'modepaiement', 'type', 'updated_at','ecart_controle',
+            'montant_base', 'montant_reduction', 'montant', 'montant_paye', 'montant_restant',
+            'montant_total_paye','montant_total_restant'
         ];
     
         $field = in_array($request->input('sort_field'), $allowed, true) ? $request->input('sort_field') : 'updated_at';

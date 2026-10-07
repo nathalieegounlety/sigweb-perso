@@ -21,11 +21,13 @@
     <thead><tr>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">#</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Nom</th>
-      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Prénoms</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Prénoms</th> 
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">E-mail</th>
-      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Référence</th>
-      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Formation</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Référence</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant</th> 
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant payé</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant restant</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Statut</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Mode</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Date</th>
@@ -40,10 +42,12 @@
         <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->email }}</td>
         <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->reference_paiement }}</td>
         <td class="r" style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ number_format($r->montant, 0, ',', ' ') }}</td>
+        <td class="r" style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ number_format($r->montant_total_paye, 0, ',', ' ') }}</td>
+        <td class="r" style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ number_format($r->montant_total_restant, 0, ',', ' ') }}</td>
         <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->code_formation }}</td>
         <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->statut_paiement }}</td>
         <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ $r->modepaiement }}</td>
-        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ \Carbon\Carbon::parse($r->updated_at)->format('d/m/Y H:i:s') }}</td>
+        <td style="margin:0; padding:5px; border: 1px solid black; text-align:left;">{{ \Carbon\Carbon::parse($r->updated_at)->format('d/m/Y') }}</td>
       </tr>
     @endforeach
     </tbody> 
