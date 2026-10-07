@@ -26,8 +26,8 @@
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Formation</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Référence</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant</th> 
-      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant payé</th>
-      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Montant restant</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Payer</th>
+      <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Restant</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Statut</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Mode</th>
       <th style="margin:0; padding:5px; border: 1px solid black; background:#698fc0; text-align:center;">Date</th>

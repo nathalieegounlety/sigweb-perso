@@ -45,10 +45,10 @@ class ExportsListePaiements implements FromCollection, WithHeadings, WithMapping
     public function headings(): array
     {
         return [
-            'Nom', 'Prénoms', 'Genre', 'Pays', 'Email',                         // A B C D E
-            'Code Formation', 'Référence', 'Montant de base', 'Réduction',      // F G H I
-            'Montant à payer', 'Montant total payé', 'Montant total restant',   // J K L
-            'Statut', 'Mode paiement', 'Ecart', 'Date',                         // M N O P
+            'Nom', 'Prénoms', 'Genre', 'Pays', 'Email',                       
+            'Code Formation', 'Référence', 'Montant', 'Réduction', 
+            'A payer', 'Payer', 'Restant',
+            'Statut', 'Mode paiement', 'Ecart', 'Date',
         ];
     }
 
