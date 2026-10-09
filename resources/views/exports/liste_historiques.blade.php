@@ -30,7 +30,13 @@
         <td  style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $i + 1 }}</td>
         <td  style="margin:0; padding:5px; border: 1px solid black; text-align: left;">{{ $r->action }}</td>
         <td  style="margin:0; padding:5px; border: 1px solid black; text-align: left;">{{ $r->description }}</td>         
-        <td  style="margin:0; padding:5px; border: 1px solid black; text-align: left;">{{ $r->created_by ? $r->getUserCreated->name : '' }}</td> 
+        <td  style="margin:0; padding:5px; border: 1px solid black; text-align: left;"> 
+          @if ($r->created_by)
+            {{ $r->getUserCreated->name }}
+        @else
+            
+        @endif
+      </td> 
         <td  style="margin:0; padding:5px; border: 1px solid black; text-align: left;">{{ \Carbon\Carbon::parse($r->created_at)->format('d/m/Y H:i:s') }}</td> 
       </tr>
     @endforeach
