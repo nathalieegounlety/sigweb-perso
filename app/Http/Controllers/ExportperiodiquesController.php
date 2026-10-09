@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ExportsListeHistoriques;
 use App\Exports\ExportsListeRoles;
 use App\Exports\Paiementsperiodique;
 use App\Helpers\ResponseHandler;
@@ -156,6 +157,27 @@ class ExportperiodiquesController extends Controller
             Log::info('test log ok');
             return Excel::download(
                 new ExportsListeRoles(),
+                $fileName
+            );  
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+
+
+    
+    public function listeHistoriques(Request $request)
+    {
+
+    try {
+        //code...   
+            # code...
+            $fileName = 'SIGWEB_LISTE_HISTORIQUES_ACTIONS_' . date('dmY'). '.xlsx'; 
+            return Excel::download(
+                new ExportsListeHistoriques(),
                 $fileName
             );  
 

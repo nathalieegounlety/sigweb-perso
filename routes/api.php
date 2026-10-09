@@ -560,6 +560,7 @@ Route::prefix('v1/afribapay')->controller(\App\Http\Controllers\AfribapayControl
 Route::prefix('v1/exportationperiodique')->controller(\App\Http\Controllers\ExportperiodiquesController::class)->group(function () {
     Route::post('liste/paiements', 'listePaiements'); 
     Route::get('liste/roles', 'listeRoles'); 
+    Route::get('liste/historiques', 'listeHistoriques'); 
 });
 
 // gestion des modepays

@@ -12,7 +12,7 @@ class HistoriqueActionController extends Controller
 
     public function __construct(HistoriqueActionServiceInterface $historiqueService)
     {
-        $this->middleware('auth:api', ['except' => ['remove']]);
+        $this->middleware('auth:api', ['except' => ['remove','index']]);
         $this->historiqueService = $historiqueService;
     }
 
