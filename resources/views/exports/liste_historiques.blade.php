@@ -11,7 +11,7 @@
   tfoot td { font-weight: bold; background: #f3f4f6; }
 </style></head>
 <body>
-  <h2>SIGWEB ERSUMA - Liste des historiques d'actions</h2>
+  <h2>SIGWEB ERSUMA - Liste des historiques des actions du {{ \Carbon\Carbon::parse($date_debut)->format('d/m/Y')  }}  au {{ \Carbon\Carbon::parse($date_fin)->format('d/m/Y')  }} </h2>
   <div class="filtres">
     Édité le {{ now()->format('d/m/Y H:i') }} 
   </div>

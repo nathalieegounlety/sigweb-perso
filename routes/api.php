@@ -561,6 +561,7 @@ Route::prefix('v1/exportationperiodique')->controller(\App\Http\Controllers\Expo
     Route::post('liste/paiements', 'listePaiements'); 
     Route::get('liste/roles', 'listeRoles'); 
     Route::get('liste/historiques', 'listeHistoriques'); 
+    Route::post('liste/historiques/periode', 'listeHistoriquesPeriode'); 
 });
 
 // gestion des modepays
