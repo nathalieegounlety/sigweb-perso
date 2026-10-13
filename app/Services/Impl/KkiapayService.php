@@ -870,7 +870,7 @@ private function validerLignesPaiement(Paiements $paiement, $rubriquePayer, ?str
     if ($ligneIntacte) {
         // ligne intacte : la tranche demandée détermine la réduction
         if ($tranche === 'tranche_unique') {
-            $baseRestant = (int) round($baseRestant * 0.95);
+            $baseRestant = (int) round($detail->getTarification->getGrilletarifaire->montant * 0.95);
             $reductionAppliquee = true;
         } else {
             $reductionAppliquee = false;

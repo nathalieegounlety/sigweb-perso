@@ -2232,7 +2232,7 @@ $query = Inscriptions::query()
 
             $user = auth('api')->user();
             if (!$user) {
-                return ResponseHandler::error('Utilisateur non authentifié');
+                return ResponseHandler::error('Utilisateur non authentifié', 302);
             }
             Log::info("begin validation paiement {$request->reference} montant reçu : {$request->montant_total_recu}");
     
@@ -2242,36 +2242,36 @@ $query = Inscriptions::query()
                     'preuve' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
                 ]);
                 if ($validation->fails()) {
-                    return ResponseHandler::error('Fichier de preuve invalide (jpg, jpeg, png ou pdf, 5 Mo max attendu)');
+                    return ResponseHandler::error('Fichier de preuve invalide (jpg, jpeg, png ou pdf, 5 Mo max attendu)', 302);
                 }
             }
     
             $paiement = Paiements::where('reference', $request->reference)->first();
             if (!$paiement) {
-                return ResponseHandler::error('Paiement introuvable');
+                return ResponseHandler::error('Paiement introuvable', 302);
             }
     
             $userInfo = User::where('email', $paiement->email)->first();
             if (!$userInfo) {
-                return ResponseHandler::error('Auditeur introuvable pour ce paiement');
+                return ResponseHandler::error('Auditeur introuvable pour ce paiement', 302);
             }
     
             $modePaiement = Modepaiements::find($request->modepaiement_id);
             if (!$modePaiement) {
-                return ResponseHandler::error('Mode de paiement invalide');
+                return ResponseHandler::error('Mode de paiement invalide', 302);
             }
     
             $montantTotalRecu = (int) $request->montant_total_recu;
             $codePaiement = trim((string) $request->code_paiement);
     
             if ($montantTotalRecu <= 0) {
-                return ResponseHandler::error('Montant invalide');
+                return ResponseHandler::error('Montant invalide', 302);
             }
     
             // Idempotence : ce code_paiement a-t-il déjà été appliqué sur ce dossier ?
             if ($codePaiement !== '' && PaiementsTranche::where('reference', 'like', "%{$paiement->reference}%")
                 ->where('num_transaction', $codePaiement)->exists()) {
-                return ResponseHandler::error('Ce paiement a déjà été validé précédemment', 302);
+                return ResponseHandler::error('Le numéro de transaction est déjà associé à un autre règlement.', 302);
             }
     
             // Jamais au-delà du solde réellement dû (source de vérité : la base,
@@ -2312,7 +2312,7 @@ $query = Inscriptions::query()
             }
     
             if (!$inscriptionDetail && !$scolariteDetail) {
-                return ResponseHandler::error('Aucune ligne restant due sur ce dossier parmi celles soumises');
+                return ResponseHandler::error('Aucune ligne restant due sur ce dossier parmi celles soumises', 302);
             }
     
             // Priorité aux frais d'inscription (obligatoires, intégraux), comme
@@ -2372,15 +2372,17 @@ $query = Inscriptions::query()
                         $baseRestantScolarite = (int) round($baseRestantScolarite);
                         $reductionAppliquee = true;
                         if ($montantRestantAAllouer < $baseRestantScolarite) {
-                            return ResponseHandler::error('Le montant reçu est inférieur au solde de scolarité (tranche unique, doit être réglée en totalité)',302);
-                        }
+                            //return ResponseHandler::error('Le montant reçu est inférieur au solde de scolarité (tranche unique, doit être réglée en totalité)',302);
+                            // Accepter paiement par tranche 13/10/2026 
+                            }
                         Log::info("tranche unique et montant valide");
                     } else {
                         $reductionAppliquee = false;
                         $montantGrille = (int) $grille->montant;
-                        if ($montantRestantAAllouer < ($montantGrille/2)) {
-                            return ResponseHandler::error('Le montant reçu est inférieur à 50% des frais de scolarité (tranche double)'.($montantGrille/2),302);
-                        }
+                        // if ($montantRestantAAllouer < ($montantGrille/2)) {
+                            // return ResponseHandler::error('Le montant reçu est inférieur à 50% des frais de scolarité (tranche double)'.($montantGrille/2),302);
+                            // retirer la restriction de deux tranches : 13/10/2026
+                        // }
                         Log::info("tranche double et montant valide");
                     }
                 }else{
@@ -2388,7 +2390,7 @@ $query = Inscriptions::query()
 
                     // le montant à payer devrait soldé le montant restant
                     if ($montantRestantAAllouer < $baseRestantScolarite) {
-                        return ResponseHandler::error('Le montant reçu est inférieur au solde de scolarité restante '.$baseRestantScolarite,302);
+                        // return ResponseHandler::error('Le montant reçu est inférieur au solde de scolarité restante '.$baseRestantScolarite,302);
                     }
 
                 }

@@ -257,8 +257,194 @@ public function generateToken()
         
     }
      
-    
     public function storePaiementPartielAFB(Request $request, String $id): \Illuminate\Http\JsonResponse
+{
+    $reference = null; // FIX : défini tôt, utilisable dans les retours d'erreur
+
+    try {
+        $token = $this->getToken();
+        $merchant_key = config('services.afribapay.merchant_id');
+
+        $client = new Client([
+            // FIX : vérification TLS désactivée seulement hors production
+            'verify' => app()->environment('production'),
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type'  => 'application/json',
+            ],
+        ]);
+
+        // FIX : l'appel HTTP est maintenant dans le try — Guzzle lève
+        // une exception sur tout code 4xx/5xx, on la catch proprement
+        $response = $client->request('GET', config('services.afribapay.base_url') . '/v1/status?transaction_id=' . $id, []);
+        $body = json_decode($response->getBody(), true);
+
+        if ($response->getStatusCode() !== 200) {
+            Log::warning('AfribaPay : statut HTTP inattendu', ['transaction_id' => $id, 'status_code' => $response->getStatusCode()]);
+            return ResponseHandler::success("ok", [
+                'reference' => $reference,
+                'success' => false,
+            ]);
+        }
+
+        $statut = $body['data']['status'];
+        $reference = $body['data']['reference_id'];
+        $actuel_montant_paye = $body['data']['amount_total'];
+ 
+        if (!in_array(strtolower($statut), ['success', 'completed', 'approved'])) {
+            Log::warning('AfribaPay : transaction non confirmée', [
+                'transaction_id' => $id,
+                'reference' => $reference,
+                'status' => $statut,
+            ]);
+            return ResponseHandler::success("paiement invalide", [
+                'reference' => $reference,
+                'success' => false,
+            ]);
+        }
+
+        // FIX : null-check mode de paiement
+        $mode_paiement = Modepaiements::whereLibelle('AfribaPay')->first();
+        if (!$mode_paiement) {
+            Log::warning('AfribaPay : mode de paiement introuvable', ['reference' => $reference]);
+            return ResponseHandler::success("mode de paiement introuvable", [
+                'reference' => $reference,
+                'success' => false,
+            ]);
+        }
+
+        // FIX : null-check paiement, first() au lieu de get()->first()
+        $paiement = Paiements::where('reference', $reference)->first();
+        if (!$paiement) {
+            Log::warning('AfribaPay : paiement introuvable', ['reference' => $reference]);
+            return ResponseHandler::success("paiement introuvable", [
+                'reference' => $reference,
+                'success' => false,
+            ]);
+        }
+ 
+        $dejaTraite = ($paiement->num_transaction === $id);
+
+        $update_paiement = Paiements::find($paiement->id);
+
+        if (!$dejaTraite) {
+            $nouveau_montant_restant = $paiement->montant_restant - $actuel_montant_paye;
+
+            Log::info('AfribaPay paiement', [
+                'reference' => $reference,
+                'montant_paye_cumule' => $paiement->montant_paye + $actuel_montant_paye,
+                'montant_restant' => $nouveau_montant_restant,
+                'actuel_montant_paye' => $actuel_montant_paye,
+            ]);
+
+            $update_paiement->setAttribute('num_transaction', $id);
+            $update_paiement->setAttribute('statut_transaction', $statut);
+            $update_paiement->setAttribute('id_modepaiement', $mode_paiement->id);
+            $update_paiement->setAttribute('montant_paye', $paiement->montant_paye + $actuel_montant_paye);
+            $update_paiement->setAttribute('montant_restant', max($nouveau_montant_restant, 0));
+
+            // FIX : pas de paiement partiel ici — chaque ligne est
+            // soldée intégralement, donc dès que ce paiement arrive
+            // approuvé, on considère le montant dû comme réglé.
+            $update_paiement->setAttribute('statut_paiement', 'PAYE');
+            $update_paiement->setAttribute('statut_traitement', 'VALIDER');
+            $update_paiement->update();
+
+            // update détails paiements
+            foreach ($request->formations as $key => $value) {
+                // FIX : null-check
+                $update_detailspaiement = Detailspaiements::find($value['detail_id']);
+                if (!$update_detailspaiement) {
+                    Log::warning('AfribaPay : détail paiement introuvable', [
+                        'detail_id' => $value['detail_id'],
+                        'reference' => $reference,
+                    ]);
+                    continue;
+                }
+
+                // FIX : plus de branche "partiel" — toujours soldé
+                $update_detailspaiement->setAttribute('modepaiement_id', $mode_paiement->id);
+                $update_detailspaiement->setAttribute('reference_paiement_partiel', $id);
+                $update_detailspaiement->setAttribute('statut_paiement', "PAYE");
+                $update_detailspaiement->update();
+            }
+        }
+
+        // ============================================================
+        // Emails — protégés par $dejaTraite
+        // ============================================================
+        if (!$dejaTraite) {
+            $auditeur = Auditeurs::where("email", $paiement->email)->first();
+
+            if ($auditeur) {
+                $contenu = [
+                    'nom' => $auditeur->nom,
+                    'prenoms' => $auditeur->prenoms,
+                    'reference_paiement' => $reference,
+                    'subject' => 'INFORMATION SUR VOTRE PAIEMENT ' . $reference,
+                    'email' => $paiement->email,
+                    'montant' => $actuel_montant_paye,
+                    'mode_paiement' => $mode_paiement->libelle,
+                ];
+            } else {
+                $contenu = [
+                    'nom' => "",
+                    'prenoms' => "",
+                    'reference_paiement' => $reference,
+                    'subject' => 'INFORMATION SUR VOTRE PAIEMENT ' . $reference,
+                    'email' => $paiement->email,
+                    'montant' => $actuel_montant_paye,
+                    'mode_paiement' => $mode_paiement->libelle,
+                ];
+            }
+
+            try {
+                Mail::to($paiement->email)->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new Paiementattente($contenu));
+            } catch (\Exception $e) {
+                Log::info('echec de l\'envoi du mail à l\'auditeur');
+            }
+
+            if (env('PAIEMENT_NOTIFIER_COMPTABLE')) {
+                $liste_comptable = User::whereHas('roles', function ($q) {
+                    $q->where('libelle', 'COMPTABLE');
+                })->pluck('email');
+
+                $contenu = [
+                    'name' => 'COMPTABLE',
+                    'reference_paiement' => $reference,
+                    'email_auditeur' => $paiement->email,
+                    // FIX : null-check
+                    'nom_auditeur' => $auditeur ? trim($auditeur->prenoms . ' ' . $auditeur->nom) : $paiement->email,
+                    'subject' => 'NOUVEAU PAIEMENT ' . date('d-m-Y H:i:s'),
+                    'email' => '',
+                    'montant' => $paiement->montant_restant,
+                    'mode_paiement' => $mode_paiement->libelle,
+                ];
+                try {
+                    Mail::to(env('MAIL_CC'))->cc($liste_comptable)->queue(new NotificationComptable($contenu));
+                } catch (\Exception $e) {
+                    Log::error('Erreur envoi mail NotificationComptable', ['error' => $e->getMessage()]);
+                }
+            }
+        }
+
+        // FIX : reference, pas reference_id (qui n'existait pas dans $request)
+        return ResponseHandler::success("ok", [
+            'reference' => $reference,
+            'success' => true,
+        ]);
+
+    } catch (\Throwable $e) { // FIX : attrape aussi les erreurs Guzzle (RequestException) et les \Error
+        Log::error('Erreur vérification AfribaPay', ['error' => $e->getMessage()]);
+
+        return ResponseHandler::success("ok", [
+            'reference' => $reference,
+            'success' => false,
+        ]);
+    }
+}
+    
+    public function storePaiementPartielAFBOld(Request $request, String $id): \Illuminate\Http\JsonResponse
     {
 
     // TODO: Implement payIn() method. 
