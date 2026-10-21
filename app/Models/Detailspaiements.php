@@ -43,7 +43,8 @@ class Detailspaiements extends Model
         'reference_paiement_partiel',
         'commentaire',
         'have_reduction_dsc',
-        'code_remise_dsc'
+        'code_remise_dsc',
+        'date_comptable'
     ];
 
     public function getReduction()

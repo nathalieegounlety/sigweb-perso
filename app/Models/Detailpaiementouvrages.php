@@ -31,7 +31,8 @@ class Detailpaiementouvrages extends Model
         'reference',
         'created_at',
         'updated_at',
-        'email'
+        'email',
+        'date_comptable'
     ];
 
     public function getOuvrage()

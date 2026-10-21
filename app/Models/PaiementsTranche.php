@@ -43,7 +43,8 @@ class PaiementsTranche extends Model
         'traiter_par',
         'created_by',
         'updated_by',
-        'created_at'
+        'created_at',
+        'date_comptable'
     ];
 
 

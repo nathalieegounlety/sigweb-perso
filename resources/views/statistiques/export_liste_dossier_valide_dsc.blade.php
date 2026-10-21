@@ -13,8 +13,9 @@
             <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Genre</b></th>  
             <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:110px;"><b>Code formation</b></th>
             <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Mode</b></th>  
-            <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Montant</b></th>  
-            <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Statut</b></th>   
+            <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Montant à payer</b></th> 
+            <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Montant payer</b></th> 
+            {{-- <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Statut</b></th>    --}}
             <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Observation</b></th>  
         </tr> 
     </thead>
@@ -39,8 +40,9 @@ $i=0;
 <td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->genre ? $item->genre : '' }}</td> 
 <td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->code_formation ? $item->code_formation : '' }}</td>
 <td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->mode ? $item->mode : '' }}</td> 
-<td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->montant ? $item->montant : '' }}</td> 
-<td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->statut_paiement ? $item->statut_paiement : 'VIDE' }}</td> 
+<td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->montant_total_a_payer ? number_format($item->montant_total_a_payer, 0, ',', ' ') : 0 }}</td> 
+<td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->montant_total_paye ? number_format($item->montant_total_paye, 0, ',', ' ') : 0 }}</td>
+{{-- <td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->statut_paiement ? $item->statut_paiement : 'VIDE' }}</td>  --}}
 <td style="margin:0; padding:5px; border: 1px solid black; text-align: center;">{{ $item->observations ? $item->observations : '' }}</td> 
 </tr>  
 @endforeach
