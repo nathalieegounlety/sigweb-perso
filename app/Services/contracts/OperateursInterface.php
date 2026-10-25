@@ -20,4 +20,6 @@ interface OperateursInterface
 
     public function getOperateursObj():  \Illuminate\Http\JsonResponse;
 
+    public function getOperateursByModePays(string $modepays):  \Illuminate\Http\JsonResponse;
+
 }

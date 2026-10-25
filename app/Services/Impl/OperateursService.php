@@ -165,7 +165,19 @@ class OperateursService implements OperateursInterface
         $data = Operateurs::join('modepays', 'modepays.id', '=', 'operateurs.modepays_id')
         ->join('pays', 'pays.id', '=', 'modepays.pays_id')
         ->join('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
+        ->where('operateurs.is_enable', true)
+        ->get(['operateurs.id as code','operateurs.operateur as name', 'operateurs.modepays_id','modepays.pays_id','modepays.modepaiement_id', 'modepaiements.libelle','pays.nom_pays']);
+        return ResponseHandler::success("ok",$data);
+    }
+    
+    public function getOperateursByModePays(string $modepays): \Illuminate\Http\JsonResponse
+    {
+        // TODO: Implement getOperateursByModePays() method.
+        $data = Operateurs::join('modepays', 'modepays.id', '=', 'operateurs.modepays_id')
+        ->join('pays', 'pays.id', '=', 'modepays.pays_id')
+        ->join('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
         ->where('is_enable', true)
+        ->where('operateurs.modepays_id', $modepays)
         ->get(['operateurs.id','operateurs.operateur', 'operateurs.modepays_id','modepays.pays_id','modepays.modepaiement_id', 'modepaiements.libelle','pays.nom_pays']);
         return ResponseHandler::success("ok",$data);
     }

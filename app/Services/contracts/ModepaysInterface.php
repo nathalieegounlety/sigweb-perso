@@ -21,4 +21,6 @@ interface ModepaysInterface
 
     public function getModepaysObj ():  \Illuminate\Http\JsonResponse;
 
+    public function getModepaysObjPays (string $code_pays):  \Illuminate\Http\JsonResponse;
+
 }

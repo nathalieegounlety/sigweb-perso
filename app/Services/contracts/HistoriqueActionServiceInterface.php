@@ -17,4 +17,7 @@ interface HistoriqueActionServiceInterface
     public function update(Request $data): \Illuminate\Http\JsonResponse;
     
     public function remove(int $id): \Illuminate\Http\JsonResponse;
+    
+    public function updateDateComptable(Request $request);
+     
 }

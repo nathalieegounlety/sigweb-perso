@@ -843,7 +843,7 @@ private function inscrireSurZoom(Inscriptions $inscrit, Formations $formation, A
     public function getListePays(): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getListePays() method.
-        $data = Pays::orderBy('nom_pays')->get(['nom_pays as name','id as code']);
+        $data = Pays::orderBy('nom_pays')->get(['nom_pays as name','id as code','code_iso']);
 
         return  ResponseHandler::success("ok",$data);
 

@@ -89,6 +89,13 @@ class AuthService implements AuthServiceInterface
 
         /** @var User $user */
         $user = Auth::guard('api')->user()->load('roles.permissions');
+        // update authentification indicator
+        $maintenant = now();
+        $user->forceFill([
+            'first_login' => $user->first_login ?? $maintenant,   
+            'last_login'  => $maintenant,
+            'login_count' => $user->login_count + 1,
+        ])->save();
 
         return [
             'access_token' => $token,

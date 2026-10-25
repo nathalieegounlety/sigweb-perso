@@ -1306,14 +1306,15 @@ class ComptabilitesService implements ComptabilitesInterface
                             $detail->montant_paye = $detail->montant_restant;
                             $detail->montant_restant = 0;
                             $detail->modepaiement_id = $request->modepaiement_id;
-                            $detail->commentaire = $request->commentaire;
+                            $detail->commentaire = $request->date_comptable;
+                            $detail->date_comptable = date('Y-m-d');
                             $detail->save();
                         }
                     }
                 } else {
                     $paiement->statut_paiement = 'EN ATTENTE';
                     $paiement->statut_traitement = 'ATTENTE';
-                    $paiement->commentaire = $request->commentaire;
+                    $paiement->commentaire = $request->date_comptable;
                     $paiement->save();
  
                     if ($paiement->type !== 'OUVRAGE') {
@@ -1396,6 +1397,7 @@ class ComptabilitesService implements ComptabilitesInterface
                         $detail->montant_restant = 0;
                         $detail->statut_traitement = 'VALIDER';
                         $detail->statut_paiement = 'PAYE';
+                        $detail->date_comptable = $request->date_comptable;
                     } else {
                         $detail->montant_paye = 0;
                         $detail->montant_restant = $item->montant;
@@ -1450,6 +1452,7 @@ class ComptabilitesService implements ComptabilitesInterface
                             $detail->montant_restant = 0;
                             $detail->modepaiement_id = $request->modepaiement_id;
                             $detail->commentaire = $request->commentaire;
+                            $detail->date_comptable = date('Y-m-d');
                             $detail->save();
                         }
                     }
@@ -1578,6 +1581,7 @@ class ComptabilitesService implements ComptabilitesInterface
             $detail->commentaire = $request->commentaire;
             $detail->modepaiement_id = $modePaiement->id;
             $detail->reference_paiement_partiel = $numTransaction;
+            $detail->date_comptable = $request->date_comptable;
             $detail->is_paiement_partiel = true;
             if ($preuveNameUrl) {
                 $detail->preuve_path = $preuveNameUrl;
@@ -1727,6 +1731,10 @@ class ComptabilitesService implements ComptabilitesInterface
     
                     $tranche->statut_traitement = $statutDemande;
                     $tranche->traiter_par = $user->id;
+                    if ($statutDemande === 'VALIDER') { 
+                        $tranche->date_comptable = $request->date_comptable;
+                    }
+
                     if ($preuveNameUrl) {
                         $tranche->preuve_path = $preuveNameUrl;
                     }
@@ -2052,7 +2060,7 @@ $query = Inscriptions::query()
             WHERE rapports.email = inscriptions.email
             AND rapports.code_formation = inscriptions.code_formation
         ) as a_participe
-    ");
+    "); 
         /* =========================================================
         |  2. Filtres sur des colonnes réelles : appliqués sur la base 
         ========================================================= */
@@ -2425,7 +2433,7 @@ $query = Inscriptions::query()
                 $paiement, $inscriptionDetail, $scolariteDetail, $montantInscriptionApplique,
                 $montantScolariteApplique, $baseRestantScolarite, $reductionAppliquee,
                 $ligneScolariteIntacte, $trancheDemandee, $montantTotalRecu, $codePaiement,
-                $modePaiement, $preuveNameUrl, $updateReference, $user, $userInfo
+                $modePaiement, $preuveNameUrl, $updateReference, $user, $userInfo, $request
             ) {
                 if ($inscriptionDetail) {
                     $inscriptionDetail->montant_paye = $inscriptionDetail->montant_paye + $montantInscriptionApplique;
@@ -2452,6 +2460,7 @@ $query = Inscriptions::query()
                         'traiter_par' => $user->id,
                         'created_by' => $userInfo->id,
                         'updated_by' => $userInfo->id,
+                        'date_comptable' => $request->date_comptable
                     ]);
                 }
     
@@ -2496,6 +2505,7 @@ $query = Inscriptions::query()
                         'traiter_par' => $user->id,
                         'created_by' => $userInfo->id,
                         'updated_by' => $userInfo->id,
+                        'date_comptable' => $request->date_comptable
                     ]);
                 }
     

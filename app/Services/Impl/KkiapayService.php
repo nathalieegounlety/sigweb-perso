@@ -260,11 +260,12 @@ public function storePaiementPartielKkiapay(Request $request): \Illuminate\Http\
                 $detail->montant_paye = $detail->montant_restant;
                 $detail->montant_restant = 0;
                 $detail->reference_paiement_partiel = $transactionId;
-                $detail->modepaiement_id = 1; // KkiaPay forcé
+                $detail->modepaiement_id = 1; 
                 $detail->is_paiement_partiel = true;
                 if ($paiementConfirme) {
                     $detail->statut_paiement = 'PAYE';
                     $detail->statut_traitement = 'VALIDER';
+                    $detail->date_comptable = Date('Y-m-d');
                 } else {
                     $detail->statut_paiement = 'EN ATTENTE';
                     $detail->statut_traitement = 'ATTENTE';
@@ -713,6 +714,7 @@ private function traiterPaiementKkiapayDsc(Request $request): \Illuminate\Http\J
                     'is_inscription'       => $item->type_tarif === 'INSCRIPTION',
                     'tranche_id'           => $trancheId,
                     'modepaiement_id'      => $paiement->id_modepaiement,
+                    'date_comptable' => date('Y-m-d'),
                     'created_by'           => $user->id,
                     'updated_by'           => $user->id,
                 ]);
@@ -1196,6 +1198,7 @@ private function confirmerPaiementDscViaWebhook(Paiements $paiement, string $ref
             $tranche->statut_transaction = 'SUCCESS';
             $tranche->modepaiement_id = 1;
             $tranche->statut_traitement = 'VALIDER';
+            $tranche->date_comptable = date('Y-m-d');
             $tranche->traiter_par = $userValidateur->id;
             $tranche->save();
 
@@ -1285,6 +1288,7 @@ private function confirmerPaiementClassiqueViaWebhook(Paiements $paiement, strin
                 foreach ($details as $detail) {
                     $detail->statut_traitement = 'VALIDER';
                     $detail->statut_paiement = 'PAYE';
+                    $detail->date_comptable = date('Y-m-d');
                     $detail->montant_paye = $detail->montant_restant;
                     $detail->montant_restant = 0;
                     $detail->commentaire = 'Validation automatique webhook KKiaPay';

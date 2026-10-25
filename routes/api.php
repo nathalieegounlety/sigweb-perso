@@ -59,6 +59,7 @@ Route::prefix('v1/historiquesactions')->group(function () {
     Route::post('unique', [\App\Http\Controllers\HistoriqueActionController::class, 'getHistoriques']);
     Route::post('update', [\App\Http\Controllers\HistoriqueActionController::class, 'update']);
     Route::post('remove', [\App\Http\Controllers\HistoriqueActionController::class, 'remove']);
+    Route::post('update/dc/formation', [\App\Http\Controllers\HistoriqueActionController::class, 'updDateComptable']);
 });
 
 // gestion des modepaiements
@@ -572,15 +573,17 @@ Route::prefix('v1/modepays')->group(function () {
     Route::post('update', [\App\Http\Controllers\ModepaysController::class, 'update']);
     Route::post('remove', [\App\Http\Controllers\ModepaysController::class, 'remove']);
     Route::get('obj', [\App\Http\Controllers\ModepaysController::class, 'getModepaysObj']);
+    Route::post('obj/pays', [\App\Http\Controllers\ModepaysController::class, 'getModepaysObjPays']);
 });
 
 // gestion des operateurs
 Route::prefix('v1/operateurs')->group(function () {
     Route::post('store', [\App\Http\Controllers\OperateursController::class, 'store']);
     Route::get('/', [\App\Http\Controllers\OperateursController::class, 'index']);
-    Route::post('unique', [\App\Http\Controllers\OperateursController::class, 'getModepays']);
+    Route::post('unique', [\App\Http\Controllers\OperateursController::class, 'getOperateur']);
     Route::post('update', [\App\Http\Controllers\OperateursController::class, 'update']);
     Route::post('remove', [\App\Http\Controllers\OperateursController::class, 'remove']);
-    Route::get('obj', [\App\Http\Controllers\OperateursController::class, 'getModepaysObj']);
+    Route::get('obj', [\App\Http\Controllers\OperateursController::class, 'getOperateurObj']);
+    Route::post('obj/mode/pays', [\App\Http\Controllers\OperateursController::class, 'getObjOperateurByMP']);
 });
 

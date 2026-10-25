@@ -1073,6 +1073,7 @@ private function notifierRoleInternePaiementOuvrage(
                         $tranche_paiement->setAttribute('num_transaction', $transactionId->id);
                         $tranche_paiement->setAttribute('statut_transaction', $transactionId->status);
                         $tranche_paiement->setAttribute('statut_traitement', 'VALIDER');
+                        $tranche_paiement->setAttribute('date_comptable', date('Y-m-d'));
                         $tranche_paiement->setAttribute('traiter_par', $userValidateur->id);
                         $tranche_paiement->setAttribute('is_inscription', true);
                         $tranche_paiement->setAttribute('modepaiement_id', $paiement->id_modepaiement);
@@ -1132,6 +1133,7 @@ private function notifierRoleInternePaiementOuvrage(
                                 $tranche_paiement->setAttribute('num_transaction', $transactionId->id);
                                 $tranche_paiement->setAttribute('statut_transaction', $transactionId->status);
                                 $tranche_paiement->setAttribute('statut_traitement', 'VALIDER');
+                                $tranche_paiement->setAttribute('date_comptable', date('Y-m-d'));
                                 $tranche_paiement->setAttribute('traiter_par', $userValidateur->id);
                                 $tranche_paiement->setAttribute('tranche_id', $tranche->id);
                                 $tranche_paiement->setAttribute('modepaiement_id', $paiement->id_modepaiement);
@@ -1194,6 +1196,7 @@ private function notifierRoleInternePaiementOuvrage(
                                 $tranche_paiement->setAttribute('num_transaction', $transactionId->id);
                                 $tranche_paiement->setAttribute('statut_transaction', $transactionId->status);
                                 $tranche_paiement->setAttribute('statut_traitement', 'VALIDER');
+                                $tranche_paiement->setAttribute('date_comptable', date('Y-m-d'));
                                 $tranche_paiement->setAttribute('traiter_par', $userValidateur->id);
                                 $tranche_paiement->setAttribute('tranche_id', $tranche->id);
                                 $tranche_paiement->setAttribute('modepaiement_id', $paiement->id_modepaiement);
@@ -2232,6 +2235,7 @@ private function notifierRoleInternePaiementOuvrage(
                                     $tranche_paiement->setAttribute('num_transaction', $transactionId->id);
                                     $tranche_paiement->setAttribute('statut_transaction', $transactionId->status);
                                     $tranche_paiement->setAttribute('statut_traitement', 'VALIDER');
+                                    $tranche_paiement->setAttribute('date_comptable', date('Y-m-d'));
                                     $tranche_paiement->setAttribute('traiter_par', $userValidateur->id);
                                     $tranche_paiement->setAttribute('tranche_id', $tranche->id);
                                     $tranche_paiement->setAttribute('modepaiement_id', $paiement->id_modepaiement);
@@ -2291,6 +2295,7 @@ private function notifierRoleInternePaiementOuvrage(
                                     $tranche_paiement->setAttribute('num_transaction', $transactionId->id);
                                     $tranche_paiement->setAttribute('statut_transaction', $transactionId->status);
                                     $tranche_paiement->setAttribute('statut_traitement', 'VALIDER');
+                                    $tranche_paiement->setAttribute('date_comptable', date('Y-m-d'));
                                     $tranche_paiement->setAttribute('traiter_par', $userValidateur->id);
                                     $tranche_paiement->setAttribute('tranche_id', $tranche->id);
                                     $tranche_paiement->setAttribute('modepaiement_id', $paiement->id_modepaiement);

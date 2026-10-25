@@ -27,7 +27,7 @@ class SignatairesController extends Controller
         // récupérer la liste des rôles
         try {
             $perPage = $request->get('per_page',50); // par défaut 50 éléments
-            $data = $this->signatairesService->getOuvrages($request);
+            $data = $this->signatairesService->getSignataires($request);
 
             // Transformer pour enlever le bloc 'links'
             $response = [

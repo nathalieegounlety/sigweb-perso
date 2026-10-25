@@ -118,7 +118,7 @@ class OperateursController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
-    public function getModepaysObj(Request $request){
+    public function getOperateurObj(Request $request){
 
         try {
             // procéder à l'enregistrement
@@ -130,4 +130,22 @@ class OperateursController extends Controller
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+    
+    public function getObjOperateurByMP(Request $request){
+
+        try {
+            
+            $validated = $request->validate([
+                'modepays' => 'required'
+            ]); 
+            // procéder à l'enregistrement
+            return $data = $this->operateurInterface->getOperateursByModePays($request->modepays);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
+    
 }

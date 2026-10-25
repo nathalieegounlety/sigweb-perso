@@ -37,4 +37,14 @@ class Signataires extends Model
         'updated_by',
     ];
 
+     public function getUserCreated()
+            {
+                return $this->belongsTo(User::class,'created_by');
+            }
+
+            public function getUserUpdated()
+            {
+                return $this->belongsTo(User::class,'updated_by','id');
+            }
+
 }

@@ -53,7 +53,7 @@ class SignatairesService implements SignatairesInterface
         return ResponseHandler::success("Création efféctuée");
     }
 
-    public function getSignataire(int $id): Signataires
+    public function getSignataire(int $id): \Illuminate\Http\JsonResponse
     {
         // TODO: Implement getSignataire() method.
         $data = Signataires::find($id);
@@ -79,39 +79,39 @@ class SignatairesService implements SignatairesInterface
         $filterAuthor = $request->input('filter_author');
 
         $query = Signataires::with('getUserUpdated:id,name,email,code_user')
-            ->select('signatures.id','signatures.nom', 'signatures.prenoms','signatures.enable','signatures.titre','signatures.fonction','signatures.ordre','signatures.date_debut','signatures.date_fin','signatures.signature', 'signatures.updated_at');
+            ->select('signataires.id','signataires.nom', 'signataires.prenoms','signataires.enable','signataires.titre','signataires.fonction','signataires.ordre','signataires.date_debut','signataires.date_fin','signataires.signature', 'signataires.updated_at');
 
         // On fait la jointure
         $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';
 
         if ($needsUserJoin) {
-            $query->leftJoin('users', 'signatures.updated_by', '=', 'users.id');
+            $query->leftJoin('users', 'signataires.updated_by', '=', 'users.id');
         }
 
         // Recherche globale sur plusieurs champs
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('signatures.nom', 'like', "%{$search}%")
-                    ->orWhere('signatures.prenoms', 'like', "%{$search}%")
-                    ->orWhere('signatures.titre', 'like', "%{$search}%")
-                    ->orWhere('signatures.fonction', 'like', "%{$search}%")
-                    ->orWhere('signatures.ordre', 'like', "%{$search}%")
+                $q->where('signataires.nom', 'like', "%{$search}%")
+                    ->orWhere('signataires.prenoms', 'like', "%{$search}%")
+                    ->orWhere('signataires.titre', 'like', "%{$search}%")
+                    ->orWhere('signataires.fonction', 'like', "%{$search}%")
+                    ->orWhere('signataires.ordre', 'like', "%{$search}%")
                     ->orWhere('users.name', 'like', "%{$search}%"); // Recherche sur auteur
             });
         }
 
         // Filtres par colonne
         if ($filterIsEnable !== null && $filterIsEnable !== '') {
-            $query->where('signatures.enable', $filterIsEnable); // 0 ou 1
+            $query->where('signataires.enable', $filterIsEnable); // 0 ou 1
         }
         if ($filterDateDebut) {
-            $query->whereDate('signatures.date_debut', $filterDateDebut);
+            $query->whereDate('signataires.date_debut', $filterDateDebut);
         }
         if ($filterDateFin) {
-            $query->whereDate('signatures.updated_at', $filterDateFin);
+            $query->whereDate('signataires.updated_at', $filterDateFin);
         }
         if ($filterUpdatedAt) {
-            $query->whereDate('signatures.updated_at', $filterUpdatedAt);
+            $query->whereDate('signataires.updated_at', $filterUpdatedAt);
         }
         if ($filterAuthor) {
             $query->where('users.name', 'like', "%{$filterAuthor}%");
@@ -121,7 +121,7 @@ class SignatairesService implements SignatairesInterface
         if ($sortField === 'get_user_updated.name') {
             $query->orderBy('users.name', $sortOrder);
         } else {
-            $query->orderBy("signatures.{$sortField}", $sortOrder);
+            $query->orderBy("signataires.{$sortField}", $sortOrder);
         }
 
         $query->orderBy($sortField, $sortOrder);

@@ -11,7 +11,7 @@ interface SignatairesInterface
     // déclaration des interfaces à utiliser
     public function saveSignataire(Request $data): \Illuminate\Http\JsonResponse;
 
-    public function getSignataire(int $id): Signataires;
+    public function getSignataire(int $id): \Illuminate\Http\JsonResponse;
 
     public function getSignataires(Request $request): LengthAwarePaginator;
 

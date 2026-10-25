@@ -6,8 +6,10 @@ use App\Helpers\ResponseHandler;
 use App\Models\Modepays;
 use App\Services\contracts\ModepaysInterface; 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Override;
 
 class ModepaysService implements ModepaysInterface
 {
@@ -165,8 +167,19 @@ class ModepaysService implements ModepaysInterface
         $data = Modepays::join('pays', 'pays.id', '=', 'modepays.pays_id')
         ->join('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
         ->where('modepays.is_enable', true)
-        ->get(['modepays.id as code',
+        ->get(['modepays.id as code', 'modepays.pays_id','modepaiements.libelle as code_libelle_mp',
         DB::raw("CONCAT(modepaiements.libelle, ' - ', pays.nom_pays) AS name")]);
+        return ResponseHandler::success("ok",$data);
+    }
+   
+    public function getModepaysObjPays(string $code_pays): JsonResponse
+    { 
+        //TODO: Implement getModepaysObjPays() method.
+        $data = Modepays::join('pays', 'pays.id', '=', 'modepays.pays_id')
+        ->join('modepaiements', 'modepaiements.id', '=', 'modepays.modepaiement_id')
+        ->where('modepays.is_enable', true)
+        ->where('pays.code_iso', $code_pays)
+        ->get(['modepays.id as code','modepays.pays_id', DB::raw("CONCAT(modepaiements.libelle, ' - ', pays.nom_pays) AS name")]);
         return ResponseHandler::success("ok",$data);
     }
 }

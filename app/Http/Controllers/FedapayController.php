@@ -245,6 +245,7 @@ private function handleFedapayDsc($event, string $get_reference, Paiements $paie
             $paiementTranche->setAttribute("statut_transaction", trim($event->entity->status));
             $paiementTranche->setAttribute("modepaiement_id", 2); // FedaPay
             $paiementTranche->setAttribute("statut_traitement", "VALIDER");
+            $paiementTranche->setAttribute("date_comptable", date('Y-m-d'));
             $paiementTranche->setAttribute('traiter_par', $user->id);
             $paiementTranche->update();
 
@@ -320,6 +321,7 @@ private function handleFedapayNonDsc($event, string $get_reference, Paiements $p
             $getDetailPaiement->setAttribute('statut_paiement', "PAYE");
             $getDetailPaiement->setAttribute("montant_paye", $getDetailPaiement->montant_restant);
             $getDetailPaiement->setAttribute("montant_restant", 0);
+            $getDetailPaiement->setAttribute("date_comptable", date('Y-m-d'));
             $getDetailPaiement->setAttribute("commentaire", "Validation automatique webhook FedaPay");
             $getDetailPaiement->update();
 
@@ -393,6 +395,7 @@ private function handleFedapayNonDsc($event, string $get_reference, Paiements $p
             $detail->setAttribute('statut_paiement', "PAYE");
             $detail->setAttribute("montant_paye", $detail->montant_restant);
             $detail->setAttribute("montant_restant", 0);
+            $detail->setAttribute("date_comptable", date('Y-m-d'));
             $detail->setAttribute("commentaire", "Validation automatique webhook Fedapay");
             $detail->update();
         }
