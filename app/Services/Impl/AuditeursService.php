@@ -620,6 +620,7 @@ private function inscrireSurZoom(Inscriptions $inscrit, Formations $formation, A
                 'first_name' => $auditeur->prenoms,
                 'last_name'  => $auditeur->nom,
                 'email'      => $auditeur->email,
+                'country'      => $auditeur->code_pays ?? 'BJ',
                 'comments'   => 'Inscription depuis SIGWEB ERSUMA',
             ],
         ]);

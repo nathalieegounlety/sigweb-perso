@@ -144,6 +144,7 @@ private GenarateurCodeService $genarateurCodeService;
                                 'first_name' => $auditeur->prenoms,
                                 'last_name' => $auditeur->nom,
                                 'email' => $auditeur->email,
+                                'country' => $auditeur->code_pays ?? 'BJ',
                                 // 'city' => $auditeur->ville,
                                 // 'state' => $auditeur->code_pays,
                                 // 'country' => $auditeur->code_pays,
