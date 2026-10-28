@@ -14,7 +14,7 @@
             <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:110px;"><b>Code formation</b></th>
             <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Mode</b></th>  
             <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Montant à payer</b></th> 
-            <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Montant payer</b></th> 
+            <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Montant payé</b></th> 
             {{-- <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Statut</b></th>    --}}
             <th style="margin:0; padding:5px; border: 1px solid black; text-align: center; width:70px;"><b>Observation</b></th>  
         </tr> 

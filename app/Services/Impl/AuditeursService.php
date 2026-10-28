@@ -1965,6 +1965,7 @@ $data = Inscriptions::query()
                                         
                                                 // mettre à jour le montant restant à payer sur la facture 
                                                 $updPaiement = Paiements::find($paiement->id);
+                                                $updPaiement->setAttribute('montant_total',($paiement->montant_total - $totalRemiseDsc));
                                                 $updPaiement->setAttribute('montant_restant',($paiement->montant_restant - $totalRemiseDsc));
                                                 $updPaiement->setAttribute('code_remise_dsc',$request->reduction_id);
                                                 $updPaiement->update();
@@ -2127,7 +2128,7 @@ $data = Inscriptions::query()
                                                 $updPaiement = Paiements::find($paiement->id);
                                                 $updPaiement->setAttribute('montant_restant',($mtTotal - $totalRemiseDsc));
                                                 $updPaiement->setAttribute('code_remise_dsc',$request->reduction_id);
-                                                $updPaiement->setAttribute("montant_total", $mtTotal);
+                                                $updPaiement->setAttribute("montant_total", ($mtTotal - $totalRemiseDsc));
                                                 $updPaiement->setAttribute("montant_paye", 0);
                                                 $updPaiement->setAttribute("statut_paiement", "EN ATTENTE");
                                                 $updPaiement->setAttribute("statut_traitement", "ATTENTE");
