@@ -893,10 +893,10 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
     // impression par lot
     
 
-    public function urlAllAttestationParticipantttestationCandidat($id, $code_formation)
+    public function allAttestationCandidat($code_formation)
     {
         try {
-            return $data = $this->documentService->downloadAllAttestationMoodleCandidat($id, $code_formation);
+            return $data = $this->documentService->downloadAllAttestationMoodleCandidat($code_formation);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
@@ -910,22 +910,22 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
 
         try{
             $validated = $request->validate([
-                'code_formation' => 'required',
-                'id' => 'required',
+                'code_formation' => 'required', 
             ]);
 
-            return $this->documentService->getUrlAllAttestationMoodleCandidat($request->id, $request->code_formation);
+            return $this->documentService->getUrlAllAttestationMoodleCandidat($request->code_formation);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
-    }
+    } 
 
-    public function allReleveNoteCandidat($id, $code_formation)
+
+    public function allReleveNoteCandidat($code_formation)
     {
         try {
-            return $data = $this->documentService->downloadAllReleveNoteCandidat($id, $code_formation);
+            return $data = $this->documentService->downloadAllReleveNoteCandidat($code_formation);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

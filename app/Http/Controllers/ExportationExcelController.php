@@ -35,6 +35,7 @@ use App\Models\Rapports;
 use App\Models\Tmpmoodlecandidats;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -394,6 +395,7 @@ class ExportationExcelController extends Controller
 
         // récupérer le code de la formation
         $code_formation = $request->code_formation;
+        Log::info("code fm ".$code_formation);
         $objFormation = Formations::where("code_formation",$code_formation)->first();
         $annee_academique = date("Y",strtotime($objFormation->date_debut));
 

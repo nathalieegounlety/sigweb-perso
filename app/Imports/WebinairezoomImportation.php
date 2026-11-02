@@ -8,6 +8,7 @@ use App\Models\Panelistes;
 use App\Models\Participants;
 use App\Models\Sessionformations;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 
@@ -48,7 +49,10 @@ class WebinairezoomImportation implements ToCollection, WithCustomCsvSettings
      */
     public function collection(Collection $rows)
     {
-
+        try {
+            //code...
+            
+Log::info("start import wb");
         // je récupère le nombre de ligne dans le fichier csv incription
         $nbr_data_participant = count($rows);
         // initialiser le id_webinaire
@@ -160,8 +164,7 @@ class WebinairezoomImportation implements ToCollection, WithCustomCsvSettings
                         //$username = $rows[$i][1];
                         $heure_arrivee = $rows[$i][7];
                         $heure_depart = $rows[$i][8];
-                        $temps_presence = $rows[$i][9];
-
+                        $temps_presence = $rows[$i][9]; 
                         if (!empty($get_email)) {
                             # code...
 
@@ -169,7 +172,6 @@ class WebinairezoomImportation implements ToCollection, WithCustomCsvSettings
                             $check_auditeur = Inscriptions::where('email', $get_email)->where('code_formation', $this->code_formation)->exists();
                             if ($check_auditeur) {
                                 $auditeur = Inscriptions::where('email', $get_email)->where('code_formation', $this->code_formation)->first();
-
                                 // if auditeur exist register data into table participant
                                 Participants::create([
                                     'a_participe' => $a_participe,
@@ -190,6 +192,11 @@ class WebinairezoomImportation implements ToCollection, WithCustomCsvSettings
                     }
                 }
             }
+        }
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            Log::info($th->getMessage());
         }
 
         return true;
