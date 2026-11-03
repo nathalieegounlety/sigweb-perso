@@ -332,10 +332,98 @@
 
         </div><!-- fermeture div background-image -->
 
-       
+        <table style="width: 100%; padding: 0; margin: 0;">
+    <tbody>
+        <tr>
+            <td style="vertical-align: bottom;">
+                <footer>
+
+                    <div style="clear:both; display:block; margin:5px 0 10px 0; width: 100%;">
+                        <div style="float:left;">
+                            &nbsp;
+                        </div>
+                        <div style="float:right; padding-right:5px; font-size: 11pt; margin-bottom: 15px;">
+                            Délivré à Porto-Novo, le
+                            {{ \Carbon\Carbon::parse(date('d-m-Y'))->isoFormat('DD MMMM YYYY') }}
+                        </div>
+                    </div>
+                    
+                    <div style="clear:both; padding:0px; margin:10px 0 0 0;">
+                        <table style="width: 100%; padding: 0; margin: 0;">
+                            <tbody>
+                                <tr>
+                                    <td style="width:100px; vertical-align: bottom;">
+                                        <div style="margin-bottom: 1px; margin-left: 10px;">
+                                            @php
+                                                $annee_debut = (int) $participant->annee_academique;
+                                                $annee_fin  = $annee_debut + 1;
+
+                                                $QrCodeText = "Relevé de notes de :\n"
+                                                        . "Auditeur : {$candidat->prenoms} {$candidat->nom}\n"
+                                                        . "Thème : {$formation->theme}\n"
+                                                        . "Code Formation : {$formation->code_formation}\n"
+                                                        . "Année académique : {$annee_debut}-{$annee_fin}";
+                                            @endphp     
+                                            
+                                            <img width="75" height="75"
+                                                 src="data:image/png;base64, {!! base64_encode(
+                                                     QrCode::encoding('UTF-8')->format('svg')->size(95)->generate($QrCodeText),
+                                                 ) !!}">
+                                        </div>
+                                    </td>
+                                    
+                                    <td style="width:35%; margin:0; font-size:9pt; border: 0px solid black; vertical-align: bottom;">
+                                        <span><b>Avis important :</b> <br> 
+                                            Il ne peut être délivré qu'un seul exemplaire du présent relevé de notes. <br>
+                                            Aucun duplicata ne sera fourni.</span>
+                                    </td>
+
+                                    <td style="text-align:center; vertical-align: bottom;">
+                                        &nbsp; 
+                                    </td>
+
+                                    <td style="width:40%; vertical-align: bottom; padding:0; font-size:11pt;">
+                                        @php
+                                            $signataire = getSignataire($formation->code_formation);
+                                        @endphp
+                                        @if ($signataire != false)
+                                            <div style="position: relative; text-align: center; width: 100%;">
+                                                
+                                                <div style="text-align: left; margin: 0; padding: 0; position: relative; z-index: 1;">
+                                                    <img src="storage/signature/{{ $signataire->signature }}"
+                                                         alt="Signature"
+                                                         style="margin-bottom: -35px; margin-left: 20px; padding: 0; height: 105px; display: block;">
+                                                </div>
+                                                
+                                                <div style="position: relative; z-index: 2; margin-top: 0; text-align: center;">
+                                                    <b><u>{{ $signataire->titre }} {{ trim($signataire->prenoms) }} {{ trim($signataire->nom) }}</u></b>
+                                                    <br>
+                                                    Directeur Général
+                                                </div>
+                                                
+                                            </div>
+                                        @endif
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pied de page bleu -->
+                    <div style="display:block; clear:both; width:100%; background: #fff; border: 0; border-top: 6px solid #9cc2e5; border-bottom: 6px solid #1571c6; margin: 25px 0 10px 0; color:#000000; font-size:9pt; text-align:center; padding:5px 0 5px 0">
+                        ERSUMA, Ouando, Carrefour Cinquantenaire - Route de Pobè, 02 BP 353 Porto-Novo, BENIN
+                        <br>Tél. : +229 01 97 97 05 37 - E-mail : ersuma@ohada.org -
+                        Web : <font color="#0563c1"><u><a href="https://ersuma.ohada.org/">https://ersuma.ohada.org</a></u></font>
+                    </div>
+
+                </footer>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 
-        <footer>
+      {{--  <footer>
 
                             <div style="clear:both; display:block; margin:5px 0 10px 0; width: 100%; ">
                                 <div style="float:left;">
@@ -387,7 +475,7 @@
                                                 @if ($signataire == false)
                                                     
                                                     @else
-                                                        <div
+                                                    <div
                                                             style=" text-align:left; margin:0; padding:0; z-index: 10;">
                                                             <img src="storage/signature/{{ $signataire->signature }}"
                                                                 alt="Signature"
@@ -417,7 +505,7 @@
                                             href="https://ersuma.ohada.org/">https://ersuma.ohada.org</a></u></font>
                             </div>
 
-                        </footer>
+                        </footer>--}}
             <!-- saut de page -->
             @if ($loop->last)
             @else
