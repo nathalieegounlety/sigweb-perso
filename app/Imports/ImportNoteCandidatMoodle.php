@@ -53,7 +53,7 @@ class ImportNoteCandidatMoodle implements ToCollection
             $code_type_examen = trim($tab_colonne[0]);
             $code_module = trim($tab_colonne[1]);
 
-            $module = Moodlemodules::whereCode($code_module)->first();
+            $module = Moodlemodules::whereCode($code_module)->whereCodeFormation($this->code_formation)->first();
             $typeexamen = Moodletypeexamens::whereCode($code_type_examen)->first();
 
             if (!$module) {

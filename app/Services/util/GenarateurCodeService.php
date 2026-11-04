@@ -257,7 +257,8 @@ public function startCalculMg(String $code_formation){
         $user = Auth('api')->user();
         // récupérer la liste des modules pour la formation
         $getModule = Moodlemoyennes::join("moodlemodules","moodlemodules.id","=","moodlemoyennes.moodlemodule_id")
-        ->whereCodeFormation($code_formation)
+        ->where("moodlemodules.code_formation",$code_formation)
+        ->where("moodlemoyennes.code_formation",$code_formation)
         ->distinct("moodlemoyennes.moodlemodule_id")
         ->pluck("moodlemodules.code");
         
@@ -277,7 +278,9 @@ public function startCalculMg(String $code_formation){
         foreach ($getCandidat as $candidat) {
             # code...
             // récupérer la somme des notes coeficiée par module
-            $somme_note = Moodlemoyennes::whereReferenceCandidat($candidat->reference_candidat)->whereCodeFormation($code_formation)->sum("note_totale");
+            $somme_note = Moodlemoyennes::whereReferenceCandidat($candidat->reference_candidat)
+            ->whereCodeFormation($code_formation)
+            ->sum("note_totale");
             // calcul moyenne générale
             Log::info('calcul moyenne somme coef ', ['coef' => $somme_note]); 
 

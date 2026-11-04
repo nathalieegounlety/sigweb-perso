@@ -154,6 +154,7 @@ class CandidaturesService implements CandidaturesInterface
         ->join('moodlemodules', 'moodlemodules.id', '=', 'moodlemoyennes.moodlemodule_id')
         ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennes.reference_candidat') 
         ->select('moodlemoyennes.note_totale', 'moodlemoyennes.note_coef', 'moodlemodules.code as code_module', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email')
+        ->where('moodlemodules.code_formation', $code_formation)
         ->where('moodlemoyennes.code_formation', $code_formation) ;
         //->orderBy('moodlemodules.code', 'ASC')
         //->get();    
@@ -210,10 +211,11 @@ class CandidaturesService implements CandidaturesInterface
             # code...
              $notes = Moodlenotes::join("moodlemodules","moodlemodules.id","=","moodlenotes.moodlemodule_id")
             ->join("moodletypeexamens","moodletypeexamens.id","=","moodlenotes.moodletypeexamen_id")
-            ->whereReferenceCandidat($data->email_candidat)
-            ->whereCodeFormation($data->code_formation)
+            ->where('moodlemodules.code_formation',$data->code_formation)
+            ->where('moodlenotes.reference_candidat',$data->email_candidat)
             //->where("moodlemodules.code",$data->code_module) 
             ->select('moodlemodules.code as code_module','moodletypeexamens.code as code_typeexamen','moodlenotes.note','moodlenotes.reference_candidat','moodlenotes.id')->get();
+            
             $candidat = Tmpmoodlecandidats::whereEmail($data->email_candidat)->first();
             //Log::info('liste note  ', ['line' => $notes]); 
             $response["notes"] = $notes;
@@ -225,8 +227,8 @@ class CandidaturesService implements CandidaturesInterface
             # code...
              $notes = Moodlenotes::join("moodlemodules","moodlemodules.id","=","moodlenotes.moodlemodule_id")
             ->join("moodletypeexamens","moodletypeexamens.id","=","moodlenotes.moodletypeexamen_id")
-            ->whereReferenceCandidat($data->email_candidat)
-            ->whereCodeFormation($data->code_formation)
+            ->where('moodlenotes.reference_candidat',$data->email_candidat) 
+            ->where('moodlemodules.code_formation',$data->code_formation) 
             ->where("moodlemodules.code",$data->code_module) 
             ->select('moodlemodules.code as code_module','moodletypeexamens.code as code_typeexamen','moodlenotes.note','moodlenotes.reference_candidat','moodlenotes.id')->get();
             $candidat = Tmpmoodlecandidats::whereEmail($data->email_candidat)->first();

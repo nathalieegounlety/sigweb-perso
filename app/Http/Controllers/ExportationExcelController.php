@@ -19,6 +19,7 @@ use App\Exports\ExportsListeDossiersValidesDsc;
 use App\Exports\ListeFormateur;
 use App\Helpers\ResponseHandler;
 use App\Imports\ImportCandidatsMoodle;
+use App\Imports\ImportMoodleModules;
 use App\Imports\ImportNoteCandidatMoodle;
 use App\Imports\InscriptionPresentielVisioImport;
 use App\Imports\InscriptionReunionImport;
@@ -29,6 +30,7 @@ use App\Mail\ImportationPresentiel;
 use App\Mail\NotificationImportation;
 use App\Models\Documentwebinaires;
 use App\Models\Formations;
+use App\Models\Moodlemodules;
 use App\Models\Moodlemoyennes;
 use App\Models\Moodlenotes;
 use App\Models\Rapports;
@@ -321,7 +323,7 @@ class ExportationExcelController extends Controller
             if(!empty($fichier_inscription)){
                 $extension = $fichier_inscription->getClientOriginalExtension();
                 $fichier_name = $numero_webinaire."_rapport_sur_inscriptions_".date('Ymd-His').'.'.$extension;
-                echo $fichier_name."<br>";
+                //echo $fichier_name."<br>";
                 // $fichier_inscription->move(public_path('documents_csv'), $fichier_name);
                 $fichier_inscription->storeAs('documents_csv', $fichier_name,'public');
                 Documentwebinaires::create([
@@ -398,7 +400,7 @@ class ExportationExcelController extends Controller
         Log::info("code fm ".$code_formation);
         $objFormation = Formations::where("code_formation",$code_formation)->first();
         $annee_academique = date("Y",strtotime($objFormation->date_debut));
-
+        $fichier_note = $request->fichier_note;
         // procéder à l'extration des données relatives aux notes dans le fichier envoyé
         Excel::import(new ImportNoteCandidatMoodle($code_formation, $annee_academique),$request->fichier_note);
 
@@ -409,6 +411,9 @@ class ExportationExcelController extends Controller
 
         if ($checkNote > 0 || $checkNoteMoyenne > 0) {
             # code...
+                $extension = $fichier_note->getClientOriginalExtension();
+                $fichier_name = $code_formation."_notes_".date('Ymd-His').'.'.$extension; 
+                $fichier_note->storeAs('documents_csv', $fichier_name,'public');
             return ResponseHandler::success("Notes importées avec succès", ['success' => true]);
 
         } else {
@@ -422,7 +427,8 @@ class ExportationExcelController extends Controller
     {
 
         // procéder à l'extration des données relatives aux notes dans le fichier envoyé
-        Excel::import(new ImportCandidatsMoodle(),$request->liste_candidats);
+        $fichier_candidat = $request->liste_candidats;
+        Excel::import(new ImportCandidatsMoodle(),$fichier_candidat);
 
         // vérifier si les notes sont importées
         $date = date('Y-m-d');
@@ -430,6 +436,9 @@ class ExportationExcelController extends Controller
 
         if ($checkData > 0) {
             # code...
+            $extension = $fichier_candidat->getClientOriginalExtension();
+            $fichier_name = "liste_candidat_".date('Ymd-His').'.'.$extension; 
+            $fichier_candidat->storeAs('documents_csv', $fichier_name,'public');
             return ResponseHandler::success("Importation effectuée avec succès",['success' => true]);
 
         } else {
@@ -474,5 +483,31 @@ class ExportationExcelController extends Controller
     public function exportListeDossiersRejetesDsc($code_formation) 
     {
         return Excel::download(new ExportsListeDossiersRejetesDsc($code_formation), "SIGWEB_ERSUMA_liste_dossiers_rejetes_dsc_" . $code_formation . '_' . date("Ymd") . '_' . date("His") . ".xlsx");
+    }
+
+    
+
+    public function importMoodleModules(Request $request)
+    {
+
+        // procéder à l'extration des données relatives aux notes dans le fichier envoyé
+        $fichier_module = $request->fichier_module;
+        Excel::import(new ImportMoodleModules(),$fichier_module);
+
+        // vérifier si les notes sont importées
+        $date = date('Y-m-d');
+        $checkData = Moodlemodules::where("updated_at","like","%$date%")->count();
+
+        if ($checkData > 0) {
+            # code...
+            $extension = $fichier_module->getClientOriginalExtension();
+                $fichier_name = "liste_modules_".date('Ymd-His').'.'.$extension; 
+                $fichier_module->storeAs('documents_csv', $fichier_name,'public');
+            return ResponseHandler::success("Importation effectuée avec succès",['success' => true]);
+
+        } else {
+            # code...
+            return ResponseHandler::success("Echec lors de l'importation des données",['success' => false]);
+        }
     }
 }

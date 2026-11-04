@@ -25,6 +25,9 @@ class MoodlesmodulesService implements MoodlesmodulesInterface
         $validator = Validator::make($data->all(), [
             'code' => 'required|unique:moodlemodules,code',
             'libelle' => 'required',
+            'annee_academique' => 'required',
+            'code_formation' => 'required',
+            'credit' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -43,6 +46,9 @@ class MoodlesmodulesService implements MoodlesmodulesInterface
             $moodlesmodule->setAttribute('libelle', $data->libelle);
             $moodlesmodule->setAttribute('code', $data->code);
             $moodlesmodule->setAttribute('credit', $data->credit);
+            $moodlesmodule->setAttribute('code_formation', $data->code_formation);
+            $moodlesmodule->setAttribute('annee_academique', $data->annee_academique);
+            $moodlesmodule->setAttribute('enseignant', $data->enseignant); 
 
             if ($user = auth('api')->user()) {
                 $moodlesmodule->setAttribute('created_by', $user->id);
@@ -70,11 +76,16 @@ class MoodlesmodulesService implements MoodlesmodulesInterface
         $sortOrder = $request->input('sort_order', 'desc');
 
         $filterLibelle = $request->input('filter_libelle');
+        $filterCode = $request->input('filter_code');
+        $filterCodeFormation = $request->input('filter_code_formation');
         $filterIsEnable = $request->input('filter_enable');
         $filterUpdatedAt = $request->input('filter_updated_at');
         $filterAuthor = $request->input('filter_author');
 
-       $query = Moodlemodules::select('moodlemodules.id', 'moodlemodules.libelle','moodlemodules.code','moodlemodules.credit', 'moodlemodules.updated_at', 'moodlemodules.enable', 'moodlemodules.updated_by')
+       $query = Moodlemodules::select('moodlemodules.id', 'moodlemodules.libelle','moodlemodules.code','moodlemodules.credit', 
+       'moodlemodules.updated_at', 'moodlemodules.enable', 'moodlemodules.updated_by','formations.theme as libelle_formation',
+       'moodlemodules.code_formation','moodlemodules.annee_academique','moodlemodules.enseignant')
+       ->leftJoin('formations','formations.code_formation','=','moodlemodules.code_formation')
             ->with(['getUserUpdated:id,name,email,code_user']);
 
         $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';
@@ -86,12 +97,25 @@ class MoodlesmodulesService implements MoodlesmodulesInterface
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('moodlemodules.libelle', 'like', "%{$search}%")
+                ->orWhere('moodlemodules.credit', 'like', "%{$search}%")
+                ->orWhere('moodlemodules.code', 'like', "%{$search}%")
+                ->orWhere('moodlemodules.enseignant', 'like', "%{$search}%")
+                ->orWhere('moodlemodules.code_formation', 'like', "%{$search}%")
+                ->orWhere('moodlemodules.annee_academique', 'like', "%{$search}%") 
                     ->orWhere('users.name', 'like', "%{$search}%");
             });
         }
 
         if ($filterLibelle) {
             $query->where('moodlemodules.libelle', 'like', "%{$filterLibelle}%");
+        }
+
+        if ($filterCode) {
+            $query->where('moodlemodules.code', 'like', "%{$filterCode}%");
+        }
+
+        if ($filterCodeFormation) {
+            $query->where('moodlemodules.libelle', 'like', "%{$filterCodeFormation}%");
         }
 
         if ($filterIsEnable !== null && $filterIsEnable !== '') {
@@ -125,13 +149,11 @@ class MoodlesmodulesService implements MoodlesmodulesInterface
 
         // Validation des données
         $validator = Validator::make($data->all(), [
-            'code' => [
-                'required',
-                \Illuminate\Validation\Rule::unique('moodlemodules')->where(function ($query) use ($data, $moodlesmodule) {
-                    return $query->whereCode($data->code)->whereNotIn('code', [$moodlesmodule->code]);
-                }),
-            ],
+            'code' => 'required',
+            'code_formation' => 'required',
+            'credit' => 'required',
             'libelle' => 'required',
+            'annee_academique' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -139,16 +161,23 @@ class MoodlesmodulesService implements MoodlesmodulesInterface
         }
 
         // Vérification de l'existence du libellé
-        $checkData = Moodlemodules::whereLibelle($data['libelle'])->where("id", "!=", $moodlesmodule->id)->exists();
+        $checkData = Moodlemodules::whereLibelle($data['libelle'])
+        ->whereCodeFormation($data['code_formation'])
+        ->whereAnneeAcademique($data['annee_academique'])
+        ->whereCode($data['code'])
+        ->where("id", "!=", $moodlesmodule->id)->exists();
 
         if ($checkData) {
-            return ResponseHandler::error("Le libellé existe déjà", 409);
+            return ResponseHandler::error("Le module existe déjà", 409);
         }
 
         // Mise à jour du module
         $moodlesmodule->setAttribute('libelle', $data['libelle']);
         $moodlesmodule->setAttribute('code', $data['code']);
         $moodlesmodule->setAttribute('credit', $data['credit']);
+        $moodlesmodule->setAttribute('code_formation', $data['code_formation']);
+        $moodlesmodule->setAttribute('annee_academique', $data['annee_academique']);
+        $moodlesmodule->setAttribute('enseignant', $data['enseignant']);
         $moodlesmodule->setAttribute('updated_by', auth('api')->id());
         $moodlesmodule->update();
 

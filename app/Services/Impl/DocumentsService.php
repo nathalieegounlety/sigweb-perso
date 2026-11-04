@@ -1520,6 +1520,7 @@ class DocumentsService implements DocumentsInterface
     $notes = DB::table('moodlemoyennes') 
         ->join('moodlemodules', 'moodlemodules.id', '=', 'moodlemoyennes.moodlemodule_id') 
         ->select('moodlemoyennes.note_totale as note', 'moodlemoyennes.note_coef as note_credit', 'moodlemodules.credit', 'moodlemoyennes.reference_candidat','moodlemodules.code','moodlemodules.libelle')
+        ->where('moodlemodules.code_formation', $code_formation) 
         ->where('moodlemoyennes.code_formation', $code_formation) 
         ->where('moodlemoyennes.reference_candidat', $candidat->email)
         ->orderBy('moodlemoyennes.note_coef', 'DESC')

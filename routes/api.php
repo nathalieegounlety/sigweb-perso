@@ -457,6 +457,7 @@ Route::prefix('v1/exportation')->controller(\App\Http\Controllers\ExportationExc
     Route::post('reunions', 'importReunion');
     Route::post('notes', 'importNotes');
     Route::post('candidats', 'importCandidats');
+    Route::post('modules', 'importMoodleModules');
 
     // liste des auditeurs 
     Route::get('auditeurs', 'AuditeursExportListe');
