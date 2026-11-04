@@ -9,7 +9,7 @@ class Moodlemoyennes extends Model
 {
     
     use HasFactory;
-    protected $table = 'moodlenotes';
+    protected $table = 'moodlemoyennes';
     protected $primaryKey = 'id';
     public $incrementing = true;
 
