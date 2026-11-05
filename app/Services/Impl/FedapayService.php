@@ -117,11 +117,27 @@ class FedapayService implements  FedapayInterfarce
                 $paiement->setAttribute('statut_paiement', 'EN ATTENTE');
             } else {
                 // soldé intégralement — règle métier hors DSC : pas de partiel par ligne
-                $paiement->setAttribute('statut_paiement', 'PAYE');
-                $paiement->setAttribute('statut_traitement', 'VALIDER');
+               $paiement->setAttribute('statut_paiement', 'PAYE');
+               $paiement->setAttribute('statut_traitement', 'VALIDER');
             }
 
             $paiement->update();
+
+            // valider les données dans la table détails paiement
+            // récupérer les détails paiements
+           /*  $listeDetailsPaiement = Detailspaiements::whereReferencePaiement($paiement->reference)->get();
+            
+            foreach($listeDetailsPaiement as $detail){
+                $updDetail = Detailspaiements::find($detail->id); 
+                $updDetail->montant_paye = $updDetail->montant_restant;
+                $updDetail->montant_restant = 0;
+                $updDetail->modepaiement_id = 2; 
+                $updDetail->is_paiement_partiel = false; 
+                $updDetail->statut_paiement = 'PAYE';
+                $updDetail->statut_traitement = 'VALIDER';
+                $updDetail->date_comptable = Date('Y-m-d'); 
+                $updDetail->save();
+            } */
         }
 
         // FIX : null-check mode de paiement
@@ -181,6 +197,8 @@ class FedapayService implements  FedapayInterfarce
                     Log::error('Erreur envoi mail NotificationComptable', ['error' => $e->getMessage()]);
                 }
             }
+
+            // send mail for traitement automatique
         }
 
         return ResponseHandler::success("ok", [
@@ -197,102 +215,7 @@ class FedapayService implements  FedapayInterfarce
         ]);
     }
 }
-
-    public function storePaiementFedapayOld(Request $request): \Illuminate\Http\JsonResponse
-    {
-        // TODO: Implement storePaiementFedapay() method.
-
-            # code...
-            $reference = $request->reference;
-            $montant_paye = $request->montant_payer;
-            // récupérer le statut de la transaction côté serveur
-            $data_transaction = Transaction::retrieve($request->transaction_id);
-
-            // mise à jour de la table paiement
-            $getPaiement = Paiements::whereReference($reference)->first();
-            $montant_restant = $getPaiement->montant_restant;
-            // mise à jour du montant paye
-            $paiement = Paiements::find($getPaiement->id);
-            $paiement->setAttribute('num_transaction', $data_transaction->id);
-            $paiement->setAttribute('statut_transaction', $data_transaction->status);
-            $paiement->setAttribute('updated_at', date('Y-m-d H:i:s'));
-            $paiement->setAttribute('id_modepaiement', 2); // FedaPay
-            if($montant_paye < $montant_restant){ // il s'agit d'un paiement partiel
-                $paiement->setAttribute('is_paiementpartiel', 1);
-            }
-            $paiement->update();
-            // récupérer le mode de paiement
-            $libelle_mode_paiement = Modepaiements::find($paiement->id_modepaiement);
-
-            // envoie de mail pour notification paiement en attente
-            // envoie de mail pour notifier l'enregistrement du paiement
-            $auditeur = Auditeurs::where("email",$paiement->email)->first();
-            if ($auditeur) {
-                # code...
-                $contenu = [
-                    'nom' => $auditeur->nom,
-                    'prenoms' => $auditeur->prenoms,
-                    'reference_paiement' => $reference,
-                    'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$reference,
-                    'email' => $paiement->email,
-                    'montant' => $montant_paye,
-                    'mode_paiement' => $libelle_mode_paiement->libelle
-                ];
-            } else {
-                # code...
-                $contenu = [
-                    'nom' => "",
-                    'prenoms' => "",
-                    'reference_paiement' => $reference,
-                    'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$reference,
-                    'email' => $paiement->email,
-                    'montant' => $montant_paye,
-                    'mode_paiement' => $libelle_mode_paiement->libelle
-                ];
-            }
-            try {
-                # code...
-                 Mail::to($paiement->email)->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new Paiementattente($contenu));
-            } catch (\Exception $e) {
-                // Get error here
-                Log::info('echec de l\'envoi du mail');
-            }
-
-            if(env('PAIEMENT_NOTIFIER_COMPTABLE')){
-
-                $liste_comptable = User::whereHas('roles', function ($q) {
-                    $q->where('libelle', 'COMPTABLE');
-                })->pluck('email');
-
-                //foreach ($liste_comptable as $comptable) {
-                $contenu = [
-                    'name' => 'COMPTABLE',
-                    'reference_paiement' => $reference,
-                    'email_auditeur' => $paiement->email,
-                    'nom_auditeur' => $auditeur->prenoms.' '.$auditeur->nom,
-                    'subject' => 'NOUVEAU PAIEMENT ' . date('d-m-Y H:i:s'),
-                    'email' => '',
-                    'montant' => $montant_paye,
-                    'mode_paiement' => $libelle_mode_paiement->libelle
-                ];
-                try {
-                    # code...
-                    Mail::to(env('MAIL_CC'))->cc($liste_comptable)->queue(new NotificationComptable($contenu));
-                } catch (\Exception $e) {
-                    // Get error here
-                }
-            }
-
-            //}
-
-            $dataResponse = [
-                'reference' => $paiement->reference,
-                'success' => true,
-            ];
-
-            return  ResponseHandler::success("ok",$dataResponse);
-
-    }
+ 
 
 public function storePaiementPartielFedapay(Request $request): \Illuminate\Http\JsonResponse
 {
@@ -404,6 +327,7 @@ public function storePaiementPartielFedapay(Request $request): \Illuminate\Http\
                     $update_paiement->setAttribute('montant_restant', max($update_montant_restant, 0));
                 }
                 $update_paiement->setAttribute('id_modepaiement', $mode_paiement->id);
+                $update_paiement->date_comptable = date('Y-m-d');
                 $update_paiement->update();
 
             } else {
@@ -412,6 +336,7 @@ public function storePaiementPartielFedapay(Request $request): \Illuminate\Http\
                 if ($update_montant_restant <= 0) {
                     // FIX : même correction ici — soldé = "PAYE"
                     $update_paiement->setAttribute('statut_paiement', 'PAYE');
+                    $update_paiement->date_comptable = date('Y-m-d');
                 }
                 $update_paiement->setAttribute('montant_paye', $update_montant_paye);
                 $update_paiement->setAttribute('montant_restant', max($update_montant_restant, 0));
@@ -439,7 +364,9 @@ public function storePaiementPartielFedapay(Request $request): \Illuminate\Http\
                     $update_detailspaiement->setAttribute('reference_paiement_partiel', $data_transaction->id);
                     $update_detailspaiement->setAttribute('statut_paiement', "PAYE");
                 } else {
-                    $update_detailspaiement->setAttribute('statut_paiement', $statut_details_paiement);
+                    //$update_detailspaiement->setAttribute('statut_paiement', $statut_details_paiement);
+                    $update_detailspaiement->setAttribute('modepaiement_id', $mode_paiement->id);
+                    $update_detailspaiement->setAttribute('statut_paiement', "PAYE");
                 }
                 $update_detailspaiement->update();
             }
@@ -517,169 +444,7 @@ public function storePaiementPartielFedapay(Request $request): \Illuminate\Http\
         ]);
     }
 }
-
-    public function storePaiementPartielFedapayOld(Request $request): \Illuminate\Http\JsonResponse
-    {
-
-        try {
-            // récupérer le statut de la transaction côté serveur
-            $data_transaction = Transaction::retrieve($request->transaction_id);
-            
-            Log::info('info fedapay');
-            Log::info($data_transaction);
-            Log::info('end info fedapay');
  
-                $reference = $request->reference_paiement;
-                $actuel_montant_paye = $request->montant_total;
-                $mode_paiement = Modepaiements::whereLibelle($request->mode_paiement)->first();
-                // mise à jour de la table paiement
-                $paiement = Paiements::where('reference', $reference)->get()->first();
-                $update_montant_restant = $paiement->montant_restant - $actuel_montant_paye;
-                $update_montant_paye = $paiement->montant_paye + $actuel_montant_paye;
-            Log::info($update_montant_restant);
-            Log::info($update_montant_paye);
-            Log::info($actuel_montant_paye);
-
-                $update_paiement = Paiements::find($paiement->id);
-
-                if ($update_paiement->is_paiement_partiel) {
-                    # code...
-                    $paiement_partiel = true;
-                } else {
-                    # code...
-                    $paiement_partiel = false;
-                }
-
-                $statut_details_paiement = "IMPAYE";
-                $statut_paiement = "EN ATTENTE";
-
-                if ($update_montant_restant == 0 && $actuel_montant_paye == $paiement->montant_restant) {
-                    # code...
-                    $update_paiement->setAttribute('statut_paiement',$statut_paiement);
-                    $update_paiement->setAttribute('num_transaction', $data_transaction->id);
-                    $update_paiement->setAttribute('statut_transaction', $data_transaction->status);
-
-                    if ($paiement_partiel) {
-                        # code...
-                        $update_paiement->setAttribute('montant_paye', $update_montant_paye);
-                        $update_paiement->setAttribute('montant_restant', $update_montant_restant);
-                    }
-                    $update_paiement->setAttribute('id_modepaiement', $mode_paiement->id);
-                    $update_paiement->update();
-
-                }else {
-                    # code...
-                    $update_paiement->setAttribute('is_paiement_partiel', true);
-                    $paiement_partiel = true;
-                    if ($update_montant_restant == 0) {
-                        # code...
-                        $update_paiement->setAttribute('statut_paiement',$statut_paiement);
-                    }
-                    $update_paiement->setAttribute('montant_paye', $update_montant_paye);
-                    $update_paiement->setAttribute('montant_restant', $update_montant_restant);
-                    $update_paiement->setAttribute('id_modepaiement', $mode_paiement->id);
-                    $update_paiement->update();
-                }
-
-
-                // update détails paiements
-                foreach ($request->formations as $key => $value) {
-                    # code...
-                    $update_detailspaiement = Detailspaiements::find($value['detail_id']);
-                    if ($paiement_partiel) {
-                        # code...
-                        $update_detailspaiement->setAttribute('is_paiement_partiel', true);
-                        $update_detailspaiement->setAttribute('modepaiement_id', $mode_paiement->id);
-                        $update_detailspaiement->setAttribute('reference_paiement_partiel', $data_transaction->id);
-                        $update_detailspaiement->setAttribute('statut_paiement', "PAYE");
-                    }else {
-                        # code...
-                        $update_detailspaiement->setAttribute('statut_paiement', $statut_details_paiement);
-                    }
-                    $update_detailspaiement->update();
-                }
-
-                // envoie de mail pour notification paiement en attente
-                // envoie de mail pour notifier l'enregistrement du paiement
-                $auditeur = Auditeurs::where("email",$paiement->email)->first();
-
-                if ($auditeur) {
-                    # code...
-                    $contenu = [
-                        'nom' => $auditeur->nom,
-                        'prenoms' => $auditeur->prenoms,
-                        'reference_paiement' => $reference,
-                        'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$reference,
-                        'email' => $paiement->email,
-                        'montant' => $actuel_montant_paye,
-                        'mode_paiement' => $mode_paiement->libelle
-                    ];
-                } else {
-                    # code...
-                    $contenu = [
-                        'nom' => "",
-                        'prenoms' => "",
-                        'reference_paiement' => $reference,
-                        'subject' => 'INFORMATION SUR VOTRE PAIEMENT '.$reference,
-                        'email' => $paiement->email,
-                        'montant' => $actuel_montant_paye,
-                        'mode_paiement' => $mode_paiement->libelle
-                    ];
-                }
-
-                try {
-                    # code...
-                    Mail::to($paiement->email)->cc([env('MAIL_CC')])->bcc(env('MAIL_BCC'))->queue(new Paiementattente($contenu));
-                } catch (\Exception $e) {
-                    // Get error here
-                    Log::info('echec de l\'envoi du mail à l\'auditeur');
-                }
-
-                if(env('PAIEMENT_NOTIFIER_COMPTABLE')){
-
-                    $liste_comptable = User::whereHas('roles', function ($q) {
-                        $q->where('libelle', 'COMPTABLE');
-                    })->pluck('email');
-
-                    $contenu = [
-                        'name' => 'COMPTABLE',
-                        'reference_paiement' => $reference,
-                        'email_auditeur' => $paiement->email,
-                        'nom_auditeur' => $auditeur->prenoms.' '.$auditeur->nom,
-                        'subject' => 'NOUVEAU PAIEMENT ' . date('d-m-Y H:i:s'),
-                        'email' => '',
-                        'montant' => $paiement->montant_restant,
-                        'mode_paiement' => $mode_paiement->libelle
-                    ];
-                    try {
-                        # code...
-                        Mail::to(env('MAIL_CC'))->cc($liste_comptable)->queue(new NotificationComptable($contenu));
-                    } catch (\Exception $e) {
-                        // Get error here
-                    }
-                }
-
-
-                $dataResponse = [
-                    'reference' => $reference,
-                    'success' => true,
-                ];
-
-                return  ResponseHandler::success("ok",$dataResponse);
-
-
-        } catch (\Exception $e) {
-            Log::error('Erreur vérification FedaPay', ['error' => $e->getMessage()]);
-
-            $dataResponse = [
-                'reference' => $reference,
-                'success' => false,
-            ];
-
-            return  ResponseHandler::success("ok",$dataResponse);
-
-        }
-    }
 
     public function storePaiementOuvrageFedapay(Request $request): \Illuminate\Http\JsonResponse
 {

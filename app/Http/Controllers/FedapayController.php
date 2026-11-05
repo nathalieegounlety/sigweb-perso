@@ -137,6 +137,8 @@ class FedapayController extends Controller
 
             // FIX : les deux cas identiques sont fusionnés sur une seule méthode
             case 'transaction.approved':
+                return $this->handleFedapayTransactionApprovee($event);
+
             case 'transaction.transferred':
                 return $this->handleFedapayTransactionApprovee($event);
 
@@ -319,7 +321,7 @@ private function handleFedapayNonDsc($event, string $get_reference, Paiements $p
         if ($getDetailPaiement->statut_traitement != "VALIDER") {
             $getDetailPaiement->setAttribute('statut_traitement', "VALIDER");
             $getDetailPaiement->setAttribute('statut_paiement', "PAYE");
-            $getDetailPaiement->setAttribute("montant_paye", $getDetailPaiement->montant_restant);
+            $getDetailPaiement->setAttribute("montant_paye", $getDetailPaiement->montant_paye + $getDetailPaiement->montant_restant);
             $getDetailPaiement->setAttribute("montant_restant", 0);
             $getDetailPaiement->setAttribute("date_comptable", date('Y-m-d'));
             $getDetailPaiement->setAttribute("commentaire", "Validation automatique webhook FedaPay");
@@ -333,11 +335,12 @@ private function handleFedapayNonDsc($event, string $get_reference, Paiements $p
                 $paiement->setAttribute("statut_traitement", "VALIDER");
                 $paiement->setAttribute("commentaire", "Validation automatique webhook FedaPay");
                 $paiement->setAttribute('agent_traiteur', $user->id);
+                $paiement->setAttribute("date_comptable", date('Y-m-d'));
                 $paiement->setAttribute('date_traitement', new \DateTime());
                 $paiement->update();
             }
             $checkValidation = false;
-        }
+        } 
 
         if ($checkValidation) {
             return response()->json(["data" => $event, "statut" => "approved"], 200);
@@ -372,14 +375,14 @@ private function handleFedapayNonDsc($event, string $get_reference, Paiements $p
     }
 
     // paiement non-partiel
-    if ($paiement->statut_traitement == "VALIDER") {
+    /* if ($paiement->statut_traitement == "VALIDER") {
         return response()->json(["data" => $event, "statut" => "approved"], 200);
-    }
+    } */
 
     $paiement->setAttribute('num_transaction', $event->entity->id);
     $paiement->setAttribute('statut_transaction', $event->entity->status);
     $paiement->setAttribute("statut_paiement", "PAYE");
-    $paiement->setAttribute("montant_paye", $paiement->montant_restant);
+    $paiement->setAttribute("montant_paye", $paiement->montant_paye + $paiement->montant_restant);
     $paiement->setAttribute("montant_restant", 0);
     $paiement->setAttribute("statut_traitement", "VALIDER");
     $paiement->setAttribute("commentaire", "Validation automatique webhook FedaPay");
@@ -393,7 +396,7 @@ private function handleFedapayNonDsc($event, string $get_reference, Paiements $p
         foreach ($details_paiement as $detail) {
             $detail->setAttribute('statut_traitement', "VALIDER");
             $detail->setAttribute('statut_paiement', "PAYE");
-            $detail->setAttribute("montant_paye", $detail->montant_restant);
+            $detail->setAttribute("montant_paye", $detail->montant_paye + $detail->montant_restant);
             $detail->setAttribute("montant_restant", 0);
             $detail->setAttribute("date_comptable", date('Y-m-d'));
             $detail->setAttribute("commentaire", "Validation automatique webhook Fedapay");

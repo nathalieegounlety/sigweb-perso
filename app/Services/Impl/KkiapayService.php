@@ -257,7 +257,7 @@ public function storePaiementPartielKkiapay(Request $request): \Illuminate\Http\
 
         DB::transaction(function () use ($paiement, $lignesValidees, $montantKkiapay, $transactionId, $transaction, $paiementConfirme) {
             foreach ($lignesValidees as $detail) {
-                $detail->montant_paye = $detail->montant_restant;
+                $detail->montant_paye = $detail->montant_paye + $detail->montant_restant;
                 $detail->montant_restant = 0;
                 $detail->reference_paiement_partiel = $transactionId;
                 $detail->modepaiement_id = 1; 
@@ -1247,11 +1247,12 @@ private function confirmerPaiementClassiqueViaWebhook(Paiements $paiement, strin
             if ($paiementPartiel->statut_traitement !== 'VALIDER') {
                 $paiementPartiel->statut_traitement = 'VALIDER';
                 $paiementPartiel->statut_paiement = 'PAYE';
-                $paiementPartiel->montant_paye = $paiementPartiel->montant_restant;
+                $paiementPartiel->date_comptable = date('Y-m-d');
+                $paiementPartiel->montant_paye = $paiementPartiel->montant_paye + $paiementPartiel->montant_restant;
                 $paiementPartiel->montant_restant = 0;
                 $paiementPartiel->commentaire = 'Validation automatique webhook KKiaPay';
                 $paiementPartiel->save();
-            }
+            } 
 
             $resteAttente = Detailspaiements::where('id', '!=', $paiementPartiel->id)
                 ->where('reference_paiement', $paiement->reference)
@@ -1266,6 +1267,7 @@ private function confirmerPaiementClassiqueViaWebhook(Paiements $paiement, strin
                 $paiement->statut_traitement = 'VALIDER';
                 $paiement->commentaire = 'Validation automatique webhook KKiaPay';
                 $paiement->agent_traiteur = $userValidateur->id;
+                $paiement->date_comptable = date('Y-m-d');
                 $paiement->date_traitement = now();
                 $paiement->save();
             }
@@ -1274,12 +1276,13 @@ private function confirmerPaiementClassiqueViaWebhook(Paiements $paiement, strin
             $paiement->num_transaction = $transactionId;
             $paiement->statut_transaction = 'SUCCESS';
             $paiement->statut_paiement = 'PAYE';
-            $paiement->montant_paye = $paiement->montant_restant;
+            $paiement->montant_paye = $paiement->montant_paye + $paiement->montant_restant;
             $paiement->montant_restant = 0;
             $paiement->statut_traitement = 'VALIDER';
             $paiement->commentaire = 'Validation automatique webhook KKiaPay';
             $paiement->id_modepaiement = 1;
             $paiement->agent_traiteur = $userValidateur->id;
+            $paiement->date_comptable = date('Y-m-d');
             $paiement->date_traitement = now();
             $paiement->save();
 
@@ -1289,7 +1292,7 @@ private function confirmerPaiementClassiqueViaWebhook(Paiements $paiement, strin
                     $detail->statut_traitement = 'VALIDER';
                     $detail->statut_paiement = 'PAYE';
                     $detail->date_comptable = date('Y-m-d');
-                    $detail->montant_paye = $detail->montant_restant;
+                    $detail->montant_paye = $detail->montant_paye + $detail->montant_restant;
                     $detail->montant_restant = 0;
                     $detail->commentaire = 'Validation automatique webhook KKiaPay';
                     $detail->save();
