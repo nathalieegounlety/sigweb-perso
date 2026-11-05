@@ -60,4 +60,6 @@ interface DocumentsInterface
     public function getUrlAllRegistreNoteCandidat($code_formation);
     public function downloadAllRegistreNoteCandidatSearch($code_formation);
     public function getUrlAllRegistreNoteCandidatSearch($code_formation);
+    public function getUrlAllRegistreNoteEmagCandidat($code_formation);
+    public function downloadListeEmargement($code_formation);
 }

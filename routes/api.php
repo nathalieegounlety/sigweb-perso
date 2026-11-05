@@ -185,6 +185,11 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
     Route::post('get/url/all/releve/note/candidat', 'urlAllReleveNoteCandidat');
     Route::get('export/all/releve/note/candidat/{code_formation}', 'allReleveNoteCandidat')->name('allReleveNoteCandidat.moodle')->middleware('signed');
     
+    
+    Route::post('get/url/all/registre/note/emag/candidat', 'urlAllRegistreNoteEmagCandidat');
+    Route::get('export/all/registre/note/emag/candidat/{code_formation}', 'allRegistreNoteEmagCandidat')->name('emargement.moodle')->middleware('signed');
+
+
     Route::post('get/url/all/registre/note/candidat', 'urlAllRegistreNoteCandidat');
     Route::get('export/all/registre/note/candidat/{code_formation}', 'allRegistreNoteCandidat')->name('allRegistreNoteCandidat.moodle')->middleware('signed');
 

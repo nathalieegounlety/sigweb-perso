@@ -1679,6 +1679,14 @@ class DocumentsService implements DocumentsInterface
         return  ResponseHandler::success("ok", $data, 200);
     }
 
+    public function getUrlAllRegistreNoteEmagCandidat($code_formation)
+    {
+        // TODO: Implement getUrlAllRegistreNoteEmagCandidat() method.
+        $url = $this->genarateurCodeService->generateUrlSigned('emargement.moodle', ['code_formation' => $code_formation]);
+        $data = ['url' => $url];
+        return  ResponseHandler::success("ok", $data, 200);
+    }
+
     public function getUrlAllRegistreNoteCandidat($code_formation)
     {
         // TODO: Implement getUrlAllRegistreNoteCandidat() method.
@@ -1693,6 +1701,59 @@ class DocumentsService implements DocumentsInterface
         $url = $this->genarateurCodeService->generateUrlSigned('allRegistreNoteCandidatSearch.moodle', ['code_formation' => $code_formation]);
         $data = ['url' => $url];
         return  ResponseHandler::success("ok", $data, 200);
+    }
+
+    
+    public function downloadListeEmargement($code_formation)
+    {
+        // TODO: Implement downloadListeEmargement() method.
+        set_time_limit(0); 
+        
+        $candidat = DB::table('moodlemoyennegenerales') 
+            ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
+            ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
+            ->where('moodlemoyennegenerales.code_formation', $code_formation)  
+            ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
+            ->first(); 
+    
+        $participants = DB::table('moodlemoyennegenerales') 
+            ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
+            ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
+            ->where('moodlemoyennegenerales.code_formation', $code_formation)  
+            ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
+            ->get(); 
+        
+        // Récupérer l'objet de la formation
+        $formation = Formations::where('code_formation', $code_formation)->first();
+        
+        // Correction : Pas de ":" dans le nom du fichier (interdit par Windows/macOS)
+        $date = date('d-m-Y_H-i-s'); 
+    
+        // Charger la vue HTML
+        $pdf = PDF::loadView('documents.pdf_liste_emargement', [
+            'participants' => $participants,
+            'code_formation' => $code_formation,
+            'formation' => $formation,
+            'candidat' => $candidat
+        ]);
+    
+        // CONFIGURATION : Impérativement AVANT le rendu du Canvas ou l'output
+        $pdf->setPaper('A4', 'landscape');
+    
+        // GESTION DU CANVAS & PAGINATION
+        $dom_pdf = $pdf->getDomPDF();
+        $canvas = $dom_pdf->get_canvas();
+        $footer = $canvas->open_object();
+        $w = $canvas->get_width();
+        $h = $canvas->get_height();
+        
+         $canvas->page_text($w-60, $h-28, "Page {PAGE_NUM} sur {PAGE_COUNT}", null, 10, array(0, 0, 0));
+        
+        $canvas->close_object();
+        $canvas->add_object($footer, "all");
+    
+        // Lancement du téléchargement sécurisé
+        return $pdf->download('SIGWEB_'.$code_formation . '_LISTE_DES_NOTES_DSC_' . $date . '.pdf');
     }
 
     

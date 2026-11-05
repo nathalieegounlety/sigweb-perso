@@ -29,7 +29,7 @@ class DocumentsController extends Controller
             'telechargerAttestationParticipant','listeParticipantVisio','listeParticipantPresentiel','proformaDsc','listeFormateurs',
             'exportAllAttestationParticipant','exportAllAttestationPresentielParticipant','telechargerAttestationFormateur','consulterAttestationFormateur','proformaOuvrage',
             'exportAllAttestationFormateur','recuPaiementOuvrage','exportEtatRecapitulatif','exportListeGlobaleToPDF','exportListeParticipantAttestationPDF',
-            'allAttestationCandidat','allReleveNoteCandidat','allRegistreNoteCandidat','allRegistreNoteCandidatSearch']]);
+            'allAttestationCandidat','allReleveNoteCandidat','allRegistreNoteCandidat','allRegistreNoteCandidatSearch','allRegistreNoteEmagCandidat']]);
     }
 
     public function showVisuelFormation(Request $request)
@@ -951,6 +951,18 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
 
     
 
+    public function allRegistreNoteEmagCandidat($code_formation)
+    {
+        try {
+            return $data = $this->documentService->downloadListeEmargement($code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+
+    }
+
     public function allRegistreNoteCandidat($code_formation)
     {
         try {
@@ -961,6 +973,21 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
 
+    }
+
+    public function urlAllRegistreNoteEmagCandidat(Request $request){
+
+        try{
+            $validated = $request->validate([
+                'code_formation' => 'required'
+            ]);
+
+            return $this->documentService->getUrlAllRegistreNoteEmagCandidat($request->code_formation);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
     }
 
     public function urlAllRegistreNoteCandidat(Request $request){
@@ -977,6 +1004,7 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
             return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
         }
     }
+
 
     
 
