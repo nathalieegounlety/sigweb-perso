@@ -22,5 +22,7 @@ interface CandidaturesInterface
     public function doCalculMg(string $code_formation): \Illuminate\Http\JsonResponse;
 
     public function getRegistreNotesCandidats(Request $request, string $code_formation); 
+    
+    public function infoConsultationDiplome(string $code_user, string $code_formation): \Illuminate\Http\JsonResponse;
 
 }

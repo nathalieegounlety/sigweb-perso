@@ -1409,12 +1409,15 @@ class DocumentsService implements DocumentsInterface
 
     // Récupérer le participant avec ses moyennes
     $participant = DB::table('moodlemoyennegenerales') 
-        ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
-        ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
-        ->where('moodlemoyennegenerales.code_formation', $code_formation) 
-        ->where('moodlemoyennegenerales.reference_candidat', $candidat->email)
-        ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
-        ->first(); 
+            ->join('formations', 'formations.code_formation', '=', 'moodlemoyennegenerales.code_formation')
+            ->join('formations_dscs', 'formations_dscs.formation_id', '=', 'formations.id')
+            ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
+            ->leftjoin('users', 'users.email', '=', 'tmpmoodlecandidats.email') 
+            ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance','users.code_user','formations.theme','formations.code_formation','formations_dscs.date_remise_diplomes','formations.lieu')
+            ->where('moodlemoyennegenerales.code_formation', $code_formation) 
+            ->where('moodlemoyennegenerales.reference_candidat', $candidat->email)
+            ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
+            ->first();  
  
     $formation = Formations::where('code_formation', $code_formation)->first();
     
@@ -1580,11 +1583,15 @@ class DocumentsService implements DocumentsInterface
 {
     // TODO: Implement downloadAllAttestationMoodleCandidat() method.
     set_time_limit(0); 
-    
+     
+
     $participants = DB::table('moodlemoyennegenerales') 
-        ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
-        ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance')
-        ->where('moodlemoyennegenerales.code_formation', $code_formation) 
+        ->join('formations', 'formations.code_formation', '=', 'moodlemoyennegenerales.code_formation')
+            ->join('formations_dscs', 'formations_dscs.formation_id', '=', 'formations.id')
+            ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat') 
+            ->leftjoin('users', 'users.email', '=', 'tmpmoodlecandidats.email') 
+            ->select('moodlemoyennegenerales.annee_academique', 'moodlemoyennegenerales.code_formation', 'moodlemoyennegenerales.moyenne', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','tmpmoodlecandidats.email','tmpmoodlecandidats.ddn','tmpmoodlecandidats.lieu_naissance','users.code_user','formations.theme','formations.code_formation','formations_dscs.date_remise_diplomes','formations.lieu')
+            ->where('moodlemoyennegenerales.code_formation', $code_formation) 
         ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
         ->get(); 
  

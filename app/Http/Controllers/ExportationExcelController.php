@@ -406,8 +406,10 @@ class ExportationExcelController extends Controller
 
         // vérifier si les notes sont importées
         $date = date('Y-m-d');
-        $checkNote = Moodlenotes::where("created_at","like","%$date%")->count();
-        $checkNoteMoyenne = Moodlemoyennes::where("created_at","like","%$date%")->count();
+        $checkNote = Moodlenotes::whereCodeFormation($code_formation)->where("updated_at","like","%$date%")->count();
+        $checkNoteMoyenne = Moodlemoyennes::whereCodeFormation($code_formation)->where("updated_at","like","%$date%")->count();
+        Log::info("nbr note ".$checkNote);
+        Log::info("nbr moyenne ".$checkNoteMoyenne);
 
         if ($checkNote > 0 || $checkNoteMoyenne > 0) {
             # code...

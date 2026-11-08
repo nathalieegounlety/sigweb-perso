@@ -183,4 +183,22 @@ class CandidaturesController extends Controller
             return ResponseHandler::error("Erreur lors de la récupération", 500, $e->getMessage());
         }
     }
+
+    
+    
+    public function infoDiplomes(Request $request){
+        try {
+            $validatedData = $request->validate([ 
+                'code_user' => 'required',
+                'code_formation' => 'required', 
+            ]);
+            
+            return $data = $this->candidatureService->infoConsultationDiplome($request->code_user, $request->code_formation);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ResponseHandler::error("Erreur de validation", 422, $e->errors());
+        } catch (\Exception $e) {
+            return ResponseHandler::error("Une erreur interne est survenue", 500, $e->getMessage());
+        }
+    }
 }

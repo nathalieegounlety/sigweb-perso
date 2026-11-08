@@ -549,6 +549,7 @@ Route::prefix('v1/scolarites')->controller(CandidaturesController::class)->group
     Route::post('moodle/liste/notes/brutes', 'listeNotesBrutes')->name('listenotesbrutes.moodle'); 
     Route::post('moodle/calcul/mg', 'calculMg')->name('calculMg.moodle'); 
     Route::get('moodle/registre/notes/candidats', 'registreNotesCandidats')->name('registreNotesCandidats.moodle'); 
+    Route::post('moodle/info/diplome/candidat', 'infoDiplomes')->name('info.diplome'); 
 });
 
 

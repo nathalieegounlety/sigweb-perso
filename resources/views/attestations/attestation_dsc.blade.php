@@ -242,7 +242,7 @@ body::before {
                                 </div>
                                 <div style=" float:right; padding-right:5px;font-size: 11pt; margin-bottom: 15px;">
                                     Délivrée à Porto-Novo, le
-                                        {{ \Carbon\Carbon::parse(date('d-m-Y'))->isoFormat('DD MMMM YYYY') }}
+                                        {{ \Carbon\Carbon::parse($participant->date_remise_diplomes)->isoFormat('DD MMMM YYYY') }}
                                 </div>
                             </div>
                             <div style="clear:both;">
@@ -256,11 +256,12 @@ body::before {
                                                         $annee_debut = (int) $participant->annee_academique;
                                                         $annee_fin  = $annee_debut + 1;
 
-                                                        $QrCodeText = "Attestation de :\n"
+                                                        /* $QrCodeText = "Attestation de :\n"
                                                                 . "Auditeur : {$participant->prenoms} {$participant->nom}\n"
                                                                 . "Thème : {$formation->theme}\n"
                                                                 . "Code Formation : {$formation->code_formation}\n"
-                                                                . "Année académique : {$annee_debut}-{$annee_fin}";
+                                                                . "Année académique : {$annee_debut}-{$annee_fin}"; */ 
+                                                        $QrCodeText =  env('FRONTEND_URL').'/consultation/diplome/'.$participant->code_user.'/'.$code_formation;
                                                     @endphp
 
                                                     <img width="75" height="75"

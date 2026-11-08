@@ -106,8 +106,18 @@ class ImportNoteCandidatMoodle implements ToCollection
                             $note->setAttribute("moodlemodule_id", $module->id);
                             $note->setAttribute("moodletypeexamen_id", $typeexamen->id);
                             $note->setAttribute("reference_candidat", trim($rows[$line][2]));
-                            $note->setAttribute("note", trim($get_note));
+                            $note->setAttribute("note", trim($get_note)); 
+                            $note->setAttribute("updated_by", $user->id);
                             $note->update();
+
+                            
+                        Log::info("Note modifiée avec succès", [
+                            'note_id' => $note->id,
+                            'ligne' => $line,
+                            'colonne' => $col,
+                            'note' => $get_note,
+                            'candidat' => trim($rows[$line][2])
+                        ]);
 
                         } else {
                             # code...
@@ -118,11 +128,11 @@ class ImportNoteCandidatMoodle implements ToCollection
                             $note->setAttribute("moodletypeexamen_id", $typeexamen->id);
                             $note->setAttribute("reference_candidat", trim($rows[$line][2]));
                             $note->setAttribute("note", trim($get_note));
+                            $note->setAttribute("created_by", $user->id);
+                            $note->setAttribute("updated_by", $user->id);
                             $note->save();
 
-                        }
-
-
+                            
                         Log::info("Note enregistrée avec succès", [
                             'note_id' => $note->id,
                             'ligne' => $line,
@@ -130,6 +140,10 @@ class ImportNoteCandidatMoodle implements ToCollection
                             'note' => $get_note,
                             'candidat' => trim($rows[$line][2])
                         ]);
+
+                        }
+
+
                     } catch (\Exception $e) {
                         Log::error("Échec de l'enregistrement de la note", [
                             'erreur' => $e->getMessage(),
@@ -170,7 +184,7 @@ class ImportNoteCandidatMoodle implements ToCollection
                                     //  ->where("note_coef", floatval(trim($get_note)) * $module->credit)
                                     ->where("note_coef", 0)
                                     ->where("reference_candidat", trim($rows[$line][2]))
-                                    ->exists();
+                                    ->first();
 
                                 $moyenne = Moodlemoyennes::find($getMoyenne->id);
 
@@ -180,7 +194,8 @@ class ImportNoteCandidatMoodle implements ToCollection
                                 $moyenne->setAttribute("note_totale", 0);
                                 //  $moyenne->setAttribute("note_coef", floatval(trim($get_note)) * $module->credit);
                                 $moyenne->setAttribute("note_coef", 0);
-                                $moyenne->setAttribute("reference_candidat", trim($rows[$line][2]));
+                                $moyenne->setAttribute("reference_candidat", trim($rows[$line][2])); 
+                                $moyenne->setAttribute("updated_by", $user->id);
                                 $moyenne->update();
                             } else {
                                 # code...
@@ -192,6 +207,8 @@ class ImportNoteCandidatMoodle implements ToCollection
                                 $moyenne->setAttribute("note_coef", 0);
                                 //  $moyenne->setAttribute("note_coef", floatval(trim($get_note)) * $module->credit);
                                 $moyenne->setAttribute("reference_candidat", trim($rows[$line][2]));
+                                $moyenne->setAttribute("created_by", $user->id);
+                                $moyenne->setAttribute("updated_by", $user->id);
                                 $moyenne->save();
 
                             }
@@ -199,6 +216,7 @@ class ImportNoteCandidatMoodle implements ToCollection
 
                             Log::info("Moyenne enregistrée avec succès", [
                                 'moyenne_id' => $moyenne->id,
+                                'annee' => $this->annee_academique,
                                 'ligne' => $line,
                                 'colonne' => $col,
                                 'note' => $get_note,
@@ -208,21 +226,16 @@ class ImportNoteCandidatMoodle implements ToCollection
                             Log::error("Échec de l'enregistrement de la moyenne", [
                                 'erreur' => $e->getMessage(),
                                 'ligne' => $line,
+                                'annee' => $this->annee_academique,
                                 'colonne' => $col,
                                 'note' => $get_note,
+                                'module id ' => $module->id,
                                 'candidat' => trim($rows[$line][2])
                             ]);
                         }
 
 
-                        // end save as
-
-
-
-
-
-
-
+                        // end save as 
                         Log::info("Note finale ignorée (vide ou '-')", [
                             'ligne' => $line,
                             'colonne' => $col,
@@ -252,7 +265,7 @@ class ImportNoteCandidatMoodle implements ToCollection
                                     //  ->where("note_coef", floatval(trim($get_note)) * $module->credit)
                                     ->where("note_coef", floatval(trim($get_note)))
                                     ->where("reference_candidat", trim($rows[$line][2]))
-                                    ->exists();
+                                    ->first();
 
                                 $moyenne = Moodlemoyennes::find($getMoyenne->id);
 
@@ -262,9 +275,21 @@ class ImportNoteCandidatMoodle implements ToCollection
                                 $moyenne->setAttribute("note_totale", trim($get_note));
                                 //  $moyenne->setAttribute("note_coef", floatval(trim($get_note)) * $module->credit);
                                 $moyenne->setAttribute("note_coef", floatval(trim($get_note)));
-                                $moyenne->setAttribute("reference_candidat", trim($rows[$line][2]));
+                                $moyenne->setAttribute("reference_candidat", trim($rows[$line][2])); 
+                                $moyenne->setAttribute("updated_by", $user->id);
                                 $moyenne->update();
+
+                                Log::info("Moyenne modifiée avec succès", [
+                                'moyenne_id' => $moyenne->id,
+                                'ligne' => $line,
+                                'annee' => $this->annee_academique,
+                                'colonne' => $col,
+                                'note' => $get_note,
+                                'candidat' => trim($rows[$line][2])
+                            ]);
+
                             } else {
+                                Log::info("test save data for ".trim($rows[$line][2]));
                                 # code...
                                 $moyenne = new Moodlemoyennes();
                                 $moyenne->setAttribute("annee_academique", $this->annee_academique);
@@ -274,24 +299,32 @@ class ImportNoteCandidatMoodle implements ToCollection
                                 $moyenne->setAttribute("note_coef", floatval(trim($get_note)));
                                 //  $moyenne->setAttribute("note_coef", floatval(trim($get_note)) * $module->credit);
                                 $moyenne->setAttribute("reference_candidat", trim($rows[$line][2]));
+                                $moyenne->setAttribute("created_by", $user->id);
+                                $moyenne->setAttribute("updated_by", $user->id);
                                 $moyenne->save();
 
-                            }
-
-
-                            Log::info("Moyenne enregistrée avec succès", [
+                                Log::info("Moyenne enregistrée avec succès", [
                                 'moyenne_id' => $moyenne->id,
                                 'ligne' => $line,
+                                'annee' => $this->annee_academique,
                                 'colonne' => $col,
                                 'note' => $get_note,
                                 'candidat' => trim($rows[$line][2])
                             ]);
+
+
+                            }
+
+
+                            
                         } catch (\Exception $e) {
                             Log::error("Échec de l'enregistrement de la moyenne", [
                                 'erreur' => $e->getMessage(),
                                 'ligne' => $line,
+                                'annee' => $this->annee_academique,
                                 'colonne' => $col,
                                 'note' => $get_note,
+                                'module id OK' => $module->id,
                                 'candidat' => trim($rows[$line][2])
                             ]);
                         }

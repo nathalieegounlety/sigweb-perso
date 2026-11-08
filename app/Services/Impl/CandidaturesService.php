@@ -364,4 +364,45 @@ class CandidaturesService implements CandidaturesInterface
             'code_formation' => $code_formation
         ];
     }
+
+
+    public function infoConsultationDiplome($code_user, $code_formation) : \Illuminate\Http\JsonResponse
+    {
+        $user = User::whereCodeUser($code_user)->first();
+        if ($user) {
+            # code...
+            // Récupérer le participant avec ses moyennes 
+            /*
+            'moodlemoyennegenerales.annee_academique', 
+            'moodlemoyennegenerales.moyenne', 
+            ,'tmpmoodlecandidats.email','tmpmoodlecandidats.ddn',
+            'tmpmoodlecandidats.lieu_naissance',
+            */
+        $participant = DB::table('moodlemoyennegenerales') 
+            ->join('formations', 'formations.code_formation', '=', 'moodlemoyennegenerales.code_formation')
+            ->join('formations_dscs', 'formations_dscs.formation_id', '=', 'formations.id')
+            ->join('tmpmoodlecandidats', 'tmpmoodlecandidats.email', '=', 'moodlemoyennegenerales.reference_candidat')
+            ->leftjoin('users', 'users.email', '=', 'tmpmoodlecandidats.email') 
+            ->select('moodlemoyennegenerales.code_formation', 'tmpmoodlecandidats.prenoms', 'tmpmoodlecandidats.nom','users.code_user','formations.theme','formations.code_formation','formations_dscs.date_remise_diplomes','formations.lieu')
+            ->where('moodlemoyennegenerales.code_formation', $code_formation) 
+            ->where('moodlemoyennegenerales.reference_candidat', $user->email)
+            ->orderBy('moodlemoyennegenerales.moyenne', 'DESC')
+            ->first();  
+
+            if ($participant) {
+                # code...
+                $data = ['info' => $participant];
+                return  ResponseHandler::success("ok",$data);
+            } else {
+                # code...
+                return  ResponseHandler::success("non ok",null, 302);
+            }
+            
+
+        } else {
+            # code...
+        return  ResponseHandler::success("non ok",null, 302);
+        }  
+
+    }
 }
