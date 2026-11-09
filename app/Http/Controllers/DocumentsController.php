@@ -833,10 +833,10 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
     return $pdf->download('SIGWEB_'.$code_formation . '_RAPPORT_PARTICIPANT_' . $date . '.pdf');
 }
 
-    public function attestationCandidat($id, $code_formation)
+    public function attestationCandidat($code, $id, $code_formation)
     {
         try {
-            return $data = $this->documentService->downloadAttestationMoodleCandidat($id, $code_formation);
+            return $data = $this->documentService->downloadAttestationMoodleCandidat($id, $code_formation, $code);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
@@ -852,9 +852,10 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
             $validated = $request->validate([
                 'code_formation' => 'required',
                 'id' => 'required',
+                'code' => 'required',
             ]);
 
-            return $this->documentService->getUrlAttestationMoodleCandidat($request->id, $request->code_formation);
+            return $this->documentService->getUrlAttestationMoodleCandidat($request->id, $request->code_formation, $request->code);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
@@ -893,10 +894,10 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
     // impression par lot
     
 
-    public function allAttestationCandidat($code_formation)
+    public function allAttestationCandidat($code,$code_formation)
     {
         try {
-            return $data = $this->documentService->downloadAllAttestationMoodleCandidat($code_formation);
+            return $data = $this->documentService->downloadAllAttestationMoodleCandidat($code,$code_formation);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {
@@ -911,9 +912,10 @@ public function pdfEtatrecapitulatif(Request $request,$code_formation)
         try{
             $validated = $request->validate([
                 'code_formation' => 'required', 
+                'code' => 'required'
             ]);
 
-            return $this->documentService->getUrlAllAttestationMoodleCandidat($request->code_formation);
+            return $this->documentService->getUrlAllAttestationMoodleCandidat($request->code, $request->code_formation);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return ResponseHandler::error("Erreur de validation", 422, $e->errors());
         } catch (\Exception $e) {

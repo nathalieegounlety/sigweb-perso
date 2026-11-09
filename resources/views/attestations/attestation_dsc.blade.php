@@ -256,12 +256,11 @@ body::before {
                                                         $annee_debut = (int) $participant->annee_academique;
                                                         $annee_fin  = $annee_debut + 1;
 
-                                                        /* $QrCodeText = "Attestation de :\n"
+                                                         $QrCodeText = "Attestation de :\n"
                                                                 . "Auditeur : {$participant->prenoms} {$participant->nom}\n"
                                                                 . "Thème : {$formation->theme}\n"
                                                                 . "Code Formation : {$formation->code_formation}\n"
-                                                                . "Année académique : {$annee_debut}-{$annee_fin}"; */ 
-                                                        $QrCodeText =  env('FRONTEND_URL').'/consultation/diplome/'.$participant->code_user.'/'.$code_formation;
+                                                                . "Année académique : {$annee_debut}-{$annee_fin}";  
                                                     @endphp
 
                                                     <img width="75" height="75"

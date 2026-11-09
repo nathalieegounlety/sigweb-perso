@@ -174,13 +174,13 @@ Route::prefix('v1/documents')->controller(\App\Http\Controllers\DocumentsControl
 
     // ATTESTATION MOODLE CANDIDAT 
     Route::post('get/url/attestation/moodle/candidat', 'urlAttestationMoodleCandidat');
-    Route::get('export/attestation/moodle/candidat/{id}/{code_formation}', 'attestationCandidat')->name('attestationCandidat.moodle')->middleware('signed');
+    Route::get('export/attestation/moodle/candidat/{code}/{id}/{code_formation}', 'attestationCandidat')->name('attestationCandidat.moodle')->middleware('signed');
     
     Route::post('get/url/releve/note/candidat', 'urlReleveNoteCandidat');
     Route::get('export/releve/note/candidat/{id}/{code_formation}', 'releveNoteCandidat')->name('releveNoteCandidat.moodle')->middleware('signed');
     
     Route::post('get/url/all/attestation/moodle/candidat', 'urlAllAttestationMoodleCandidat');
-    Route::get('export/all/attestation/moodle/candidat/{code_formation}', 'allAttestationCandidat')->name('allAttestationCandidat.moodle')->middleware('signed');
+    Route::get('export/all/attestation/moodle/candidat/{code}/{code_formation}', 'allAttestationCandidat')->name('allAttestationCandidat.moodle')->middleware('signed');
     
     Route::post('get/url/all/releve/note/candidat', 'urlAllReleveNoteCandidat');
     Route::get('export/all/releve/note/candidat/{code_formation}', 'allReleveNoteCandidat')->name('allReleveNoteCandidat.moodle')->middleware('signed');

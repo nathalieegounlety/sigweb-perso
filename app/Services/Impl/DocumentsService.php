@@ -1399,7 +1399,7 @@ class DocumentsService implements DocumentsInterface
         ];
     }
 
-    public function downloadAttestationMoodleCandidat($id, $code_formation)
+    public function downloadAttestationMoodleCandidat($id, $code_formation, $code)
 {
     // TODO: Implement downloadAttestationMoodleCandidat() method.
     set_time_limit(0);
@@ -1422,7 +1422,7 @@ class DocumentsService implements DocumentsInterface
     $formation = Formations::where('code_formation', $code_formation)->first();
     
     $date = date('d-m-Y_H-i-s');
- 
+    if($code == "ATTESTATION"){
     $pdf = PDF::loadView('attestations.attestation_dsc', [
         'participant' => $participant,
         'code_formation' => $code_formation,
@@ -1430,6 +1430,17 @@ class DocumentsService implements DocumentsInterface
     ]);
 
     $pdf->setPaper('A4', 'landscape');
+
+    }else{
+    $pdf = PDF::loadView('attestations.diplome_dsc', [
+        'participant' => $participant,
+        'code_formation' => $code_formation,
+        'formation' => $formation,
+    ]);
+
+    $pdf->setPaper('A4', 'landscape');
+
+    }
 
     $dom_pdf = $pdf->getDomPDF();
     $canvas = $dom_pdf->get_canvas();
@@ -1445,10 +1456,10 @@ class DocumentsService implements DocumentsInterface
 }
 
  
-    public function getUrlAttestationMoodleCandidat($id, $code_formation)
+    public function getUrlAttestationMoodleCandidat($id, $code_formation, $code)
     {
         // TODO: Implement getUrlAttestationMoodleCandidat() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('attestationCandidat.moodle', ['id' => $id, 'code_formation' => $code_formation]);
+        $url = $this->genarateurCodeService->generateUrlSigned('attestationCandidat.moodle', ['code' => $code, 'id' => $id, 'code_formation' => $code_formation]);
         $data = ['url' => $url];
         return  ResponseHandler::success("ok", $data, 200);
     }
@@ -1579,7 +1590,7 @@ class DocumentsService implements DocumentsInterface
     // impression des attestations moodle par lot
     
 
-    public function downloadAllAttestationMoodleCandidat($code_formation)
+    public function downloadAllAttestationMoodleCandidat($code, $code_formation)
 {
     // TODO: Implement downloadAllAttestationMoodleCandidat() method.
     set_time_limit(0); 
@@ -1599,11 +1610,19 @@ class DocumentsService implements DocumentsInterface
     
     $date = date('d-m-Y_H-i-s');
  
-    $pdf = PDF::loadView('attestations.attestation_dsc_impression_lot', [
+   if($code == "ATTESTATION"){
+      $pdf = PDF::loadView('attestations.attestation_dsc_impression_lot', [
         'participants' => $participants,
         'code_formation' => $code_formation,
         'formation' => $formation,
     ]);
+   }else{
+     $pdf = PDF::loadView('attestations.diplome_dsc_impression_lot', [
+        'participants' => $participants,
+        'code_formation' => $code_formation,
+        'formation' => $formation,
+    ]);
+   }
 
     $pdf->setPaper('A4', 'landscape');
 
@@ -1620,10 +1639,10 @@ class DocumentsService implements DocumentsInterface
 }
 
  
-    public function getUrlAllAttestationMoodleCandidat($code_formation)
+    public function getUrlAllAttestationMoodleCandidat($code,$code_formation)
     {
         // TODO: Implement getUrlAllAttestationMoodleCandidat() method.
-        $url = $this->genarateurCodeService->generateUrlSigned('allAttestationCandidat.moodle', ['code_formation' => $code_formation]);
+        $url = $this->genarateurCodeService->generateUrlSigned('allAttestationCandidat.moodle', ['code'=>$code, 'code_formation' => $code_formation]);
         $data = ['url' => $url];
         return  ResponseHandler::success("ok", $data, 200);
     }
