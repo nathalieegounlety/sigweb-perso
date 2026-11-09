@@ -1,0 +1,19 @@
+#!/bin/sh
+
+LIB_PATH="/Users/digiweb/Webserver/SIGWEB_ERSUMA/SIGWEB-API/MacPorts-2.8.1/vendor/tcl/unix:/Users/digiweb/Webserver/SIGWEB_ERSUMA/SIGWEB-API/MacPorts-2.8.1/vendor/tcl/unix/pkgs/sqlite3.40.0"
+
+# For macOS
+if [ -z "$DYLD_LIBRARY_PATH" ]; then
+    export DYLD_LIBRARY_PATH="$LIB_PATH"
+else
+    export DYLD_LIBRARY_PATH="$LIB_PATH:$DYLD_LIBRARY_PATH"
+fi
+
+# For Linux and *BSD
+if [ -z "$LD_LIBRARY_PATH" ]; then
+    export LD_LIBRARY_PATH="$LIB_PATH"
+else
+    export LD_LIBRARY_PATH="$LIB_PATH:$LD_LIBRARY_PATH"
+fi
+
+exec "/Users/digiweb/Webserver/SIGWEB_ERSUMA/SIGWEB-API/MacPorts-2.8.1/vendor/tcl/unix/tclsh" "$@"
