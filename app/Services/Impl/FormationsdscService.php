@@ -58,6 +58,10 @@ class FormationsdscService implements FormationsdscInterface
         $formationdsc->setAttribute('date_limite_paiement_inscription', $data->get('date_paiement'));
         $formationdsc->setAttribute('date_limite_inscription', $data->get('date_inscription'));
         $formationdsc->setAttribute('date_remise_diplomes', $data->get('date_diplome'));
+        if(!empty($data->get('titre_autorite'))){ $formationdsc->setAttribute('titre_autorite', $data->get('titre_autorite')); }
+        if(!empty($data->get('num_decision'))){ $formationdsc->setAttribute('num_decision', $data->get('num_decision')); }
+        if(!empty($data->get('date_deliberation'))){ $formationdsc->setAttribute('date_deliberation', $data->get('date_deliberation')); }
+        if(!empty($data->get('date_signature'))){ $formationdsc->setAttribute('date_signature', $data->get('date_signature')); }
         $formationdsc->setAttribute('created_by', $user_id);
         $formationdsc->setAttribute('updated_by', $user_id);
         $formationdsc->save();
@@ -90,8 +94,9 @@ class FormationsdscService implements FormationsdscInterface
             ->join('formations','formations.id','=','formations_dscs.formation_id')
             ->select('formations_dscs.id', 'formations_dscs.duree','formations_dscs.date_limite_paiement_inscription','formations_dscs.date_limite_inscription',
                 'formations_dscs.updated_at','formations_dscs.date_remise_diplomes','formations.code_formation','formations_dscs.formation_id',
-                'formations_dscs.updated_by','formations_dscs.modalites_path','formations.theme');
-
+                'formations_dscs.updated_by','formations_dscs.modalites_path','formations.theme',
+                'formations_dscs.titre_autorite','formations_dscs.date_signature','formations_dscs.date_deliberation','formations_dscs.num_decision');
+ 
         // On fait la jointure
         $needsUserJoin = $search || $filterAuthor || $sortField === 'get_user_updated.name';
 
@@ -175,6 +180,10 @@ class FormationsdscService implements FormationsdscInterface
             $dataUpdate->setAttribute('date_limite_paiement_inscription', $data->get('date_paiement'));
             $dataUpdate->setAttribute('date_limite_inscription', $data->get('date_inscription'));
             $dataUpdate->setAttribute('date_remise_diplomes', $data->get('date_diplome'));
+        if(!empty($data->get('titre_autorite'))){ $dataUpdate->setAttribute('titre_autorite', $data->get('titre_autorite')); }
+        if(!empty($data->get('num_decision'))){ $dataUpdate->setAttribute('num_decision', $data->get('num_decision')); }
+        if(!empty($data->get('date_deliberation'))){ $dataUpdate->setAttribute('date_deliberation', $data->get('date_deliberation')); }
+        if(!empty($data->get('date_signature'))){ $dataUpdate->setAttribute('date_signature', $data->get('date_signature')); }
             $dataUpdate->setAttribute('updated_by', $user_id);
             $dataUpdate->update();
             return ResponseHandler::success("Modification effectuée avec succès");

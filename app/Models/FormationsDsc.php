@@ -31,6 +31,10 @@ class FormationsDsc extends Model
         'duree',
         'date_limite_paiement_inscription',
         'date_remise_diplomes',
+        'num_decision',
+        'date_deliberation',
+        'date_signature',
+        'titre_autorite',
         'created_by',
         'updated_by'
     ];

@@ -1422,7 +1422,7 @@ class DocumentsService implements DocumentsInterface
     $formation = Formations::where('code_formation', $code_formation)->first();
     
     $date = date('d-m-Y_H-i-s');
-    if($code == "ATTESTATION"){
+    if($code == "ATTESTATION"){ 
     $pdf = PDF::loadView('attestations.attestation_dsc', [
         'participant' => $participant,
         'code_formation' => $code_formation,
@@ -1432,7 +1432,9 @@ class DocumentsService implements DocumentsInterface
     $pdf->setPaper('A4', 'landscape');
 
     }else{
-    $pdf = PDF::loadView('attestations.diplome_dsc', [
+       str_contains($code_formation, 'DS') ? $name_view = 'attestations.diplome_dsc' : $name_view = 'attestations.certificat_dsc';
+
+    $pdf = PDF::loadView($name_view, [
         'participant' => $participant,
         'code_formation' => $code_formation,
         'formation' => $formation,
@@ -1617,7 +1619,8 @@ class DocumentsService implements DocumentsInterface
         'formation' => $formation,
     ]);
    }else{
-     $pdf = PDF::loadView('attestations.diplome_dsc_impression_lot', [
+    str_contains($code_formation, 'DS') ? $name_view = 'attestations.diplome_dsc_impression_lot' : $name_view = 'attestations.certificat_dsc_impression_lot';
+     $pdf = PDF::loadView($name_view, [
         'participants' => $participants,
         'code_formation' => $code_formation,
         'formation' => $formation,

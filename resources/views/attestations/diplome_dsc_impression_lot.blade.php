@@ -19,14 +19,23 @@
     padding: 0;
 }
 
+
+.page-background {
+    position: absolute;
+    top: -0.73cm;    
+    left: -1.27cm;   
+    width: 29.7cm;  
+    height: 21.0cm;  
+    z-index: -1000;  
+}
+
 body::before {
     content: "";
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background: url('img/logo/logo-ohada-new500.png') no-repeat fixed center 100px / contain;
+    height: 100%; 
     background-size: 500px;
     opacity: 0.1;
     z-index: -1;
@@ -84,7 +93,6 @@ body::before {
 </head>
 
 <body>
- 
     @foreach ($participants as $participant)
         @php
             $candidat = getCandidat($participant->email);
@@ -92,52 +100,9 @@ body::before {
         @endphp
 
         @if (!$checkAjourne && $participant->moyenne > 12)
-
-         <table style="width: 100%;  padding: 0; margin: 0 ;">
-            <tbody>
-                <tr>
-                    <td style="vertical-align:top;">
-                        <header>
-                            {{--   <div
-                                style="display:block; clear:both; width:100%; background: #fff; border: 0; border-top: 10px solid #1571c6; border-bottom:  10px solid #9cc2e5;  margin: 0 0 10px 0; color:#000000; padding:0; height:10px; text-align:center;">
-
-                            </div> --}}
-                            <div style="z-index:100;">
-                                <div style="float:left; width:72%;">
-
-                                    <div style="z-index:100; max-width:92%; padding: 10px 0;">
-
-                                        <div
-                                            style="z-index:100;float:left; width: 105px; margin:-10px 0 0 0; height:92px; ">
-                                            <img src="img/logo/logo-ohada.png" alt="" height="85px"
-                                                style="height: 85px; ">
-                                        </div>
-                                        <div
-                                            style=" line-height:1.3; margin: -5px 0 0 95px; padding:0px; top:0; font-size:11px; text-align:justify; border-bottom:5px double #2681ca; padding-bottom:8px;">
-                                            Organisation &nbsp;&nbsp;pour &nbsp;l’Harmonisation &nbsp;en
-                                            &nbsp;Afrique &nbsp;du &nbsp;Droit &nbsp;des &nbsp;&nbsp;Affaires <br>
-                                            Organization &nbsp;&nbsp; for&nbsp; &nbsp;the&nbsp; &nbsp;Harmonization
-                                            &nbsp;&nbsp; of &nbsp;&nbsp;Business
-                                            &nbsp;&nbsp; Law &nbsp;in &nbsp;&nbsp; Africa <br>
-                                            Organización para la Armonización en África del Derecho de los Negocios
-                                            <br>
-                                            Organização &nbsp;para &nbsp;a &nbsp;Harmonização &nbsp;em &nbsp;África
-                                            &nbsp;do &nbsp;Direito dos Negócios
-                                        </div>
-                                    </div>
-                                </div>
-                                <img src="img/logo/Logo_ERSUMA-1.jpg" alt="logo"
-                                    style="height: 70px; margin-top:8px;">
-                            </div>
-                            </div>
-
-                        </header>
-
-                    </td>
-                </tr>
-            </tbody>
-        </table> 
-        <div style="z-index: 10; background:none;">
+ 
+     <img src="img/BG_Diplomes-2026.jpg" class="page-background">
+        <div style="z-index: 10; background:none; margin-top:115px">
 
             <div>
                 <!-- div opacity -->
@@ -150,21 +115,13 @@ body::before {
                         </div>
                     </div> 
                     <div style="clear:both; display:block; text-align:justify; padding:8px 15px;">
-                        <div style="line-height: 1.4; ">
-                            <span style="font-size:11pt;">
-                                <b>Vu</b> le Traité relatif à l’Harmonisation du droit des Affaires en Afrique signé à
-                                Port-Louis le 17 octobre 1993, tel que révisé à Québec le 17 octobre 2008 notamment en
-                                son article 41 ; <br>
-                                <b>Vu</b> le Statut de l’ERSUMA du 03 octobre 1995 révisé par les Règlements 
-                                n° 004/2009/CM/OHADA du 19 décembre 2009, n° 003/2011/CM du 17 juin 2011 et n° 02/2016/CM/OHADA du 28
-                                octobre 2016 portant Statut révisé de l’ERSUMA ; <br>
-                                <b>Vu</b> la Décision n° 002/2019/CA/ERSUMA/OHADA du 24 août 2019 portant création et organisation du
-                                Diplôme de Spécialité en Droit OHADA à l'ERSUMA ;<br>
-                                <b>Vu</b> la Décision n° 017-2025 du 10 octobre 2025 portant délibération et
-                                publication du
-                                résultat final aux examens de fin d’année au titre de l’année académique 2024-2025 ;
-                                <br>
-                            </span><br> 
+                        <div style="line-height: 1.4;">
+                            <span style="font-size:11pt; margin: 8px 0;">
+                               <li><b>Vu</b> le Traité relatif à l’Harmonisation du droit des Affaires en Afrique signé à Port-Louis le 17 octobre 1993, tel que révisé à Québec le 17 octobre 2008 notamment en son article 41 ; </li>
+                                <li><b>Vu</b> le Statut de l’ERSUMA du 03 octobre 1995 révisé par les Règlements n° 004/2009/CM/OHADA du 19 décembre 2009, n° 003/2011/CM du 17 juin 2011 et n° 02/2016/CM/OHADA du 28 octobre 2016 portant Statut révisé de l’ERSUMA ; </li>
+                                <li><b>Vu</b> la Décision n° 002/2019/CA/ERSUMA/OHADA du 24 août 2019 portant création et organisation du Diplôme de Spécialité en Droit OHADA à l'ERSUMA ;</li>
+                                <li><b>Vu</b> la Décision n° 017-2025 du 10 octobre 2025 portant délibération et publication du résultat final aux examens de fin d’année au titre de l’année académique 2024-2025 ; </li>
+                            </span>
                             <div style="clear:both; display:block;text-align:center;font-size: 14pt;"> Délivré(e) à :
                             </div>
                             <div
@@ -174,7 +131,7 @@ body::before {
                                     {{ trim($participant->nom) }}</span> 
                                      <br>
                                      @if (!empty($participant->ddn) || !empty($participant->lieu_naissance))
-                                        <p style="font-weight:bold; font-size:20pt; margin-top:5px;  border-bottom:  2px solid #233468; padding:0px 0px 1px 0px;"> Né(e) le {{$participant->ddn}} à {{$participant->lieu_naissance}}</p>
+                                        <p style="font-weight:bold; font-size:20pt; margin-top:5px;  border-bottom:  2px solid #233468; padding:0px 0px 0px 0px;"> Né(e) le {{$participant->ddn}} à {{$participant->lieu_naissance}}</p>
                                      @endif 
                                      <span style="font-weight:bold; font-size:20pt; line-height:1.1;">Le  <span style="color:#233468;">{{ $formation->theme }}</span></span><br>
                               <!--  au titre de l'année académique 2024-2025.-->
@@ -195,7 +152,7 @@ body::before {
                                             <b>
                                                 {{$mention}}
                                             </b> 
-                            </p> <br>
+                            </p> 
                             </div> 
                             <div class="clearfix"></div>
                         </div>
@@ -220,7 +177,9 @@ body::before {
                                 </div>
                                 <div style=" float:right; padding-right:5px;font-size: 11pt; margin-bottom: 15px; color:#233468; font-weight:bold;">
                                     Délivrée à Porto-Novo, le
-                                        {{ \Carbon\Carbon::parse($participant->date_remise_diplomes)->isoFormat('DD MMMM YYYY') }}
+                                        <span style="color: #000000">{{ \Carbon\Carbon::parse($participant->date_remise_diplomes)->isoFormat('DD MMMM YYYY') }}</span>
+                                        <br>
+                                        <span style="font-size: 13pt;">Le Directeur Général,</span>
                                 </div>
                             </div>
                             <div style="clear:both;">
@@ -262,39 +221,20 @@ body::before {
                                                 @endphp
                                                 @if ($signataire == false)
                                                     
-                                                    @else
-                                                        <div
-                                                            style=" text-align:left; margin:0; padding:0; z-index: 10;">
-                                                            <img src="storage/signature/{{ $signataire->signature }}"
-                                                                alt="Signature"
-                                                                style="margin: -15px; padding:0; height: 105px; text-align:left; ">
-                                                        </div>
+                                                    @else 
                                                         <div
                                                             style="padding:0 0 0 50px; margin:-20px 0 0; text-align:center; z-index: 100;">
                                                             <b><u> {{ $signataire->titre }}
                                                                     {{ trim($signataire->prenoms) }}
                                                                     {{ trim($signataire->nom) }}
-                                                                </u></b> <br>
-                                                                Directeur Général
+                                                                </u></b>  
                                                         </div>
                                                 @endif
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
-                            </div>
-                            <div style="
-                                display: block;
-                                clear: both;
-                                width: 100%;
-                                height: 55px;
-                                background-image: url('{{ public_path('img/barre_flag.png') }}');
-                                background-repeat: no-repeat;
-                                background-position: center center;
-                                background-size: contain;
-                                margin: 5px 0 10px 0;
-                            ">
-                            </div>
+                            </div> 
 
                         </footer>
 
