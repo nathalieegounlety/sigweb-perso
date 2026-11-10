@@ -120,9 +120,9 @@ body::before {
                                <li><b>Vu</b> le Traité relatif à l’Harmonisation du droit des Affaires en Afrique signé à Port-Louis le 17 octobre 1993, tel que révisé à Québec le 17 octobre 2008 notamment en son article 41 ; </li>
                                 <li><b>Vu</b> le Statut de l’ERSUMA du 03 octobre 1995 révisé par les Règlements n° 004/2009/CM/OHADA du 19 décembre 2009, n° 003/2011/CM du 17 juin 2011 et n° 02/2016/CM/OHADA du 28 octobre 2016 portant Statut révisé de l’ERSUMA ; </li>
                                 <li><b>Vu</b> la Décision n° 002/2019/CA/ERSUMA/OHADA du 24 août 2019 portant création et organisation du Diplôme de Spécialité en Droit OHADA à l'ERSUMA ;</li>
-                                <li><b>Vu</b> la Décision n° 017-2025 du 10 octobre 2025 portant délibération et publication du résultat final aux examens de fin d’année au titre de l’année académique 2024-2025 ; </li>
+                                <li><b>Vu</b> la Décision n° 010-2026 du 09 novembre 2026 portant délibération et publication du résultat final aux examens de fin d’année au titre de l’année académique 2025-2026 ; </li>
                             </span>
-                            <div style="clear:both; display:block;text-align:center;font-size: 14pt;"> Délivré(e) à :
+                            <div style="clear:both; display:block;text-align:center;font-size: 14pt;"> Délivre à :
                             </div>
                             <div
                                 style="line-height: 1.3;font-size: 11pt; display:block; text-align:center; margin-bottom:10px;">
@@ -176,9 +176,9 @@ body::before {
                                     &nbsp; Avec les droits et prérogatives qui y sont attachés.
                                 </div>
                                 <div style=" float:right; padding-right:5px;font-size: 11pt; margin-bottom: 15px; color:#233468; font-weight:bold;">
-                                    Délivrée à Porto-Novo, le
+                                    Délivré à Porto-Novo, le
                                         <span style="color: #000000">{{ \Carbon\Carbon::parse($participant->date_remise_diplomes)->isoFormat('DD MMMM YYYY') }}</span>
-                                        <br>
+                                        <br><br>
                                         <span style="font-size: 13pt;">Le Directeur Général,</span>
                                 </div>
                             </div>
