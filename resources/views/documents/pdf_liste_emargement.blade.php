@@ -152,7 +152,7 @@
 
                         <div style="margin: 10px 0;">
                             <small style="color: black;">{{$formation->theme}}</small> <br>
-                             REGISTRE DES NOTES - {{$candidat->annee_academique}} - {{$candidat->annee_academique+1}}
+                             REGISTRE DE RETRAIT DES PARCHEMINS - {{$candidat->annee_academique}} - {{$candidat->annee_academique+1}}
                         </div>
                     </div>
                 <!--  -->
@@ -174,9 +174,9 @@
                                 <th style="padding:5px; margin:0; border: 1px solid black; text-align:left; width:25%;">Nom
                                 </th>
                                 <th style="padding:5px; margin:0; border: 1px solid black; width:28%;">Prénom(s)</th>
-                                <th style="padding:5px; margin:0; border: 1px solid black;width:8%;">Moyenne</th>
-                                <th style="padding:5px; margin:0; border: 1px solid black;width:7%;">Décision</th>
-                                <th style="padding:5px; margin:0; border: 1px solid black;width:12%;">Mention</th>
+                                <th style="padding:5px; margin:0; border: 1px solid black;width:8%;">Relevés de notes</th>
+                                <th style="padding:5px; margin:0; border: 1px solid black;width:7%;">Attestation</th>
+                                <th style="padding:5px; margin:0; border: 1px solid black;width:12%;">Diplôme/Certificat</th>
                                 <th style="padding:5px; margin:0; border: 1px solid black;width:15%;">Emargement</th>
                             </tr>
                         </thead>
@@ -200,11 +200,11 @@
                                         {{ $item->prenoms }}
                                     </td>
                                     <td style="margin:0; padding:10px 5px 10px 5px; border: 1px solid black; text-align:center;">
-                                        {{ number_format($item->moyenne, 2, ',', '') }}
+                                      {{--  {{ number_format($item->moyenne, 2, ',', '') }}--}}
                                     </td>
                                     
                                     <td style="margin:0; padding:10px 5px 10px 5px; border: 1px solid black; text-align:center;">
-                                         @if (checkAjourne($item->code_formation,$item->email))
+                                     {{--     @if (checkAjourne($item->code_formation,$item->email))
                                         @php 
                                         echo 'Refusé' ;
                                         @endphp 
@@ -213,13 +213,13 @@
                                             $moyenne = $item->moyenne;
                                             echo $moyenne < 12 ? 'Refusé' : 'Admis';
                                             @endphp 
-                                        @endif
+                                        @endif--}}
 
                                     </td>
 
                                     <td style="margin:0; padding:10px 5px 10px 5px; border: 1px solid black; text-align:center;">
                                         <!-- vérifier si ajourné -->
-                                        @if (checkAjourne($item->code_formation,$item->email))
+                                       {{--  @if (checkAjourne($item->code_formation,$item->email))
                                             N/A 
                                         @else
                                             @php
@@ -234,7 +234,7 @@
                                                     echo 'TRÈS BIEN';
                                                 }
                                             @endphp 
-                                        @endif 
+                                        @endif --}}
                                     </td> 
 
                                     <td style="margin:0; padding:10px 5px 10px 5px; border: 1px solid black; text-align:center;">
