@@ -151,8 +151,8 @@
                         style="z-index: 100;clear:both; display:block; margin:0; text-align: center;line-height: 1.2;font-size: 15pt; color:#006fc0; font-weight:bold;">
 
                         <div style="margin: 10px 0;">
-                            <small style="color: black;">{{$formation->theme}}</small> <br>
-                             REGISTRE DE RETRAIT DES PARCHEMINS - {{$candidat->annee_academique}} - {{$candidat->annee_academique+1}}
+                            REGISTRE DE RETRAIT DES PARCHEMINS <br>
+                            <small style="color: black;">{{$formation->theme}} - {{$candidat->annee_academique}} - {{$candidat->annee_academique+1}} </small>
                         </div>
                     </div>
                 <!--  -->
