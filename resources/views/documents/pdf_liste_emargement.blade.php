@@ -296,7 +296,7 @@
                                                 &nbsp; 
                                             </td>
 
-                                            <td style="width:40%; vertical-align: bottom; padding:0; font-size:11pt;">
+                                            <td style="width:40%; vertical-align: bottom; padding:0; font-size:10.5pt;">
                                                 @php
                                                     $signataire = getSignataire($formation->code_formation);
                                                 @endphp
